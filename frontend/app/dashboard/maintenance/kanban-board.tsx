@@ -53,6 +53,16 @@ export function KanbanBoard({ search, fpsoFilter, onAddNew }: KanbanBoardProps) 
         fetch(`${API_URL}/maintenance/cards?search=${search}${fpsoFilter ? `&fpso=${fpsoFilter}` : ""}`)
       ])
 
+      if (!colsRes.ok || !cardsRes.ok) {
+        console.error("API request failed:", {
+          columns: colsRes.status,
+          cards: cardsRes.status
+        })
+        setColumns([])
+        setCards([])
+        return
+      }
+
       const colsData = await colsRes.json()
       const cardsData = await cardsRes.json()
 
@@ -63,6 +73,8 @@ export function KanbanBoard({ search, fpsoFilter, onAddNew }: KanbanBoardProps) 
       else setCards([])
     } catch (error) {
       console.error("Failed to fetch Kanban data", error)
+      setColumns([])
+      setCards([])
     } finally {
       setLoading(false)
     }

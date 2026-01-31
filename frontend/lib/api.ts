@@ -113,6 +113,77 @@ export async function submitCalibrationResults(taskId: number, data: any) {
   return res.json();
 }
 
+// M2 MVP: Calibration Workflow API
+export async function planCalibration(taskId: number, planData: { procurement_ids?: number[], notes?: string }) {
+  return fetchApi(`/api/calibration/tasks/${taskId}/plan`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(planData),
+  });
+}
+
+export async function executeCalibration(taskId: number, execData: {
+  execution_date: string,
+  completion_date: string,
+  calibration_type: string,
+  seal_number: string,
+  seal_date: string,
+  seal_location: string,
+  seal_type?: string
+}) {
+  return fetchApi(`/api/calibration/tasks/${taskId}/execute`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(execData),
+  });
+}
+
+export async function uploadCertificate(taskId: number, certData: {
+  certificate_number: string,
+  issue_date: string,
+  uncertainty?: number,
+  standard_reading?: number,
+  equipment_reading?: number
+}) {
+  return fetchApi(`/api/calibration/tasks/${taskId}/certificate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(certData),
+  });
+}
+
+export async function validateCertificate(taskId: number) {
+  return fetchApi(`/api/calibration/tasks/${taskId}/certificate/validate`, {
+    method: "POST",
+  });
+}
+
+// M2 MVP: Seal Management API
+export async function recordSealInstallation(sealData: {
+  tag_id: number,
+  seal_number: string,
+  seal_type: string,
+  seal_location: string,
+  installation_date: string,
+  installed_by: string,
+  removal_reason?: string
+}) {
+  return fetchApi(`/api/calibration/seals`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(sealData),
+  });
+}
+
+export async function getTagSealHistory(tagId: number) {
+  return fetchApi(`/api/calibration/tags/${tagId}/seals`);
+}
+
+export async function getActiveSeals(tagIds?: number[]) {
+  const params = tagIds ? `?tag_ids=${tagIds.join(",")}` : "";
+  return fetchApi(`/api/calibration/seals/active${params}`);
+}
+
 // Chemical Analysis API (M3)
 export async function fetchSamplingCampaigns(fpsoName?: string, status?: string) {
   const params = new URLSearchParams();

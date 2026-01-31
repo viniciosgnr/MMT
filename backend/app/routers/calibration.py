@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from datetime import date
+from datetime import date, datetime
+import json
 from .. import models, database
 from ..schemas import calibration as schemas
 
@@ -74,7 +75,224 @@ def get_task(task_id: int, db: Session = Depends(database.get_db)):
         raise HTTPException(status_code=404, detail="Task not found")
     return task
 
-# Result Endpoints
+# M2 MVP: Status Transition Endpoints
+
+@router.post("/tasks/{task_id}/plan")
+def plan_calibration(
+    task_id: int,
+    plan_data: schemas.CalibrationPlanData,
+    db: Session = Depends(database.get_db)
+):
+    """Transition task from PENDING to PLANNED."""
+    task = db.query(models.CalibrationTask).filter(models.CalibrationTask.id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    task.status = models.CalibrationTaskStatus.PLANNED.value
+    task.plan_date = date.today()
+    if plan_data.procurement_ids:
+        task.spare_procurement_ids = json.dumps(plan_data.procurement_ids)
+    
+    db.commit()
+    db.refresh(task)
+    return {"message": "Calibration planned successfully", "task_id": task.id, "status": task.status}
+
+@router.post("/tasks/{task_id}/execute")
+def execute_calibration(
+    task_id: int,
+    exec_data: schemas.CalibrationExecutionData,
+    db: Session = Depends(database.get_db)
+):
+    """Record calibration execution with temporary completion date."""
+    task = db.query(models.CalibrationTask).filter(models.CalibrationTask.id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    task.status = models.CalibrationTaskStatus.EXECUTED.value
+    task.exec_date = exec_data.execution_date
+    task.calibration_type = exec_data.calibration_type
+    task.temporary_completion_date = exec_data.completion_date
+    task.is_temporary = 1
+    task.seal_number = exec_data.seal_number
+    task.seal_installation_date = exec_data.seal_date
+    task.seal_location = exec_data.seal_location
+    
+    # Also record seal in history
+    seal = models.SealHistory(
+        tag_id=task.equipment.installations[0].tag_id if task.equipment.installations else None,
+        seal_number=exec_data.seal_number,
+        seal_type=exec_data.seal_type or "Wire",
+        seal_location=exec_data.seal_location,
+        installation_date=exec_data.seal_date,
+        installed_by="System",  # TODO: Get from auth
+        is_active=1
+    )
+    db.add(seal)
+    
+    db.commit()
+    db.refresh(task)
+    return {"message": "Calibration executed successfully", "task_id": task.id, "status": task.status}
+
+# M2 MVP: Seal Management Endpoints
+
+@router.post("/seals", response_model=schemas.SealHistoryRead)
+def record_seal_installation(
+    seal_data: schemas.SealInstallationData,
+    db: Session = Depends(database.get_db)
+):
+    """Record a new seal installation."""
+    # Deactivate previous seal if exists
+    previous_seal = db.query(models.SealHistory).filter(
+        models.SealHistory.tag_id == seal_data.tag_id,
+        models.SealHistory.is_active == 1
+    ).first()
+    
+    if previous_seal:
+        previous_seal.is_active = 0
+        previous_seal.removal_date = seal_data.installation_date
+        previous_seal.removed_by = seal_data.installed_by
+        previous_seal.removal_reason = seal_data.removal_reason or "Calibration"
+    
+    # Create new seal record
+    new_seal = models.SealHistory(**seal_data.dict())
+    db.add(new_seal)
+    db.commit()
+    db.refresh(new_seal)
+    
+    return new_seal
+
+@router.get("/tags/{tag_id}/seals", response_model=List[schemas.SealHistoryRead])
+def get_tag_seal_history(
+    tag_id: int,
+    db: Session = Depends(database.get_db)
+):
+    """Get seal history for a specific tag."""
+    seals = db.query(models.SealHistory).filter(
+        models.SealHistory.tag_id == tag_id
+    ).order_by(models.SealHistory.installation_date.desc()).all()
+    
+    return seals
+
+@router.get("/seals/active", response_model=List[schemas.SealHistoryRead])
+def get_active_seals(
+    tag_ids: Optional[str] = None,  # Comma-separated tag IDs
+    db: Session = Depends(database.get_db)
+):
+    """Get currently active seals, optionally filtered by tag IDs."""
+    query = db.query(models.SealHistory).filter(models.SealHistory.is_active == 1)
+    
+    if tag_ids:
+        tag_id_list = [int(x) for x in tag_ids.split(",")]
+        query = query.filter(models.SealHistory.tag_id.in_(tag_id_list))
+    
+    seals = query.order_by(models.SealHistory.installation_date.desc()).all()
+    return seals
+
+# M2 MVP: Certificate Management Endpoints
+
+@router.post("/tasks/{task_id}/certificate")
+def upload_certificate(
+    task_id: int,
+    certificate_data: schemas.CertificateData,
+    db: Session = Depends(database.get_db)
+):
+    """Upload certificate metadata and mark task as definitively complete."""
+    task = db.query(models.CalibrationTask).filter(models.CalibrationTask.id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    # Update task with certificate info
+    task.certificate_number = certificate_data.certificate_number
+    task.certificate_issued_date = certificate_data.issue_date
+    task.is_temporary = 0
+    task.definitive_completion_date = certificate_data.issue_date
+    task.certificate_ca_status = "pending"
+    
+    # Update or create result
+    if not task.results:
+        result = models.CalibrationResult(
+            task_id=task_id,
+            standard_reading=certificate_data.standard_reading or 0.0,
+            equipment_reading=certificate_data.equipment_reading or 0.0,
+            uncertainty=certificate_data.uncertainty
+        )
+        db.add(result)
+    else:
+        result = task.results
+        if certificate_data.uncertainty:
+            result.uncertainty = certificate_data.uncertainty
+        if certificate_data.standard_reading:
+            result.standard_reading = certificate_data.standard_reading
+        if certificate_data.equipment_reading:
+            result.equipment_reading = certificate_data.equipment_reading
+    
+    db.commit()
+    return {"message": "Certificate uploaded successfully", "task_id": task.id}
+
+@router.post("/tasks/{task_id}/certificate/validate")
+def validate_certificate(
+    task_id: int,
+    db: Session = Depends(database.get_db)
+):
+    """Run CA validation rules on certificate data."""
+    task = db.query(models.CalibrationTask).filter(models.CalibrationTask.id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    validation_results = []
+    issues = []
+    
+    # Rule 1: Certificate number exists
+    if not task.certificate_number:
+        issues.append("Certificate number is missing")
+    else:
+        validation_results.append({
+            "rule": "Certificate Number Exists",
+            "status": "pass",
+            "value": task.certificate_number
+        })
+    
+    # Rule 2: Certificate issued within RTM time limit (30 days)
+    if task.certificate_issued_date and task.exec_date:
+        days_diff = (task.certificate_issued_date - task.exec_date).days
+        if days_diff > 30:
+            issues.append(f"Certificate issued {days_diff} days after calibration (limit: 30 days)")
+            validation_results.append({
+                "rule": "RTM Time Limit",
+                "status": "fail",
+                "value": f"{days_diff} days"
+            })
+        else:
+            validation_results.append({
+                "rule": "RTM Time Limit",
+                "status": "pass",
+                "value": f"{days_diff} days"
+            })
+    
+    # Rule 3: Tag number matches (basic check)
+    if task.certificate_number and task.tag:
+        # Extract tag from certificate number (format: AAA-BBB-CC-DDD)
+        # For now, just check if tag is mentioned
+        if task.tag.replace("-", "") not in task.certificate_number.replace("-", ""):
+            issues.append(f"Certificate number may not match tag {task.tag}")
+    
+    # Store validation results
+    result = task.results
+    if result:
+        result.ca_validated_at = datetime.utcnow()
+        result.ca_validated_by = "System"  # TODO: Get from auth
+        result.ca_validation_rules = json.dumps(validation_results)
+        result.ca_issues = json.dumps(issues) if issues else None
+        task.certificate_ca_status = "approved" if not issues else "pending"
+        db.commit()
+    
+    return {
+        "validation_results": validation_results,
+        "issues": issues,
+        "status": "approved" if not issues else "pending"
+    }
+
+# Result Endpoints (existing)
 @router.post("/tasks/{task_id}/results", response_model=schemas.CalibrationResult)
 def submit_results(task_id: int, result: schemas.CalibrationResultBase, db: Session = Depends(database.get_db)):
     # Check if task exists
