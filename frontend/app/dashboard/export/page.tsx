@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -28,40 +28,80 @@ import {
   Loader2
 } from "lucide-react"
 import { toast } from "sonner"
-import { cn } from "@/lib/utils"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
 
+const FPSOS = ["SEPETIBA", "SAQUAREMA", "MARICÁ", "PARATY", "ILHABELA"]
+
 const FILE_TYPES = [
-  { id: "CERTS", label: "Calibration Certificates", description: "Signed PDF documents for instruments" },
-  { id: "UNCERTAINTY", label: "Uncertainty Calculations", description: "Generated and uploaded calculations" },
-  { id: "EVIDENCE", label: "Flow Computer Evidence", description: "Screenshots and raw data from FC" },
-  { id: "SAMPLING", label: "Sampling & Validation Reports", description: "Chemical analysis reports (M3)" },
-  { id: "CHANGES", label: "Equipment Change Reports", description: "M6.3 Audit trail of swaps" }
+  { id: "CERTS", label: "Calibration Certificates (4.1)", description: "Formal PDF documents for instruments" },
+  { id: "UNCERTAINTY", label: "Uncertainty Calculations (4.2)", description: "Generated or uploaded uncertainty analysis" },
+  { id: "EVIDENCE", label: "Flow Computer Evidence (4.3)", description: "Raw data or screenshots from FC" },
+  { id: "SAMPLING", label: "Sampling Reports (Chemical)", description: "Lab analysis and collection evidence" },
+  { id: "CHANGES", label: "Equipment Change Reports", description: "Audit trail of hardware swaps (M6.3)" }
 ]
 
 export default function ExportPage() {
   const [loading, setLoading] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [nodes, setNodes] = useState<any[]>([])
+  const [selectedFPSO, setSelectedFPSO] = useState("SEPETIBA")
   const [selectedNodes, setSelectedNodes] = useState<number[]>([])
-  const [fileTypes, setFileTypes] = useState<string[]>(["CERTS", "UNCERTAINTY"])
-  const [dateRange, setDateRange] = useState({ start: "2025-01-01", end: "2025-12-31" })
+  const [fileTypes, setFileTypes] = useState<string[]>(["CERTS", "UNCERTAINTY", "EVIDENCE"])
+  const [dateRange, setDateRange] = useState({
+    start: new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toISOString().split('T')[0],
+    end: new Date().toISOString().split('T')[0]
+  })
 
   useEffect(() => {
     // Fetch hierarchy for the selection tree
     fetch(`${API_URL}/equipment/hierarchy/nodes`)
-      .then(res => res.json())
+      .then(async res => {
+        if (!res.ok) {
+          const text = await res.text();
+          console.error("Hierarchy fetch failed:", text);
+          throw new Error(`Server error ${res.status}`);
+        }
+        return res.json();
+      })
       .then(data => {
         if (Array.isArray(data)) {
           setNodes(data)
         } else {
-          console.error("Expected array for hierarchy nodes, got:", data)
           setNodes([])
         }
       })
-      .catch(() => toast.error("Failed to load hierarchy nodes"))
+      .catch((err) => {
+        console.error(err);
+        toast.error("Failed to load hierarchy nodes")
+      })
   }, [])
+
+  const filteredNodes = useMemo(() => {
+    const rootNode = nodes.find(n =>
+      n.level_type === "FPSO" &&
+      n.tag.toUpperCase().includes(selectedFPSO.toUpperCase())
+    );
+
+    if (!rootNode) return [];
+
+    const getDescendants = (parentId: number): any[] => {
+      const children = nodes.filter(n => n.parent_id === parentId);
+      return children.reduce((acc, child) => {
+        return [...acc, child, ...getDescendants(child.id)];
+      }, [] as any[]);
+    };
+
+    // Return the root node and all its descendants
+    return [rootNode, ...getDescendants(rootNode.id)];
+  }, [nodes, selectedFPSO]);
 
   const handleExport = async (format: "ZIP" | "EXCEL" | "PDF") => {
     if (selectedNodes.length === 0) {
@@ -71,6 +111,7 @@ export default function ExportPage() {
 
     setExporting(true)
     const payload = {
+      fpso_name: `FPSO ${selectedFPSO}`,
       fpso_nodes: selectedNodes,
       start_date: new Date(dateRange.start).toISOString(),
       end_date: new Date(dateRange.end).toISOString(),
@@ -84,29 +125,41 @@ export default function ExportPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       })
-      const { job_id } = await res.json()
 
-      toast.info("Export started. Preparing your ZIP...")
+      if (!res.ok) {
+        const text = await res.text();
+        console.error("Export prepare failed:", text);
+        throw new Error(text || `Server error ${res.status}`);
+      }
+
+      const { job_id } = await res.json()
+      toast.info("Export started. Preparing package...")
 
       // Poll for status
       const checkStatus = setInterval(async () => {
-        const sRes = await fetch(`${API_URL}/export/status/${job_id}`)
-        const statusData = await sRes.json()
+        try {
+          const sRes = await fetch(`${API_URL}/export/status/${job_id}`)
+          const statusData = await sRes.json()
 
-        if (statusData.status === "COMPLETED") {
+          if (statusData.status === "COMPLETED") {
+            clearInterval(checkStatus)
+            setExporting(false)
+            window.location.href = `${API_URL}/export/download/${job_id}`
+            toast.success("Ready! Downloading ZIP package...")
+          } else if (statusData.status === "FAILED") {
+            clearInterval(checkStatus)
+            setExporting(false)
+            toast.error("Export failed: " + statusData.message)
+          }
+        } catch (e) {
           clearInterval(checkStatus)
           setExporting(false)
-          window.location.href = `${API_URL}/export/download/${job_id}`
-          toast.success("Export ready! Downloading now...")
-        } else if (statusData.status === "FAILED") {
-          clearInterval(checkStatus)
-          setExporting(false)
-          toast.error("Export failed: " + statusData.message)
+          toast.error("Lost connection to export worker")
         }
       }, 3000)
 
     } catch (error) {
-      toast.error("An error occurred during export")
+      toast.error("An error occurred during export initialization")
       setExporting(false)
     }
   }
@@ -142,38 +195,54 @@ export default function ExportPage() {
                 <Filter className="h-4 w-4 text-blue-500" />
                 Step 1: Hierarchy Selection
               </CardTitle>
-              <CardDescription className="text-xs">Select FPSO, systems, or specific tags to export.</CardDescription>
+              <CardDescription className="text-xs">Isolate by FPSO and select systems/tags.</CardDescription>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="p-3 bg-slate-50/50 border-b">
+              <div className="p-3 bg-slate-50/50 border-b space-y-3">
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] uppercase font-bold text-slate-400">Target FPSO</Label>
+                  <Select value={selectedFPSO} onValueChange={setSelectedFPSO}>
+                    <SelectTrigger className="h-9 text-xs bg-white">
+                      <SelectValue placeholder="Select FPSO" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FPSOS.map(fpso => (
+                        <SelectItem key={fpso} value={fpso} className="text-xs">FPSO {fpso}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="relative">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
                   <Input placeholder="Search tags/systems..." className="pl-9 h-9 text-xs bg-white border-slate-200" />
                 </div>
               </div>
-              <div className="max-h-[500px] overflow-y-auto p-2 space-y-1">
-                {/* Simplified Tree Mockup */}
+              <div className="max-h-[440px] overflow-y-auto p-2 space-y-1">
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 px-2 py-1.5 hover:bg-slate-100 rounded-md transition-all cursor-pointer group">
+                  <div className="flex items-center gap-2 px-2 py-1.5 bg-slate-100/50 rounded-md transition-all cursor-pointer group">
                     <ChevronDown className="h-4 w-4 text-slate-400" />
-                    <span className="text-xs font-bold text-slate-700">FPSO SEPETIBA</span>
+                    <span className="text-xs font-bold text-slate-700">FPSO {selectedFPSO}</span>
                   </div>
                   <div className="pl-6 space-y-1 border-l ml-3.5 border-slate-200">
-                    {Array.isArray(nodes) && nodes.map(node => (
-                      <div key={node.id} className="flex items-center gap-3 px-2 py-1.5 hover:bg-slate-50 rounded-md group">
-                        <Checkbox
-                          id={`node-${node.id}`}
-                          checked={selectedNodes.includes(node.id)}
-                          onCheckedChange={(checked) => {
-                            if (checked) setSelectedNodes([...selectedNodes, node.id])
-                            else setSelectedNodes(selectedNodes.filter(id => id !== node.id))
-                          }}
-                        />
-                        <label htmlFor={`node-${node.id}`} className="text-xs text-slate-600 font-medium cursor-pointer flex-1">
-                          {node.tag} <span className="text-[10px] text-slate-400 ml-1">({node.level_type})</span>
-                        </label>
-                      </div>
-                    ))}
+                    {Array.isArray(filteredNodes) && filteredNodes.length > 0 ? (
+                      filteredNodes.map(node => (
+                        <div key={node.id} className="flex items-center gap-3 px-2 py-1.5 hover:bg-slate-50 rounded-md group">
+                          <Checkbox
+                            id={`node-${node.id}`}
+                            checked={selectedNodes.includes(node.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) setSelectedNodes([...selectedNodes, node.id])
+                              else setSelectedNodes(selectedNodes.filter(id => id !== node.id))
+                            }}
+                          />
+                          <label htmlFor={`node-${node.id}`} className="text-xs text-slate-600 font-medium cursor-pointer flex-1">
+                            {node.tag} <span className="text-[10px] text-slate-400 ml-1">({node.level_type})</span>
+                          </label>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-[10px] text-slate-400 italic p-2">No items found for this asset.</p>
+                    )}
                   </div>
                 </div>
               </div>

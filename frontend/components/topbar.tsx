@@ -32,6 +32,24 @@ import Image from "next/image"
 import { cn } from "@/lib/utils"
 
 export function Topbar() {
+  const [unreadCount, setUnreadCount] = React.useState(0)
+
+  React.useEffect(() => {
+    const fetchUnreadCount = async () => {
+      try {
+        const response = await fetch("/api/alerts?acknowledged=false")
+        const data = await response.json()
+        setUnreadCount(data.length)
+      } catch (error) {
+        console.error("Failed to fetch unread alerts", error)
+      }
+    }
+    fetchUnreadCount()
+    // Poll every 30 seconds
+    const interval = setInterval(fetchUnreadCount, 30000)
+    return () => clearInterval(interval)
+  }, [])
+
   return (
     <header className="h-16 border-b flex items-center justify-between px-6 bg-[#003D5C] text-white shadow-md z-30">
       <div className="flex items-center gap-8">
@@ -104,13 +122,16 @@ export function Topbar() {
 
             {/* Admin Menu */}
             <NavigationMenuItem>
-              <Link href="/dashboard/configurations" legacyBehavior passHref>
-                <NavigationMenuLink className={cn(
-                  "group inline-flex h-10 w-max items-center justify-center rounded-md bg-transparent px-4 py-2 text-sm font-medium transition-colors hover:bg-white/10 hover:text-white focus:bg-white/10 focus:text-white focus:outline-none disabled:pointer-events-none disabled:opacity-50"
-                )}>
+              <NavigationMenuLink asChild>
+                <Link
+                  href="/dashboard/configurations"
+                  className={cn(
+                    "group inline-flex h-10 w-max items-center justify-center rounded-md bg-transparent px-4 py-2 text-sm font-medium transition-colors hover:bg-white/10 hover:text-white focus:bg-white/10 focus:text-white focus:outline-none disabled:pointer-events-none disabled:opacity-50"
+                  )}
+                >
                   Configurations (M11)
-                </NavigationMenuLink>
-              </Link>
+                </Link>
+              </NavigationMenuLink>
             </NavigationMenuItem>
 
           </NavigationMenuList>
@@ -135,10 +156,16 @@ export function Topbar() {
         </div>
 
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" className="h-9 w-9 text-white hover:bg-white/10 relative">
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-[#FF6B35] rounded-full border border-[#003D5C]" />
-          </Button>
+          <Link href="/dashboard/monitoring">
+            <Button variant="ghost" size="icon" className="h-9 w-9 text-white hover:bg-white/10 relative">
+              <Bell className="h-5 w-5" />
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 w-4 h-4 bg-[#FF6B35] rounded-full border border-[#003D5C] text-[10px] flex items-center justify-center font-bold">
+                  {unreadCount}
+                </span>
+              )}
+            </Button>
+          </Link>
 
           <div className="h-8 w-px bg-white/20 ml-2" />
         </div>
@@ -148,13 +175,13 @@ export function Topbar() {
 }
 
 const ListItem = React.forwardRef<
-  React.ElementRef<"a">,
-  React.ComponentPropsWithoutRef<"a">
+  HTMLAnchorElement,
+  React.ComponentPropsWithoutRef<typeof Link> & { title: string }
 >(({ className, title, children, ...props }, ref) => {
   return (
     <li>
       <NavigationMenuLink asChild>
-        <a
+        <Link
           ref={ref}
           className={cn(
             "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-slate-50 hover:text-black focus:bg-slate-50 focus:text-black",
@@ -166,7 +193,7 @@ const ListItem = React.forwardRef<
           <p className="line-clamp-2 text-xs leading-snug text-slate-500 font-medium">
             {children}
           </p>
-        </a>
+        </Link>
       </NavigationMenuLink>
     </li>
   )

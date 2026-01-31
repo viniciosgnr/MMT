@@ -138,12 +138,41 @@ def seed_data():
             sample_id="OIL-2401-001",
             type="Oil",
             collection_date=datetime.now().date() - timedelta(days=4),
-            location="Oil Export Header",
+            location="62-FT-1103 - Sampling Point",
             status=models.SampleStatus.ANALYZED.value,
             responsible="Daniel Bernoulli",
-            compliance_status="Compliant"
+            compliance_status="Compliant",
+            lab_report_url="/docs/lab_reports/OIL-2401-001.pdf",
+            notes="Sampling evidence verified on FC."
         )
         db.add(sample)
+        db.commit()
+
+        # 5.1 Calibration Results (M2) - Needed for M7 Export
+        res1 = models.CalibrationResult(
+            task_id=tasks[0].id,
+            standard_reading=10.0,
+            equipment_reading=10.1,
+            uncertainty=0.015,
+            uncertainty_report_url="/docs/uncertainty/UNC-62PT1101-2401.pdf",
+            fc_evidence_url="/docs/evidence/FC-62PT1101-2401.png",
+            certificate_url="/docs/certs/CERT-62PT1101-2401.pdf",
+            approved_by="Metrology Manager",
+            approved_at=datetime.utcnow(),
+            notes="As-found within tolerance."
+        )
+        db.add(res1)
+        db.commit()
+
+        # 5.2 Equipment Certificates (M1)
+        cert1 = models.EquipmentCertificate(
+            equipment_id=eq1.id,
+            certificate_number="CERT-PT-2023-001",
+            issue_date=datetime.now().date() - timedelta(days=100),
+            expiry_date=datetime.now().date() + timedelta(days=265),
+            file_path="/docs/certs/ Rosemount_3051S_SN123.pdf"
+        )
+        db.add(cert1)
         db.commit()
 
         # 6. Maintenance Records
@@ -160,17 +189,24 @@ def seed_data():
         db.add(maint)
         db.commit()
 
-        # 7. Installation History (Legacy record type replaced by tag-based history)
-        # We'll just create a historical installation for eq1/tag1
-        hist = models.EquipmentTagInstallation(
+        # 7. Installation History
+        hist1 = models.InstallationHistory(
             equipment_id=eq1.id,
-            tag_id=tag1.id,
+            location=tag1.tag_number,
             installation_date=datetime.now() - timedelta(days=365),
-            removal_date=datetime.now() - timedelta(days=364),
             installed_by="Daniel Bernoulli",
-            is_active=0
+            reason="Initial Commissioning",
+            notes="System startup."
         )
-        db.add(hist)
+        hist2 = models.InstallationHistory(
+            equipment_id=eq2.id,
+            location=tag2.tag_number,
+            installation_date=datetime.now() - timedelta(days=200),
+            installed_by="Daniel Bernoulli",
+            reason="Replacement",
+            notes="Previous unit failed drift test."
+        )
+        db.add_all([hist1, hist2])
         db.commit()
 
         # 8. Planned Activities
@@ -214,24 +250,74 @@ def seed_data():
         db.add_all(syncs)
         db.commit()
 
-        # 10. Alerts
+        # 10. Alerts (M6)
         alerts = [
             models.Alert(
-                type=models.AlertType.CALIBRATION.value,
-                severity=models.AlertSeverity.WARNING.value,
-                title="Upcoming Calibration",
-                message="Equipment 62-FT-1103 is due in 5 days.",
+                type="System Configuration",
+                severity=models.AlertSeverity.CRITICAL.value,
+                title="K-Factor Mismatch",
+                message="Flowmeter T62-FT-1103 configured K-Factor (150.5) differs from last certificate (152.1).",
+                fpso_name="FPSO MARICÁ",
+                tag_number="T62-FT-1103",
                 equipment_id=eq3.id
             ),
             models.Alert(
-                type=models.AlertType.MAINTENANCE.value,
+                type="Metrological Confirmation",
+                severity=models.AlertSeverity.WARNING.value,
+                title="Pending Calibration Certificate",
+                message="Calibration executed for T62-PT-1101 on 2024-01-28 but certificate is not yet uploaded.",
+                fpso_name="FPSO MARICÁ",
+                tag_number="T62-PT-1101",
+                equipment_id=eq1.id
+            ),
+            models.Alert(
+                type="Sampling",
+                severity=models.AlertSeverity.INFO.value,
+                title="Sampling Due Soon",
+                message="Oil sampling for 'FPSO SAQUAREMA' scheduled for tomorrow.",
+                fpso_name="FPSO SAQUAREMA",
+                tag_number=None
+            ),
+            models.Alert(
+                type="Failure Notification",
                 severity=models.AlertSeverity.CRITICAL.value,
-                title="Critical Maintenance Delayed",
-                message="Equipment 65-PT-2201 is overdue from vendor Emerson.",
-                equipment_id=eq4.id
+                title="Failure Notification Overdue",
+                message="Failure #1024 has been open for > 240h without a final report.",
+                fpso_name="FPSO SEPETIBA",
+                tag_number="65-PT-2201"
             )
         ]
         db.add_all(alerts)
+        db.commit()
+
+        # 10.1 Alert Configuration (M6.2)
+        configs = [
+            models.AlertConfiguration(
+                fpso_name="FPSO MARICÁ",
+                alert_type="System Configuration",
+                notify_email=1,
+                notify_whatsapp=1,
+                notify_in_app=1
+            ),
+            models.AlertConfiguration(
+                fpso_name="FPSO SAQUAREMA",
+                alert_type="Metrological Confirmation",
+                notify_email=1,
+                notify_whatsapp=0,
+                notify_in_app=1
+            )
+        ]
+        db.add_all(configs)
+        db.commit()
+        db.refresh(configs[0])
+        db.refresh(configs[1])
+
+        recipients = [
+            models.AlertRecipient(config_id=configs[0].id, user_name="Daniel Bernoulli", email="daniel.bernoulli@sbm.com", whatsapp_number="+552199999999", receive_in_app=1),
+            models.AlertRecipient(config_id=configs[0].id, user_name="Maintenance Lead", email="maint.lead@sbm.com", receive_in_app=1),
+            models.AlertRecipient(config_id=configs[1].id, user_name="Metrology Specialist", email="metro.spec@sbm.com", receive_in_app=1)
+        ]
+        db.add_all(recipients)
         db.commit()
         
         # 11. Failure Notifications

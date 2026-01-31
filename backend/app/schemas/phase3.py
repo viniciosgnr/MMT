@@ -152,10 +152,12 @@ class DataIngestionPayload(BaseModel):
 # M6 - Alert Schemas
 
 class AlertBase(BaseModel):
-    type: str
+    type: str # e.g., "System Configuration", "Calibration Frequency"
     severity: str
     title: str
     message: str
+    fpso_name: str
+    tag_number: Optional[str] = None
     equipment_id: Optional[int] = None
 
 class AlertCreate(AlertBase):
@@ -163,6 +165,10 @@ class AlertCreate(AlertBase):
 
 class AlertAcknowledge(BaseModel):
     acknowledged_by: str
+    justification: Optional[str] = None
+    linked_event_type: Optional[str] = None
+    linked_event_id: Optional[int] = None
+    run_recheck: bool = True
 
 class Alert(AlertBase):
     id: int
@@ -170,7 +176,44 @@ class Alert(AlertBase):
     acknowledged: int
     acknowledged_by: Optional[str] = None
     acknowledged_at: Optional[datetime] = None
+    justification: Optional[str] = None
+    linked_event_type: Optional[str] = None
+    linked_event_id: Optional[int] = None
+    run_recheck: int
 
+    class Config:
+        from_attributes = True
+
+# Alert Configuration Schemas
+class AlertRecipientBase(BaseModel):
+    user_name: str
+    email: Optional[str] = None
+    whatsapp_number: Optional[str] = None
+    receive_in_app: bool = True
+
+class AlertRecipientCreate(AlertRecipientBase):
+    pass
+
+class AlertRecipient(AlertRecipientBase):
+    id: int
+    config_id: int
+    class Config:
+        from_attributes = True
+
+class AlertConfigurationBase(BaseModel):
+    fpso_name: str
+    alert_type: str
+    rule_config: Optional[str] = None
+    notify_email: bool = True
+    notify_whatsapp: bool = False
+    notify_in_app: bool = True
+
+class AlertConfigurationCreate(AlertConfigurationBase):
+    recipients: list[AlertRecipientCreate] = []
+
+class AlertConfiguration(AlertConfigurationBase):
+    id: int
+    recipients: list[AlertRecipient] = []
     class Config:
         from_attributes = True
 

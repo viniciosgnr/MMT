@@ -7,7 +7,7 @@ import io
 import os
 from datetime import datetime
 from .. import models, database
-from ..schemas.export import ExportRequest, ExportJobStatus
+from ..schemas.export import ExportRequest, ExportJobStatus, FILE_TYPE_MAP
 
 router = APIRouter(
     prefix="/api/export",
@@ -17,21 +17,23 @@ router = APIRouter(
 # In-memory job tracking (should use Redis/DB for production)
 export_jobs = {}
 
-def get_suffix(item_type: str, category: str = None) -> str:
-    """Map equipment/event types to audit suffixes."""
-    type_map = {
-        "FLOWMETER": "P",
-        "PRESSURE": "S",
-        "TEMPERATURE": "S",
-        "DP": "S",
-        "ORIFICE_PLATE": "OP",
-        "STRAIGHT_RUN": "SR",
-        "ZANKER": "SR",
-        "REMOVAL": "R",
-        "UNAVAILABLE": "UN",
-        "AVAILABLE": "AV"
-    }
-    return type_map.get(item_type.upper(), "")
+def get_suffix(equipment_type: str, event_type: str) -> str:
+    """Map equipment/event types to audit suffixes per M7 spec."""
+    et = (equipment_type or "").upper()
+    evt = (event_type or "").upper()
+    
+    # Priority 1: Events
+    if evt == "REMOVAL": return "R"
+    if evt == "UNAVAILABLE": return "UN"
+    if evt == "AVAILABLE": return "AV"
+    
+    # Priority 2: Equipment Types
+    if "FLOWMETER" in et or "PD METER" in et or "ULTRASONIC" in et: return "P"
+    if "PRESSURE" in et or "TEMPERATURE" in et or "DP" in et or "TRANSMITTER" in et: return "S"
+    if "ORIFICE" in et: return "OP"
+    if "STRAIGHT RUN" in et or "ZANKER" in et: return "SR"
+    
+    return ""
 
 @router.post("/prepare")
 async def prepare_export(request: ExportRequest, background_tasks: BackgroundTasks, db: Session = Depends(database.get_db)):
@@ -54,6 +56,9 @@ async def generate_export_zip(job_id: str, request: ExportRequest, db: Session):
         zip_buffer = io.BytesIO()
         with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
             
+            # Use request.fpso_name or resolve from nodes
+            fpso_trigram = request.fpso_name[:3].upper() if request.fpso_name else "FPSO"
+            
             # Step 1: Resolve all child nodes if parent nodes are selected
             all_node_ids = set(request.fpso_nodes)
             current_level_ids = request.fpso_nodes
@@ -68,77 +73,78 @@ async def generate_export_zip(job_id: str, request: ExportRequest, db: Session):
                 all_node_ids.update(child_ids)
                 current_level_ids = child_ids
 
-            # Step 2: Get all tags associated with ANY of these nodes
+            # Step 2: Get all tags associated with these nodes
             tags = db.query(models.InstrumentTag).filter(
                 models.InstrumentTag.hierarchy_node_id.in_(list(all_node_ids))
             ).all()
 
             for tag in tags:
-                # Find the FPSO parent for the trigram
-                # (Mocking trigram resolution for now based on tag area or area field)
-                fpso_trigram = tag.area[:3].upper() if tag.area else "FPSO"
-                
                 # --- METROLOGICAL CONFIRMATION ---
-                if "CERTS" in request.file_types:
-                    # Get all equipments ever installed on this tag during the interval
-                    installations = db.query(models.EquipmentTagInstallation).filter(
-                        models.EquipmentTagInstallation.tag_id == tag.id
-                    ).all()
-                    
-                    for inst in installations:
-                        certs = db.query(models.EquipmentCertificate).filter(
-                            models.EquipmentCertificate.equipment_id == inst.equipment_id,
-                            models.EquipmentCertificate.issue_date >= request.start_date,
-                            models.EquipmentCertificate.issue_date <= request.end_date
-                        ).all()
-                        
-                        for cert in certs:
-                            suffix = get_suffix(inst.equipment.equipment_type or "SECONDARY")
-                            date_str = cert.issue_date.strftime("%Y-%m-%d")
-                            folder_path = f"{fpso_trigram}/Metrological Confirmation/{tag.tag_number}/{date_str} {suffix}".strip()
-                            
-                            # Real app would fetch cert.file_path from disk/S3
-                            f_name = os.path.basename(cert.certificate_url) if cert.certificate_url else f"Cert_{cert.id}.pdf"
-                            zip_file.writestr(f"{folder_path}/{f_name}", b"Mock PDF Content")
+                # Structure: FPSO / "Metrological Confirmation" / System Tag / YYYY-MM-DD *
+                
+                # Fetch Calibrations (Certificates, Uncertainty, Evidence)
+                results = db.query(models.CalibrationResult).join(models.CalibrationTask).filter(
+                    models.CalibrationTask.tag == tag.tag_number,
+                    models.CalibrationResult.created_at >= request.start_date,
+                    models.CalibrationResult.created_at <= request.end_date
+                ).all()
 
-                # --- CHANGES REPORT (M6.3) ---
+                for res in results:
+                    suffix = get_suffix(res.task.equipment.equipment_type, res.task.type)
+                    date_str = res.task.exec_date.strftime("%Y-%m-%d") if res.task.exec_date else res.created_at.strftime("%Y-%m-%d")
+                    folder_path = f"{fpso_trigram}/Metrological Confirmation/{tag.tag_number}/{date_str} {suffix}".strip()
+
+                    # 4.1 Calibration certificates
+                    if "CERTS" in request.file_types and res.certificate_url:
+                        zip_file.writestr(f"{folder_path}/Certificate_{res.id}.pdf", b"Mock PDF Content")
+                    
+                    # 4.2 Uncertainty calculations (Uploaded or Generated)
+                    if "UNCERTAINTY" in request.file_types and res.uncertainty_report_url:
+                        zip_file.writestr(f"{folder_path}/Uncertainty_{res.id}.pdf", b"Mock Uncertainty Content")
+                    
+                    # 4.3 Calibration flow computer evidence
+                    if "EVIDENCE" in request.file_types and res.fc_evidence_url:
+                        zip_file.writestr(f"{folder_path}/FC_Evidence_{res.id}.png", b"Mock FC Evidence Content")
+
+                # --- EQUIPMENT CHANGE REPORT (M6.3) ---
                 if "CHANGES" in request.file_types:
-                    # Export equipment change history for this tag
-                    changes = db.query(models.EquipmentTagInstallation).filter(
-                        models.EquipmentTagInstallation.tag_id == tag.id,
-                        models.EquipmentTagInstallation.installation_date >= request.start_date,
-                        models.EquipmentTagInstallation.installation_date <= request.end_date
+                    histories = db.query(models.InstallationHistory).filter(
+                        models.InstallationHistory.location == tag.tag_number,
+                        models.InstallationHistory.installation_date >= request.start_date,
+                        models.InstallationHistory.installation_date <= request.end_date
                     ).all()
                     
-                    if changes:
-                        report_content = "Date,Equipment SN,Installed By,Action\n"
-                        for ch in changes:
-                            date_str = ch.installation_date.strftime("%Y-%m-%d")
-                            report_content += f"{date_str},{ch.equipment.serial_number},{ch.installed_by},Installation\n"
-                        
-                        folder_path = f"{fpso_trigram}/Metrological Confirmation/{tag.tag_number}"
-                        zip_file.writestr(f"{folder_path}/Equipment_Change_Report.csv", report_content.encode())
+                    if histories:
+                        content = "Date,Equipment SN,Action,Responsible,Notes\n"
+                        for h in histories:
+                            date_str = h.installation_date.strftime("%Y-%m-%d")
+                            content += f"{date_str},{h.equipment.serial_number},{h.reason},{h.installed_by},{h.notes}\n"
+                            
+                            # Also create folders for Removal (R) etc if they are standalone events
+                            suffix = get_suffix(None, h.reason)
+                            if suffix:
+                                folder_path = f"{fpso_trigram}/Metrological Confirmation/{tag.tag_number}/{date_str} {suffix}"
+                                zip_file.writestr(f"{folder_path}/Equipment_Log.txt", f"Action: {h.reason}".encode())
+
+                        zip_file.writestr(f"{fpso_trigram}/Metrological Confirmation/{tag.tag_number}/Equipment_Change_Report.csv", content.encode())
 
             # --- CHEMICAL ANALYSIS ---
             if "SAMPLING" in request.file_types:
-                # Chemical Analysis has different hierarchy: Sample Point Tag
-                # We'll fetch samples based on the FPSO name in the request
-                # (Simplification: using the first selected node's FPSO if possible)
                 samples = db.query(models.Sample).filter(
                     models.Sample.collection_date >= request.start_date,
                     models.Sample.collection_date <= request.end_date
                 ).all()
                 
                 for sample in samples:
-                    # Structure: FPSO / "Chemical analysis" / Sample point tag – Sample point name / YYYY-MM-DD
-                    fpso_trigram = "FPSO" # Match to sample.campaign.fpso_name
+                    # FPSO / "Chemical analysis" / Sample point tag – Sample point name / YYYY-MM-DD
                     date_str = sample.collection_date.strftime("%Y-%m-%d")
-                    # location used as Tag - Name
                     folder_path = f"{fpso_trigram}/Chemical analysis/{sample.location}/{date_str}"
                     
                     if sample.lab_report_url:
-                        f_name = os.path.basename(sample.lab_report_url)
-                        zip_file.writestr(f"{folder_path}/{f_name}", b"Mock Chemical Report")
+                        zip_file.writestr(f"{folder_path}/Lab_Report_{sample.sample_id}.pdf", b"Mock Lab Report")
+                    # Validation report / Flow computer evidence for sampling
+                    if sample.notes: # Using notes as a proxy for evidence existence in this MVP
+                         zip_file.writestr(f"{folder_path}/Sampling_Evidence.txt", b"Mock Sampling Evidence")
 
         export_jobs[job_id]["status"] = "COMPLETED"
         export_jobs[job_id]["progress"] = 100

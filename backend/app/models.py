@@ -216,6 +216,8 @@ class CalibrationResult(Base):
     standard_reading = Column(Float)
     equipment_reading = Column(Float)
     uncertainty = Column(Float, nullable=True)
+    uncertainty_report_url = Column(String, nullable=True) # PDF for MMT-generated or uploaded uncertainty
+    fc_evidence_url = Column(String, nullable=True) # Flow computer screenshot/raw data evidence
     approved_by = Column(String, nullable=True)
     approved_at = Column(DateTime, nullable=True)
     certificate_url = Column(String, nullable=True)
@@ -314,6 +316,9 @@ class InstallationHistory(Base):
     installed_by = Column(String)
     created_at = Column(DateTime, default=datetime.utcnow)
 
+    # Relationships
+    equipment = relationship("Equipment")
+
 # M5 - Synchronization Status & Data Ingestion
 class SyncSource(Base):
     __tablename__ = "sync_sources"
@@ -370,15 +375,59 @@ class Alert(Base):
     __tablename__ = "alerts"
 
     id = Column(Integer, primary_key=True, index=True)
-    type = Column(String, default=AlertType.SYSTEM.value)
+    type = Column(String, default=AlertType.SYSTEM.value) # e.g., System Configuration, Sampling
     severity = Column(String, default=AlertSeverity.INFO.value)
     title = Column(String)
     message = Column(Text)
+    fpso_name = Column(String, index=True)
+    tag_number = Column(String, nullable=True, index=True)
     equipment_id = Column(Integer, ForeignKey("equipments.id"), nullable=True)
+    
     created_at = Column(DateTime, default=datetime.utcnow)
-    acknowledged = Column(Integer, default=0)  # SQLite doesn't have Boolean
+    
+    # Acknowledgment
+    acknowledged = Column(Integer, default=0)
     acknowledged_by = Column(String, nullable=True)
     acknowledged_at = Column(DateTime, nullable=True)
+    justification = Column(Text, nullable=True)
+    
+    # Event Linking
+    linked_event_type = Column(String, nullable=True) # e.g., "Failure", "Replacement"
+    linked_event_id = Column(Integer, nullable=True)
+    
+    # Re-check Logic
+    run_recheck = Column(Integer, default=1) # Boolean 1/0
+
+class AlertConfiguration(Base):
+    """Configuration for alert triggers and recipients per FPSO and Type."""
+    __tablename__ = "alert_configurations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    fpso_name = Column(String, index=True)
+    alert_type = Column(String) # Matching the categories in 6.2
+    
+    # Thresholds/Parameters (placeholder JSON for now)
+    rule_config = Column(Text, nullable=True)
+    
+    # Notification channels toggle
+    notify_email = Column(Integer, default=1)
+    notify_whatsapp = Column(Integer, default=0)
+    notify_in_app = Column(Integer, default=1)
+
+    recipients = relationship("AlertRecipient", back_populates="config", cascade="all, delete-orphan")
+
+class AlertRecipient(Base):
+    """Specific recipients for an AlertConfiguration."""
+    __tablename__ = "alert_recipients"
+
+    id = Column(Integer, primary_key=True, index=True)
+    config_id = Column(Integer, ForeignKey("alert_configurations.id"))
+    user_name = Column(String)
+    email = Column(String, nullable=True)
+    whatsapp_number = Column(String, nullable=True)
+    receive_in_app = Column(Integer, default=1)
+
+    config = relationship("AlertConfiguration", back_populates="recipients")
 
 # M8 - Planning
 class PlannedActivity(Base):
