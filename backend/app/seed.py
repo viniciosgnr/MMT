@@ -198,6 +198,7 @@ def seed_data():
 
         # 8. Planned Activities
         activities = [
+            # Calibration activities
             models.PlannedActivity(
                 type=models.ActivityType.CALIBRATION.value,
                 title="Gas Export USM Verification",
@@ -208,11 +209,179 @@ def seed_data():
                 responsible="Daniel Bernoulli"
             ),
             models.PlannedActivity(
+                type=models.ActivityType.CALIBRATION.value,
+                title="Pressure Transmitter Calibration - 62-PT-1101",
+                description="Annual calibration of export gas pressure transmitter.",
+                equipment_id=eq1.id,
+                tag_id=tag1.id,
+                fpso_name="FPSO SEPETIBA",
+                scheduled_date=datetime.now() + timedelta(days=3),
+                responsible="Carlos Silva"
+            ),
+            models.PlannedActivity(
+                type=models.ActivityType.CALIBRATION.value,
+                title="Temperature Transmitter Calibration - 62-TT-1102",
+                description="Routine calibration of oil rundown temperature sensor.",
+                equipment_id=eq2.id,
+                tag_id=tag2.id,
+                fpso_name="FPSO SAQUAREMA",
+                scheduled_date=datetime.now() + timedelta(days=15),
+                responsible="Ana Costa"
+            ),
+            models.PlannedActivity(
+                type=models.ActivityType.CALIBRATION.value,
+                title="Water Injection Pressure Calibration",
+                description="Calibration of injection pressure transmitter.",
+                equipment_id=eq4.id,
+                tag_id=tag4.id,
+                fpso_name="FPSO MARICÁ",
+                scheduled_date=datetime.now() - timedelta(days=2),  # Overdue
+                status="Planned",
+                responsible="Roberto Lima"
+            ),
+            
+            # Sampling activities
+            models.PlannedActivity(
                 type=models.ActivityType.SAMPLING.value,
                 title="Bimonthly Gas Sampling",
                 description="Gas analysis for fiscal reporting.",
                 fpso_name="FPSO PARATY",
                 scheduled_date=datetime.now() + timedelta(days=10),
+                responsible="Daniel Bernoulli"
+            ),
+            models.PlannedActivity(
+                type=models.ActivityType.SAMPLING.value,
+                title="Oil Quality Sample Collection",
+                description="Monthly oil quality verification sample.",
+                fpso_name="FPSO SEPETIBA",
+                scheduled_date=datetime.now() + timedelta(days=7),
+                responsible="Maria Santos"
+            ),
+            models.PlannedActivity(
+                type=models.ActivityType.SAMPLING.value,
+                title="Water Injection Quality Sample",
+                description="Weekly water quality check for injection system.",
+                fpso_name="FPSO ILHABELA",
+                scheduled_date=datetime.now() + timedelta(days=2),
+                responsible="João Oliveira"
+            ),
+            
+            # Certificate issuance
+            models.PlannedActivity(
+                type=models.ActivityType.CERTIFICATE.value,
+                title="Issue Calibration Certificate - 62-FT-1103",
+                description="Generate and issue calibration certificate for fiscal meter.",
+                tag_id=tag3.id,
+                fpso_name="FPSO PARATY",
+                scheduled_date=datetime.now() + timedelta(days=1),
+                responsible="Daniel Bernoulli"
+            ),
+            models.PlannedActivity(
+                type=models.ActivityType.CERTIFICATE.value,
+                title="Issue Annual Certification - Gas Export",
+                description="Annual certification for gas export metering system.",
+                fpso_name="FPSO SEPETIBA",
+                scheduled_date=datetime.now() + timedelta(days=20),
+                responsible="Carlos Silva"
+            ),
+            
+            # Report generation
+            models.PlannedActivity(
+                type=models.ActivityType.REPORT.value,
+                title="Monthly Calibration Report - January",
+                description="Compile monthly calibration activities report.",
+                fpso_name="FPSO PARATY",
+                scheduled_date=datetime.now() + timedelta(days=4),
+                responsible="Daniel Bernoulli"
+            ),
+            models.PlannedActivity(
+                type=models.ActivityType.REPORT.value,
+                title="Quarterly ANP Compliance Report",
+                description="Prepare quarterly report for ANP submission.",
+                fpso_name="FPSO SAQUAREMA",
+                scheduled_date=datetime.now() + timedelta(days=12),
+                responsible="Ana Costa"
+            ),
+            models.PlannedActivity(
+                type=models.ActivityType.REPORT.value,
+                title="Weekly Sampling Summary",
+                description="Weekly summary of all sampling activities.",
+                fpso_name="FPSO MARICÁ",
+                scheduled_date=datetime.now() + timedelta(days=6),
+                responsible="Roberto Lima"
+            ),
+            
+            # Flow computer updates
+            models.PlannedActivity(
+                type=models.ActivityType.FLOW_COMPUTER.value,
+                title="Update Flow Computer Configuration - Gas Export",
+                description="Update flow computer with new calibration factors.",
+                fpso_name="FPSO PARATY",
+                scheduled_date=datetime.now() + timedelta(days=8),
+                responsible="Daniel Bernoulli"
+            ),
+            models.PlannedActivity(
+                type=models.ActivityType.FLOW_COMPUTER.value,
+                title="Flow Computer Firmware Update",
+                description="Apply latest firmware patch to flow computer.",
+                fpso_name="FPSO ILHABELA",
+                scheduled_date=datetime.now() + timedelta(days=14),
+                responsible="João Oliveira"
+            ),
+            
+            # Inspection activities
+            models.PlannedActivity(
+                type=models.ActivityType.INSPECTION.value,
+                title="Annual Metering System Inspection",
+                description="Complete visual and functional inspection of metering system.",
+                fpso_name="FPSO SEPETIBA",
+                scheduled_date=datetime.now() + timedelta(days=25),
+                responsible="Carlos Silva"
+            ),
+            models.PlannedActivity(
+                type=models.ActivityType.INSPECTION.value,
+                title="Quarterly Instrument Panel Inspection",
+                description="Routine inspection of all instrument panels.",
+                fpso_name="FPSO SAQUAREMA",
+                scheduled_date=datetime.now() + timedelta(days=18),
+                responsible="Ana Costa"
+            ),
+            
+            # Overdue activities for testing traffic lights
+            models.PlannedActivity(
+                type=models.ActivityType.CALIBRATION.value,
+                title="OVERDUE: Emergency Shutdown System Check",
+                description="Critical safety system verification - OVERDUE.",
+                fpso_name="FPSO MARICÁ",
+                scheduled_date=datetime.now() - timedelta(days=5),
+                status="Planned",
+                responsible="Roberto Lima"
+            ),
+            models.PlannedActivity(
+                type=models.ActivityType.SAMPLING.value,
+                title="OVERDUE: Gas Chromatograph Sample",
+                description="Delayed gas composition analysis.",
+                fpso_name="FPSO ILHABELA",
+                scheduled_date=datetime.now() - timedelta(days=3),
+                status="Planned",
+                responsible="João Oliveira"
+            ),
+            
+            # Near-due activities
+            models.PlannedActivity(
+                type=models.ActivityType.CERTIFICATE.value,
+                title="Issue Certificate - Pressure Transmitter",
+                description="Certificate issuance due tomorrow.",
+                fpso_name="FPSO SEPETIBA",
+                scheduled_date=datetime.now() + timedelta(days=1),
+                responsible="Carlos Silva"
+            ),
+            models.PlannedActivity(
+                type=models.ActivityType.REPORT.value,
+                title="Daily Production Report",
+                description="Daily metering report for operations.",
+                fpso_name="FPSO PARATY",
+                scheduled_date=datetime.now() + timedelta(hours=12),
                 responsible="Daniel Bernoulli"
             )
         ]
