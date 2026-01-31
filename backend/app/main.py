@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import equipment, calibration, chemical, maintenance, failures, alerts, sync, planning, export, history
+from .routers import equipment, calibration, chemical, maintenance, failures, alerts, sync, planning, export, history, configuration
 from .database import engine, Base
 
 # Create tables on startup
@@ -32,6 +32,7 @@ app.include_router(sync.router)
 app.include_router(planning.router)
 app.include_router(export.router)
 app.include_router(history.router)
+app.include_router(configuration.router)
 
 @app.get("/")
 def read_root():

@@ -27,8 +27,7 @@ import {
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
+import { fetchEquipments as fetchEquipmentsAPI, createEquipment } from "@/lib/api"
 
 export default function EquipmentInventory() {
   const [equipments, setEquipments] = useState<any[]>([])
@@ -54,8 +53,7 @@ export default function EquipmentInventory() {
   async function fetchEquipments() {
     try {
       setLoading(true)
-      const res = await fetch(`${API_URL}/equipment/`)
-      const data = await res.json()
+      const data = await fetchEquipmentsAPI()
       if (Array.isArray(data)) {
         setEquipments(data)
       } else {
@@ -63,6 +61,7 @@ export default function EquipmentInventory() {
       }
     } catch (error) {
       console.error("Error fetching equipments:", error)
+      toast.error("Failed to load equipment inventory")
     } finally {
       setLoading(false)
     }
@@ -76,31 +75,21 @@ export default function EquipmentInventory() {
 
     try {
       setSubmitting(true)
-      const res = await fetch(`${API_URL}/equipment/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form)
+      await createEquipment(form)
+      toast.success("Equipment registered successfully!")
+      setIsDialogOpen(false)
+      fetchEquipments()
+      setForm({
+        serial_number: "",
+        model: "",
+        manufacturer: "",
+        equipment_type: "Pressure Transmitter",
+        calibration_frequency_months: 12,
+        calculation_base: "Calibration Date",
+        status: "Active"
       })
-
-      if (res.ok) {
-        toast.success("Equipment registered successfully!")
-        setIsDialogOpen(false)
-        fetchEquipments()
-        setForm({
-          serial_number: "",
-          model: "",
-          manufacturer: "",
-          equipment_type: "Pressure Transmitter",
-          calibration_frequency_months: 12,
-          calculation_base: "Calibration Date",
-          status: "Active"
-        })
-      } else {
-        const err = await res.json()
-        toast.error(`Error: ${err.detail || "Failed to register"}`)
-      }
-    } catch (error) {
-      toast.error("Connection error.")
+    } catch (error: any) {
+      toast.error(error.message || "Failed to register equipment")
     } finally {
       setSubmitting(false)
     }

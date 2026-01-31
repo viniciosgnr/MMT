@@ -1,26 +1,65 @@
 const API_URL = "http://localhost:8000";
 
-// Equipment API (M1)
-export async function fetchEquipments() {
-  const res = await fetch(`${API_URL}/equipment/`);
-  if (!res.ok) {
-    throw new Error("Failed to fetch equipments");
+async function fetchApi(path: string, options: RequestInit = {}) {
+  const url = `${API_URL}${path}`;
+  try {
+    const res = await fetch(url, options);
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error(`API Error [${res.status}] ${url}:`, errorText);
+      throw new Error(`API Error: ${res.statusText}`);
+    }
+    return res.json();
+  } catch (err) {
+    console.error(`Network or Parsing Error ${url}:`, err);
+    throw err;
   }
-  return res.json();
+}
+
+// Equipment API (M1)
+export async function fetchEquipments(params?: { serial_number?: string; equipment_type?: string }) {
+  const queryParams = new URLSearchParams();
+  if (params?.serial_number) queryParams.append("serial_number", params.serial_number);
+  if (params?.equipment_type) queryParams.append("equipment_type", params.equipment_type);
+  const query = queryParams.toString();
+  return fetchApi(`/api/equipment/${query ? `?${query}` : ""}`);
 }
 
 export async function createEquipment(data: any) {
-  const res = await fetch(`${API_URL}/equipment/`, {
+  return fetchApi("/api/equipment/", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
-  if (!res.ok) {
-    throw new Error("Failed to create equipment");
-  }
-  return res.json();
+}
+
+export async function fetchInstrumentTags(params?: { tag_number?: string }) {
+  const queryParams = new URLSearchParams();
+  if (params?.tag_number) queryParams.append("tag_number", params.tag_number);
+  const query = queryParams.toString();
+  return fetchApi(`/api/equipment/tags${query ? `?${query}` : ""}`);
+}
+
+export async function fetchEquipmentHistory(equipmentId: number) {
+  return fetchApi(`/api/equipment/${equipmentId}/history`);
+}
+
+export async function fetchTagHistory(tagId: number) {
+  return fetchApi(`/api/equipment/tags/${tagId}/history`);
+}
+
+export async function installEquipment(data: { equipment_id: number; tag_id: number; installed_by: string }) {
+  return fetchApi("/api/equipment/install", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function removeEquipment(installationId: number) {
+  return fetchApi(`/api/equipment/remove/${installationId}`, {
+    method: "POST",
+  });
 }
 
 // Calibration API (M2)
@@ -198,6 +237,115 @@ export async function createMaintenanceRecord(data: any) {
   });
   if (!res.ok) throw new Error("Failed to create maintenance record");
   return res.json();
+}
+
+// Configuration API (M11)
+export async function fetchHierarchyTree() {
+  console.log("fetchHierarchyTree called");
+  try {
+    const data = await fetchApi("/api/config/hierarchy/tree");
+    console.log("fetchHierarchyTree response received:", data);
+    return data;
+  } catch (err) {
+    console.error("fetchHierarchyTree failed:", err);
+    throw err;
+  }
+}
+
+export async function createHierarchyNode(data: any) {
+  return fetchApi("/api/config/hierarchy/nodes", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteHierarchyNode(id: number) {
+  return fetchApi(`/api/config/hierarchy/nodes/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export async function fetchAttributeDefinitions(entityType?: string) {
+  const params = new URLSearchParams();
+  if (entityType) params.append("entity_type", entityType);
+  return fetchApi(`/api/config/attributes?${params}`);
+}
+
+export async function createAttributeDefinition(data: any) {
+  return fetchApi("/api/config/attributes", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function fetchAttributeValues(entityId: number) {
+  return fetchApi(`/api/config/values/${entityId}`);
+}
+
+export async function setAttributeValue(data: any) {
+  return fetchApi("/api/config/values", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function fetchWells(fpso?: string) {
+  const params = new URLSearchParams();
+  if (fpso) params.append("fpso", fpso);
+  return fetchApi(`/api/config/wells?${params}`);
+}
+
+export async function createWell(data: any) {
+  return fetchApi("/api/config/wells", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function fetchHolidays(fpso?: string) {
+  const params = new URLSearchParams();
+  if (fpso) params.append("fpso", fpso);
+  return fetchApi(`/api/config/holidays?${params}`);
+}
+
+export async function createHoliday(data: any) {
+  return fetchApi("/api/config/holidays", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function fetchStockLocations(fpso?: string) {
+  const params = new URLSearchParams();
+  if (fpso) params.append("fpso", fpso);
+  return fetchApi(`/api/config/stock-locations?${params}`);
+}
+
+export async function createStockLocation(data: any) {
+  return fetchApi("/api/config/stock-locations", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function fetchParameters(fpso?: string) {
+  const params = new URLSearchParams();
+  if (fpso) params.append("fpso", fpso);
+  return fetchApi(`/api/config/parameters?${params}`);
+}
+
+export async function setParameter(data: any) {
+  return fetchApi("/api/config/parameters", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
 }
 
 export async function updateMaintenanceRecord(recordId: number, data: any) {

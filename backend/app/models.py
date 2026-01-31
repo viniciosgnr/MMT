@@ -640,6 +640,39 @@ class AttributeValue(Base):
     entity_id = Column(Integer, index=True)  # ID of the HierarchyNode or specific record
     value = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+class Well(Base):
+    __tablename__ = "wells"
+    id = Column(Integer, primary_key=True, index=True)
+    tag = Column(String, index=True)
+    description = Column(String, nullable=True)
+    fpso = Column(String, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class Holiday(Base):
+    __tablename__ = "holidays"
+    id = Column(Integer, primary_key=True, index=True)
+    date = Column(Date, index=True)
+    description = Column(String)
+    fpso = Column(String, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class StockLocation(Base):
+    __tablename__ = "stock_locations"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True)
+    description = Column(String, nullable=True)
+    fpso = Column(String, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class ConfigParameter(Base):
+    __tablename__ = "config_parameters"
+    id = Column(Integer, primary_key=True, index=True)
+    key = Column(String, index=True) # e.g. "pressure_transmitter_cal_freq"
+    value = Column(String)
+    fpso = Column(String, index=True)
+    description = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
 # M4 - Onshore Maintenance Kanban
 class MaintenanceColumn(Base):
     __tablename__ = "maintenance_columns"

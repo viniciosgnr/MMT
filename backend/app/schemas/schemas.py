@@ -78,8 +78,8 @@ class EquipmentCertificateBase(BaseModel):
     certificate_number: str
     issue_date: date
     expiry_date: Optional[date] = None
-    certificate_type: str
-    file_path: str
+    certificate_type: Optional[str] = None
+    file_path: Optional[str] = None
     tag_id: Optional[int] = None
 
 class EquipmentCertificateCreate(EquipmentCertificateBase):

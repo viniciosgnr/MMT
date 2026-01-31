@@ -36,14 +36,8 @@ def read_equipments(
     
     return query.offset(skip).limit(limit).all()
 
-@router.get("/{equipment_id}", response_model=schemas.Equipment)
-def read_equipment(equipment_id: int, db: Session = Depends(database.get_db)):
-    db_equipment = db.query(models.Equipment).filter(models.Equipment.id == equipment_id).first()
-    if not db_equipment:
-        raise HTTPException(status_code=404, detail="Equipment not found")
-    return db_equipment
-
 # --- Instrument Tags (Locations) ---
+# IMPORTANT: These routes must come BEFORE /{equipment_id} to avoid conflicts
 
 @router.post("/tags", response_model=schemas.InstrumentTag)
 def create_tag(tag: schemas.InstrumentTagCreate, db: Session = Depends(database.get_db)):
@@ -59,6 +53,13 @@ def read_tags(skip: int = 0, limit: int = 100, tag_number: Optional[str] = None,
     if tag_number:
         query = query.filter(models.InstrumentTag.tag_number.ilike(f"%{tag_number}%"))
     return query.offset(skip).limit(limit).all()
+
+@router.get("/{equipment_id}", response_model=schemas.Equipment)
+def read_equipment(equipment_id: int, db: Session = Depends(database.get_db)):
+    db_equipment = db.query(models.Equipment).filter(models.Equipment.id == equipment_id).first()
+    if not db_equipment:
+        raise HTTPException(status_code=404, detail="Equipment not found")
+    return db_equipment
 
 # --- Installation & History ---
 

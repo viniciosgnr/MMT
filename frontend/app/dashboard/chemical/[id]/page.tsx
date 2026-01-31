@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table"
 import {
   ArrowLeft,
   CheckCircle2,
@@ -295,7 +296,10 @@ export default function SampleDetailPage() {
                             <TableCell>{p.current?.toFixed(3) || '-'}</TableCell>
                             <TableCell>{p.avg?.toFixed(3)}</TableCell>
                             <TableCell className="text-xs font-mono text-muted-foreground">
-                              {p.range[0]?.toFixed(3)} to {p.range[1]?.toFixed(3)}
+                              {p.range && p.range.length >= 2
+                                ? `${p.range[0]?.toFixed(3)} to ${p.range[1]?.toFixed(3)}`
+                                : '-'
+                              }
                             </TableCell>
                             <TableCell>
                               <Badge variant={p.status === 'Pass' ? 'default' : 'destructive'} className="rounded-full">
