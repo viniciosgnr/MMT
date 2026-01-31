@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Badge } from "@/components/ui/badge"
 import {
   Select,
   SelectContent,
@@ -201,11 +202,11 @@ export default function NewSamplePage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-xs text-muted-foreground leading-relaxed">
+          <div className="text-xs text-muted-foreground leading-relaxed">
             Initializing this process will set the status to <Badge variant="secondary" className="text-[10px] h-4">Planned</Badge>.
             The team on board will receive a notification to perform the physical sampling on the specified date.
             Once sampled, the full 11-step audit trail will begin tracking SLA milestones.
-          </p>
+          </div>
         </CardContent>
       </Card>
     </div>

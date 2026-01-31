@@ -130,20 +130,20 @@ async def generate_export_zip(job_id: str, request: ExportRequest, db: Session):
 
             # --- CHEMICAL ANALYSIS ---
             if "SAMPLING" in request.file_types:
-                samples = db.query(models.Sample).filter(
-                    models.Sample.collection_date >= request.start_date,
-                    models.Sample.collection_date <= request.end_date
+                samples_query = db.query(models.Sample).filter(
+                    models.Sample.sampling_date >= request.start_date,
+                    models.Sample.sampling_date <= request.end_date
                 ).all()
                 
-                for sample in samples:
+                for s in samples_query:
                     # FPSO / "Chemical analysis" / Sample point tag – Sample point name / YYYY-MM-DD
-                    date_str = sample.collection_date.strftime("%Y-%m-%d")
-                    folder_path = f"{fpso_trigram}/Chemical analysis/{sample.location}/{date_str}"
+                    date_str = s.sampling_date.strftime("%Y-%m-%d")
+                    folder_path = f"{fpso_trigram}/Chemical analysis/{s.sample_point.tag_number}/{date_str}"
                     
-                    if sample.lab_report_url:
-                        zip_file.writestr(f"{folder_path}/Lab_Report_{sample.sample_id}.pdf", b"Mock Lab Report")
+                    if s.lab_report_url:
+                        zip_file.writestr(f"{folder_path}/Lab_Report_{s.sample_id}.pdf", b"Mock Lab Report")
                     # Validation report / Flow computer evidence for sampling
-                    if sample.notes: # Using notes as a proxy for evidence existence in this MVP
+                    if s.notes: # Using notes as a proxy for evidence existence in this MVP
                          zip_file.writestr(f"{folder_path}/Sampling_Evidence.txt", b"Mock Sampling Evidence")
 
         export_jobs[job_id]["status"] = "COMPLETED"
