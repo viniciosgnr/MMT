@@ -96,6 +96,7 @@ class Sample(SampleBase):
     fc_evidence_url: Optional[str]
     
     created_at: datetime
+    sample_point: Optional[SamplePoint] = None
     history: List[SampleStatusHistory] = []
 
     class Config:
