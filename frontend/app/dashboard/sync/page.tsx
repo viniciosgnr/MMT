@@ -159,7 +159,7 @@ export default function SynchronizationPage() {
                     <Clock className="h-3 w-3" />
                     Last Ingestion
                   </div>
-                  <Badge variant="secondary" className="bg-slate-100 text-[10px] font-bold">
+                  <Badge variant="secondary" className="bg-slate-200 text-slate-900 border border-slate-300 text-[10px] font-bold shadow-sm px-2">
                     Today, 10:45
                   </Badge>
                 </div>

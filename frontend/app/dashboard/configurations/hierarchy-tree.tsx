@@ -264,7 +264,27 @@ export function HierarchyTree({ onSelect, selectedId }: HierarchyTreeProps) {
         <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-2">Asset Hierarchy Browser</span>
         <div className="flex items-center gap-1">
           <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={loadTree}><RefreshCw className="h-3 w-3 mr-1" /> Refresh</Button>
-          <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setIsAddingRoot(true)}><Plus className="h-3 w-3 mr-1" /> Add FPSO</Button>
+          <Dialog open={isAddingRoot} onOpenChange={setIsAddingRoot}>
+            <DialogTrigger asChild>
+              <Button variant="default" size="sm" className="h-7 text-xs border-none text-white hover:opacity-90 transition-opacity" style={{ backgroundColor: "#f97316" }}><Plus className="h-3 w-3 mr-1" /> Add FPSO</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add New FPSO</DialogTitle>
+                <DialogDescription>Create a new root node (FPSO) for your asset hierarchy.</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="root-tag-main">FPSO Name</Label>
+                  <Input id="root-tag-main" placeholder="e.g. FPSO ILHABELA" value={newTag} onChange={(e) => setNewTag(e.target.value)} />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsAddingRoot(false)}>Cancel</Button>
+                <Button onClick={handleCreateRoot}>Create</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
       <div className="p-2 max-h-[600px] overflow-auto">
