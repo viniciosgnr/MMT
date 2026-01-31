@@ -30,7 +30,8 @@ export default function ConfigurationsPage() {
 
   const loadParams = async () => {
     try {
-      const data = await fetchParameters("SEPETIBA")
+      // Don't filter by FPSO - show all parameters
+      const data = await fetchParameters()
       setParams(data)
     } catch (error) {
       toast.error("Failed to load parameters")
