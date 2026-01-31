@@ -20,7 +20,9 @@ import {
   ChevronUp,
   History,
   ShieldCheck,
-  Undo2
+  Undo2,
+  FlaskConical,
+  Plus
 } from "lucide-react"
 import {
   fetchSampleDetails,
