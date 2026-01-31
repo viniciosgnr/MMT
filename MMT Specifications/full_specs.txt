@@ -1,0 +1,82 @@
+--- M1: Managing Equipment ---
+Problem: N/A
+How it works: Keep track of all equipment ever installed on the metering system, correlating the physical element serial number with the tag for the place where it is installed. Tracking is done for the entire lifetime of a serial number and for a tag, registering all changes.
+
+It also has the tag structure for each unit. FPSO and instruments structure set on this module as well as system status (approved by ANP, not approved, decomissioned, comissioning, unavailable etc) will be the basis for the others to work.
+Inter-connectivity: ALL
+Feature: A111: Propose ingest information breakdown and populate information tree similar to inspiration mockup.
+
+A121: Propose use tag system logic, same as used in SBM for each vessel.
+
+A131: Propose implement search feature by field: [tag] or [serial number] or [status - approved, not approved, decomissioned].
+------------------------------
+--- M2: Metrological Confirmation ---
+Problem: N/A
+How it works: User can manage the calibration campaign, status, localization, responsibles and deadlines. User can manage: edit, create, delete, close campaigns.
+Inter-connectivity: M1, M5
+Feature: A211: Propose list of calibration campaign organized by logicla parts: types of equipment, criticality, fpso module, type of service, etc.
+
+A221: Propose add new calibration feature, screen with easy friendly field for information selection/completion.
+
+A231: Propose overview dashboard with all calibration information grouped/compiled and able to be inspected in one place.
+
+A241: Propose export calibration campaign information based on user inputs.
+------------------------------
+--- M3: Chemical Analysis ---
+Problem: N/A
+How it works: User can manage the sampling campaign, status, localization, responsibles and deadlines. User can manage: edit, create, delete, close campaigns.
+Inter-connectivity: M1
+Feature: A211: Propose list of chemical analysis organized by logicla parts: types of equipment, criticality, fpso module, type of service, etc.
+
+A221: Propose add new chemical analysis feature, screen with easy friendly field for information selection/completion.
+
+A231: Propose overview dashboard with all chemical analysis information grouped/compiled and able to be inspected in one place.
+------------------------------
+--- M4: Onshore Maintenance ---
+Problem: N/A
+How it works: User can manage all equipment information when on repair, such as, supplier information, timestamp, status, localization, expected date for retrieval, etc.
+Inter-connectivity: M1
+Feature: nan
+------------------------------
+--- M5: Synchronization Data ---
+Problem: N/A
+How it works: Data connection between metering tool and SBM systems. Note metering data comes from multiples data access points, including offshore servers.
+Inter-connectivity: -
+Feature: nan
+------------------------------
+--- M6: Monitoring & Alerts ---
+Problem: N/A
+How it works: Manage thresholds, upper limits, lower limits, deadline and general alerts related to metering. User can manage: edit, create, delete, close alerts.
+Inter-connectivity: ALL
+Feature: nan
+------------------------------
+--- M7: Export Data ---
+Problem: N/A
+How it works: Based on audit reports, the user can pre-select certain types of information to be compiled and printed in a .pdf with timestamp and responsible.
+Inter-connectivity: ALL
+Feature: nan
+------------------------------
+--- M8: Planning ---
+Problem: N/A
+How it works: Schedule view of upcoming tasks (timeline, calendar, list by week, month, quarter). User can manage: edit, create, delete, close events.
+Inter-connectivity: ALL
+Feature: nan
+------------------------------
+--- M9: Failure Notification ---
+Problem: N/A
+How it works: User can setup failure definition as per ANP resolution standards/criteria, or custom failure for specific equipment, fpso, etc.
+Inter-connectivity: M1, M2
+Feature: nan
+------------------------------
+--- M10: Historical Report ---
+Problem: N/A
+How it works: Information repository for past or closed events, can be filtered by time (week, month, quarter, year), type (equipment, sampling, fpso, module), events (specific alerts and/or failures).
+Inter-connectivity: M1
+Feature: nan
+------------------------------
+--- M11: Configurations ---
+Problem: N/A
+How it works: No parameters will be hard coded on the software. Every metering system name, description, frequencies on each step, etc., shall be configured on this module.
+Inter-connectivity: ALL
+Feature: nan
+------------------------------

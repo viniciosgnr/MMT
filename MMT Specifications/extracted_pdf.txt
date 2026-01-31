@@ -1,0 +1,1042 @@
+--- Page 1 ---
+2 - Restricted - OFFICIAL COPY - IS93502 - OOSDOMPF550001C1 - PDF Generated on 16-Jul-2024 6:16PM
+CLIENT:
+PROJECT:
+Head Office
+5, Route de Fribourg
+PO Box 152 Asset Surveillance & Intelligence
+CH-1723 Marly
+Switzerland
+Tel. +41 26 439 99 20
+Fax: +41 26 439 99 39
+www.sbmoffshore.com IS93502 OOSDOMPF550001 C 1
+DOCUMENT DESCRIPTION:
+OIPOC
+METERING MANAGEMENT TOOL
+FUNCTIONAL SPECIFICATION
+Status / Date No. of EPM Approval for
+Written by Checked by Approved by
+Revision (DD-MMM-YYYY) Pages issue
+V. CASTILHO
+C 1 13-Jun-2024 26 H. MELE S. KOMAI KOMA A. ROOS
+T. ALVES
+INFORMATION ON STATUS: CONFIDENTIALITY LEVEL: 2
+P Preliminary for Information
+I Inter Discipline Checking INFORMATION ON CONFIDENTIALITY LEVEL:
+C For Comments and Approval
+V Valid for Construction 1 Non-confidential
+A Approved for Construction 2 Restricted
+X “As Built” 3 Confidential
+EPM Engineering Project Manager or Assigned 4 Trade Secrets
+Substitute
+© Copyright SBM Offshore N.V. 2024
+COPYRIGHT by SBM Offshore N.V. or any of its subsidiaries.
+This document is the property of SBM Offshore N.V. or any of its subsidiaries. This document or any part thereof is CONFIDENTIAL and may not be made
+known, copied, multiplied, or used in any other way without the permission of SBM Offshore N.V. or any of its subsidiaries
+
+--- Page 2 ---
+2 - Restricted - OFFICIAL COPY - IS93502 - OOSDOMPF550001C1 - PDF Generated on 16-Jul-2024 6:16PM
+OIPOC
+METERING MANAGEMENT TOOL
+FUNCTIONAL SPECIFICATION
+IS93502 OOSDOMPF550001 C 1 PAGE 2 of 26
+REVISION STATUS / SUMMARY OF CHANGES
+REVISION REVISED CHAPTERS REVISION DESCRIPTION REASON FOR REVISION
+C1 For Comments and Approval First Issue
+
+--- Page 3 ---
+2 - Restricted - OFFICIAL COPY - IS93502 - OOSDOMPF550001C1 - PDF Generated on 16-Jul-2024 6:16PM
+OIPOC
+METERING MANAGEMENT TOOL
+FUNCTIONAL SPECIFICATION
+IS93502 OOSDOMPF550001 C 1 PAGE 3 of 26
+TABLE OF CONTENTS
+1. INTRODUCTION..................................................................................................................5
+2. ABBREVIATIONS................................................................................................................5
+3. GLOSSARY.........................................................................................................................5
+4. REFERENCE DOCUMENTS...............................................................................................5
+5. SCOPE.................................................................................................................................6
+6. REQUIREMENTS................................................................................................................6
+6.1 MAIN FEATURES..................................................................................................6
+6.1.1 Data Access.............................................................................................7
+6.1.2 Data filtering.............................................................................................7
+6.1.3 Compliance...............................................................................................7
+6.2 CONFIGURATION MODULE.................................................................................7
+6.3 MANAGING EQUIPMENT MODULE.....................................................................8
+6.4 METROLOGICAL CONFIRMATION MODULE....................................................10
+6.4.1 Planning Calibration...............................................................................10
+6.4.2 Executing Calibration..............................................................................11
+6.4.3 Seal Control............................................................................................11
+6.4.4 Issuing Certificate...................................................................................11
+6.4.5 Certificate Issued....................................................................................13
+6.4.6 Certificate CA Issued..............................................................................13
+6.4.7 Issuing UC..............................................................................................13
+6.4.8 UC Issued...............................................................................................13
+6.4.9 FC Update..............................................................................................14
+6.4.10 UC CA Issued.........................................................................................14
+6.4.11 FC Checking...........................................................................................14
+6.4.12 Closing....................................................................................................14
+6.4.13 On demand UC.......................................................................................14
+6.5 CHEMICAL ANALYSIS MODULE........................................................................15
+6.5.1 Oil from Well Test or Gas in General......................................................16
+6.5.2 Daily Oil Sample or per Operation..........................................................18
+6.5.3 Periodic samples....................................................................................19
+6.6 ONSHORE MAINTENANCE MODULE................................................................19
+6.7 SYNCRONIZE DATA MODULE...........................................................................20
+6.8 MONITORING & ALERTS MODULE...................................................................20
+6.8.1 System Configuration.............................................................................20
+6.8.2 Metrological confirmation........................................................................21
+6.8.3 Calibration/Inspection frequency............................................................21
+6.8.4 Sampling.................................................................................................21
+6.8.5 Failure notification..................................................................................21
+6.8.6 Oil/Gas properties...................................................................................22
+6.9 EXPORT DATA MODULE....................................................................................22
+6.10 PLANNING MODULE...........................................................................................23
+6.11 FAILURE NOTIFICATION MODULE....................................................................23
+6.12 HISTORICAL REPORT MODULE........................................................................24
+7. POWER BI REPORTS.......................................................................................................24
+8. NON-FUNCTIONAL REQUIREMENTS.............................................................................24
+9. USER ACCESS.................................................................................................................24
+
+--- Page 4 ---
+2 - Restricted - OFFICIAL COPY - IS93502 - OOSDOMPF550001C1 - PDF Generated on 16-Jul-2024 6:16PM
+OIPOC
+METERING MANAGEMENT TOOL
+FUNCTIONAL SPECIFICATION
+IS93502 OOSDOMPF550001 C 1 PAGE 4 of 26
+10. USER INTERFACE............................................................................................................24
+11. DATA REQUIREMENTS...................................................................................................25
+12. PERFORMANCE AND SCALABILITY..............................................................................25
+13. DEPLOYMENT..................................................................................................................25
+14. TESTING............................................................................................................................26
+15. APPENDIX.........................................................................................................................26
+APPENDIX A OFFSHORE PROVING CERTIFICATE...............................................................26
+APPENDIX B VALVE LEAK TEST REPORT.............................................................................26
+APPENDIX C SAMPLER TEST REPORT..................................................................................26
+APPENDIX D EQUIPMENT CHANGE REPORT........................................................................26
+
+--- Page 5 ---
+2 - Restricted - OFFICIAL COPY - IS93502 - OOSDOMPF550001C1 - PDF Generated on 16-Jul-2024 6:16PM
+OIPOC
+METERING MANAGEMENT TOOL
+FUNCTIONAL SPECIFICATION
+IS93502 OOSDOMPF550001 C 1 PAGE 5 of 26
+1. INTRODUCTION
+Flow measurement on a production facilities plays an important role on different fronts
+such as operational control, production performance, contractual targets and
+environmental emission.
+In some units due to local regulations, most critical front becomes the regulatory side. For
+units operating in Brazil, due to very tight and specific regulations and significantly high
+fine exposures, a management system must be in place for close watch of the entire
+metering system.
+The lack of a central tool capable of capturing all the nuances of the local regulation and
+store all data in a central database for future audits may lead to exposures with SBM
+clients and local regulations.
+This specification will capture funcionalities and business rules to assist the contractor on
+delivering a tool capable of managing the entire metering system in the light of local
+brazilian regulation.
+2. ABBREVIATIONS
+ANP National Petroleum Agency (Agência Nacional do Petróleo)
+API Application Programming Interface
+CA Critical Analysis
+CT Custody Transfer
+FC Flow Computer
+IFS CMMS – Maintenance Management Software
+MA Metering Analyst
+ME Metering Engineer
+ML Metering Lead
+MMT Metering Management Tool
+MT Metering Technician
+NFSM Mismeasurement Notification of the Metering System (Notificação de Falha
+do Sistema de Medição)
+RTM Metrological Technical Regulation (Regulamento Técnico de Medição)
+SRS Software Requirements Specification
+UAT User Acceptance Testing
+UC Uncertainty calculation
+3. GLOSSARY
+Critical Analysis Evaluation of the report against a predefined set of rules and
+previous reports of same equipment to ensure provided data is
+within expected limits and previous references
+4. REFERENCE DOCUMENTS
+[1] Resolução Conjunta ANP/INMETRO nº 1 – RTM 01/2013
+[2] Resolução ANP Nº 18/2014 – Failure Notification
+[3] Resolução ANP nº 52/2013 - Gas and Oil Sampling
+
+--- Page 6 ---
+2 - Restricted - OFFICIAL COPY - IS93502 - OOSDOMPF550001C1 - PDF Generated on 16-Jul-2024 6:16PM
+OIPOC
+METERING MANAGEMENT TOOL
+FUNCTIONAL SPECIFICATION
+IS93502 OOSDOMPF550001 C 1 PAGE 6 of 26
+[4] Resolução ANP nº 65/2014 - Data Exchance
+[5] Ofício Circular ANP/NFP nº 01/2020 - RTM Clarifications
+[6] ANP/NFP nº 02/2020, 835/2020, 841/2021 - Waivers due COVID-19
+[7] Ofício Circular ANP/NFP nº 02/2021 - Resolução 18 Clarifications
+[8] Ofício ANP/NFP nº 906/2021 – Offloading XML
+[9] ISO 10012:2003 - Measurement management systems – Requirements for
+measurement processes and measuring
+equipment
+5. SCOPE
+The contractor scope of supply shall include as a minimum requirement the following:
+ Development, Deployment, Testing and Hosting of the MMT
+ Power BI templates for desired reports integrated with MMT database,
+including delivery of PBI native files
+ Training sessions at SBM Office
+ 2 years of technical support and bug fixes
+ 1 year of active development after delivery for functionality fixes
+ Documents:
+o Detailed SRS
+o Periodic Project Report
+o Project Timeline with deployment date and UAT period for each
+delivery
+o Training Material
+o User Manual
+It is contractor responsibility to detail the software requirements based on the
+specification provided on this document. Detailed requirements may be submitted for
+SBM approval prior to development.
+6. REQUIREMENTS
+6.1 MAIN FEATURES
+Software will be developed in modules. Each module will be focused on one activity
+developed under Metering Management System. Modules shall have necessary
+interconnection in a way that information from one module can be used by the other
+without users ever needing to input the same data twice. Modules breakdown and
+specific requirements are presented in the coming sections.
+All parameters used throughout the software such as possible instrument types, possible
+meters classification, calibration, and inspection frequencies, spares locations etc, must
+be configurable by users with the role “admin” on the control panel, even where not
+explicitly specified.
+Software language for the displays is English. Documents generated on the software
+(reports, certificates etc.), must be available in both Portuguese and English either in two
+separated documents or ideally in one document with two languages. All document
+templates shall be approved by SBM.
+
+--- Page 7 ---
+2 - Restricted - OFFICIAL COPY - IS93502 - OOSDOMPF550001C1 - PDF Generated on 16-Jul-2024 6:16PM
+OIPOC
+METERING MANAGEMENT TOOL
+FUNCTIONAL SPECIFICATION
+IS93502 OOSDOMPF550001 C 1 PAGE 7 of 26
+6.1.1 Data Access
+MMT will be developed using APIs for all functionalities and enabling the users at SBM to
+collect any data available in the tool. All API endpoints will be accessible for SBM users
+with an authentication process implemented. Access control on the API will follow the
+same rules as the web interface.
+For each attachment, certificate, uncertainty calculation or any other report/file available
+on the MMT there will be a permanent hyperlink associated to it which can be shared with
+other users. User access for accessing attachments links will be the same as for
+accessing read data for that FPSO. Data must be stored for at least 10 years.
+6.1.2 Data filtering
+Each page will have its own link. If filters are applied, they will be reflected on the page
+link in a way that if a link is shared, the user who receives it will have the same filters
+applied.
+If at any time the user copies the link from the address bar on the browser and share with
+a different user, this second user will see exact the same page if it has access to it.
+Where applicable, filters will be available to select data per FPSO, system tag, system
+classification and system fluid. Any filter available on the tool will be stored for that user,
+automatically or on the click of a button, so when user access that page again it is
+already applied. A clear filter button will be available and when clicked, the clear filter
+state will be stored as well.
+6.1.3 Compliance
+Software shall be in compliance with all reference documents.
+6.2 CONFIGURATION MODULE
+This module will gather all parametrization used on the software. No parameter used on
+the flows or to fill the forms must be hardcoded. Users with ‘admin’ role will have access
+to adjust it as needed.
+User will be able to model the FPSO on this module, creating all metering systems and
+associated tags.
+The FPSO will consist of a hierarchal tree. The FPSO tree will have the following levels:
+FPSO short name
+System description or tag (user defined)
+Process variable (pressure, temperature, fluid properties etc)
+Device tag and/or description
+A metering system may consist of the following equipment:
+1. Primary device (turbine, orifice plate, coriolis, ultrasonic, magnetic, cone etc)
+2. Secondary device (pressure, temperature, differential pressure, and multivariable
+transmitters and thermoelements)
+3. Straight run
+4. Zanker plates
+
+--- Page 8 ---
+2 - Restricted - OFFICIAL COPY - IS93502 - OOSDOMPF550001C1 - PDF Generated on 16-Jul-2024 6:16PM
+OIPOC
+METERING MANAGEMENT TOOL
+FUNCTIONAL SPECIFICATION
+IS93502 OOSDOMPF550001 C 1 PAGE 8 of 26
+A metering system may have associated to it:
+1. Manual sample point
+2. Automatic sample point
+3. Gas chromatography
+4. BS&W analyser
+5. Provers
+6. Density Meters
+7. Fast Loop/Jet Mixing pumps
+8. MOV and Control Valves
+9. Strainers
+10. Air Eliminators
+Except from the primary devices, all items may be associated with one or multiple
+metering systems.
+A metering system will be defined by a tag, description, fluid, type of primary device and
+classification. Admin will have the ability to create/update/remove new properties on
+equipment. Properties can be of type text, date, numerical or multiple choice.
+A set of rules for data validation must be available for the admin to choose one or many
+(and the relationship between them being AND or OR), such as:
+1. Number between X and Y; greater than X; less than X; greater than or equal to X;
+less than or equal to X; multiple of X
+2. Date between X and Y; greater than X; less than X; greater than or equal to X; less
+than or equal to X
+3. Text length between X and Y; greater than X; less than X; greater than or equal to
+X; less than or equal to X;
+4. Mandatory/Not mandatory
+5. Conditionally mandatory (based on values of other properties)
+The rule configured by admin will then be applied to that property when it is value is filled
+by the users.
+Properties will have a name, description, and unit of measure.
+The types of primary and secondary device will be user configurable and can be
+created/updated/removed by admins. Each device will have its own properties, which
+also can be created/updated/removed by admins following the same specifications for
+metering system properties.
+Parameters such as frequencies and intervals will be defined for each FPSO and not for
+the entire application.
+On this module admin will also create and configure wells, users, holiday calendars, stock
+locations etc.
+6.3 MANAGING EQUIPMENT MODULE
+It is important to learn about the roles played by serial numbers and tags on the metering
+system.
+
+--- Page 9 ---
+2 - Restricted - OFFICIAL COPY - IS93502 - OOSDOMPF550001C1 - PDF Generated on 16-Jul-2024 6:16PM
+OIPOC
+METERING MANAGEMENT TOOL
+FUNCTIONAL SPECIFICATION
+IS93502 OOSDOMPF550001 C 1 PAGE 9 of 26
+A tag is like an address on the process plant. It is a unique identification of where an
+equipment is installed on the line. You will find the tags for each component mainly on
+P&IDs. A serial number is a unique identification of a physical equipment. Metrological
+confirmation is usually applied on a combination of a serial number installed on a tag. The
+same serial number may have different metrological confirmation criteria depending on
+which tag it is installed.
+Certificates are issued to a serial number and may or may not be linked to a tag by the
+time certificate is issued.
+This module will be where all serial numbers are recorded and tracked. When users
+create a new serial number, it will select which type of equipment that is (pressure
+transmitter, temperature transmitter etc), fill the specifications based on the type (nominal
+size, pressure rating, original tag etc) and select one or more tags where that equipment
+could be installed.
+A tag is unique to an instrument and service in the facility. A serial number is unique to
+the device (being a transmitter, orifice plate, etc.). Anytime a device is changed out, a
+new serial number will exist, but the instrument tag remains the same. Certificates and
+processes associated to the metering systems are associated to the device, therefore to
+the serial number, where the tag number will only correlate on which metering system
+that device was installed on a certain period.
+Equipment types and the specifications it has will be configurable by users with the role
+“admin” on the control panel.
+When an equipment is created, user will be prompted to reply if a calibration frequency
+should be set up for it. In case it is, the interval will come from module 6.2. the interval will
+be based on instrument type and classification of the systems where this equipment may
+be installed. In case of conflicts, the lowest interval will be considered. These calibrations
+will appear on module 6.10. It must be possible to configure calibration frequency to be
+calculated based on installation date and / or calibration date.
+MMT will keep track of all certificates issued for a serial number, all certificates related to
+a tag (showing certificates for all serial numbers ever installed on that tag) and log the
+dates when each serial number was installed or removed from a tag.
+Every time a serial number is set or removed from a tag, or the serial number is replaced
+on a tag, a document will be issued and store at MMT. A checklist will be shown to the
+user doing the installation/removal/replacement for the user to confirm mandatory steps
+are completed. Appendix D has a template suggestion for this report. Contractor may
+submit other templates for approval. Direct links to execute each step on the checklist
+inside MMT and/or store evidence of execution will be available.
+On this module, user will be able to check the datasheet of the equipment and its
+historical data, with all its calibration certificates, maintenance reports and the tags where
+this serial number was installed with the installation and removal dates. User will also be
+capable of adding certificates to the equipment on this module if equipment is not
+currently installed on any tag.
+User will be able to search for an equipment by its serial number, specification,
+
+--- Page 10 ---
+2 - Restricted - OFFICIAL COPY - IS93502 - OOSDOMPF550001C1 - PDF Generated on 16-Jul-2024 6:16PM
+OIPOC
+METERING MANAGEMENT TOOL
+FUNCTIONAL SPECIFICATION
+IS93502 OOSDOMPF550001 C 1 PAGE 10 of 26
+instrument type, possible tags where it could be installed, tags where they are currently
+installed or tags where they were once installed.
+6.4 METROLOGICAL CONFIRMATION MODULE
+This module will be responsible to manage the metrological confirmation.
+Metrological confirmation is a set of operations required to ensure that measuring
+equipment conforms to the requirements for its intended use. It generally includes
+calibration and verification, any necessary adjustment or repair, and subsequent
+recalibration, comparison with the metrological requirements for the intended use of the
+equipment, as well as any required sealing and labelling. The requirements for intended
+use include such considerations as range, resolution and maximum permissible errors
+and calibration frequency.
+Module must be capable to manage all steps of the metrological confirmation process
+described on Figure 1, with all data available inside the software. Below a brief
+description for most critical steps.
+Figure 1 - Metrological Confirmation Process
+On this module user will be capable of consulting all historical data for each specific tag,
+including calibration dates, certificates, uncertainty calculation reports, maintenance
+reports, each time equipment was installed/removed/replaced etc.
+6.4.1 Planning Calibration
+At this step, ME will change calibration activity status from “pending” to “planned” to show
+leadership service is under control. There must be an integration with spare management
+module, so ME can link one or more procurement follow up from spare management
+module with this calibration. This will be used in cases where a spare calibrated
+flowmeter is required to comply with the calibration, or spare parts such as orifice plates
+and gaskets are needed.
+
+--- Page 11 ---
+2 - Restricted - OFFICIAL COPY - IS93502 - OOSDOMPF550001C1 - PDF Generated on 16-Jul-2024 6:16PM
+OIPOC
+METERING MANAGEMENT TOOL
+FUNCTIONAL SPECIFICATION
+IS93502 OOSDOMPF550001 C 1 PAGE 11 of 26
+6.4.2 Executing Calibration
+During execution phase of the metrological confirmation, MT will plan it calibration with
+offshore leadership and execute it. The calibration may be done “in-situ”, where
+equipment is calibrated in place and put back in service, or “ex-situ”, where on this
+calibration date the equipment on the line is replaced with a spare already calibrated.
+If the line where instrument is under calibration will be kept under operation, MT will
+override equipment readings according to reference [2]. MMT must be able to provide to
+the MT the correct value to be used on the override based on reference [2] requirements.
+After finishing the calibration, MT will replace the seals.
+After sealing it, MT will send calibration data to shore base (SBM and/or third party) and
+inform ME of the calibration date and the number of the seals installed.
+ME will update MMT with a temporary conclusion date and wait for complete
+documentation to confirm it is indeed correct. MMT must somehow identify the date is
+temporary (different colour, label, specific icon). Module 6.8 and 6.10 will have tasks and
+alerts showing that ME must complete the definitive calibration date.
+6.4.3 Seal Control
+MMT will keep track of all seals installed per instrument and must be capable to issue
+Excel reports showing all seals installed on selected tags. Selection shall be made on a
+filter and should support standard filtering as per 6.
+For each tag, report must show type of seal, current seal installed, last seal removed and
+its respective dates of installation and removal, reason for replacement and responsible
+for replacement. One tag may have multiple seals. Configuration module will have an
+option to configure seal location for each tag from a list. List of possible places will also
+be registered on the configuration module.
+6.4.4 Issuing Certificate
+Certificates may be issued by SBM or by third party. In case it is issued by SBM, it may
+be a calibration certificate, valve leak test certificate or sampler function test certificate.
+MMT will issue all certificates under SBM responsibility.
+All certificates must have a unique number. Certificates issued by SBM will have the
+following number format:
+AAA-BBB-CC-DDD where:
+AAA – FPSO trigram (ESS, CDA, CDP, CDI, CDM, CDS, SEP, ATD, ADG)
+BBB – Type of certificate (PRV - proving, LT – leak test, SMP - sampler)
+CC – Year of execution
+DDD – Sequential for each certificate type, restarting at 1 every year
+ME will have the ability to manually fill the date the certificate is issued.
+6.4.4.1 Third party
+When a certificate is issued by a third party, ME plays no role on its preparation, only
+doing CA and the steps that follows it. MMT will keep track of which calibrations are
+completed and not yet with a certificate registered. ME will have a screen to monitor all
+outstanding activities, including this one.
+
+--- Page 12 ---
+2 - Restricted - OFFICIAL COPY - IS93502 - OOSDOMPF550001C1 - PDF Generated on 16-Jul-2024 6:16PM
+OIPOC
+METERING MANAGEMENT TOOL
+FUNCTIONAL SPECIFICATION
+IS93502 OOSDOMPF550001 C 1 PAGE 12 of 26
+6.4.4.2 Offshore Flowmeter Proving (master/prover)
+Oil flowmeters are sometimes calibrated offshore against compact prover or master
+meters. In this case, certificate is issued by SBM ME. MMT shall be able to import
+calibration data directly from offshore reports (one standard format per unit) and issue a
+calibration certificate. Certificate will be shown to ME for approval. After approval,
+certificate is sent to ML for approval. After both approvals, certificate will be stored on
+MMT.
+Uncertainty calculation shall be completed for each proving run, considering at least
+compact prover, master meter and all transmitters uncertainty contributions and attached
+to certificate.
+It shall be possible to export a PDF and Excel version of the certificate both prior and
+after approvals. PDF report prior to approval or Excel file at any state shall have a stamp
+“FOR REFERENCE ONLY”.
+Appendix A has a template suggestion for the certificate. Contractor may submit other
+templates for approval.
+6.4.4.3 Valve Leak test
+When a valve leak test is completed by SBM, a leak test certificate must be issued.
+MMT will have an option to print the certificate template to be able to manually fill the data
+in the field during test execution.
+MMT will be capable of receiving all the data and issuing the certificate. Certificate will
+have one or more screenshot of the trends on supervisory system during test execution.
+After data is completed, MMT will show the certificate to ME for approval. After approved,
+certificate will be stored.
+It shall be possible to export a PDF and Excel version of the certificate both prior and
+after approvals. Prior to approvals, with a “COPY IN ADVANCE” stamp on it. Excel
+version will have a stamp “NOT OFFICIAL COPY”.
+Appendix B has a template suggestion for the certificate. Contractor may submit other
+templates for approval.
+6.4.4.4 Sampler Function Test
+When a sampler leak test is completed by SBM, a test certificate must be issued.
+MMT will have an option to print the certificate template to be able to manually fill the data
+in the field during test execution.
+MMT will be capable of receiving all the data and issuing the certificate.
+After data is completed, MMT will show the certificate to ME for approval. After approved,
+the certificate will be stored.
+It shall be possible to export a PDF and Excel version of the certificate both prior and
+after approvals. Prior to approvals, with a “COPY IN ADVANCE” stamp on it. Excel
+version will have a stamp “NOT OFFICIAL COPY”.
+
+--- Page 13 ---
+2 - Restricted - OFFICIAL COPY - IS93502 - OOSDOMPF550001C1 - PDF Generated on 16-Jul-2024 6:16PM
+OIPOC
+METERING MANAGEMENT TOOL
+FUNCTIONAL SPECIFICATION
+IS93502 OOSDOMPF550001 C 1 PAGE 13 of 26
+Appendix C has a template suggestion for the certificate. Contractor may submit other
+templates for approval.
+6.4.5 Certificate Issued
+Once a certificate is issued, it must be stored on MMT. If the certificate was issued by
+MMT, it is already stored. If the certificate was issued by a third party, ME shall be able to
+import an XML and/or PDF file. The XML file will have all data from the certificate to be
+stored on MMT for future use in the tool. XML may have information of PDF certificate
+location. In this case, MMT shall import it automatically.
+XML template may be developed by SBM or contractor. Details to be evaluated during
+bid.
+6.4.6 Certificate CA Issued
+Each field of the certificate must be validated by a set of predefined rules to be detailed
+by the contractor and approved by SBM. Validations must be per predefined limits or
+comparison against other certificates or other data stored on MMT. Some examples of
+rules:
+- certificate tag matches instrument tag and FPSO where certificate is being imported to
+- instrument serial number matches last certificate and MMT register
+- certificate was issued within RTM time limit after calibration
+- errors and uncertainty within acceptable limits
+- calibration range matches calibration curve
+If any of the rules set are not met, an alert will be sent to ME to evaluate and act, if
+needed.
+6.4.7 Issuing UC
+MMT will be responsible for issuing UC for the metering system every time a change
+happens on that system (new calibration, instrument replacement, new gas/oil sample
+result etc).
+UC template will be developed by contractor and approved by SBM. Reports must follow
+best practices for uncertainty calculation, comply with standards, especially ISO GUM
+and ISO 5167.
+Mathematical model used for uncertainty calculation will be shared between SBM and
+contractor for validation.
+The UC must be issued on the date when calibration certificate was issued if calibration
+was in-situ, or on the date when the equipment was installed, if calibration was ex-situ.
+MMT shall also be capable of issuing an UC report by demand as detailed on item
+6.4.13.
+MMT shall have a detailed document describing all calculations and showing all formulas
+implemented on the uncertainty calculation.
+6.4.8 UC Issued
+After UC is issued, MMT show UC for the user. User will be able to export as PDF with a
+stamp “COPY IN ADVANCE” on it. User may approve or reject UC.
+
+--- Page 14 ---
+2 - Restricted - OFFICIAL COPY - IS93502 - OOSDOMPF550001C1 - PDF Generated on 16-Jul-2024 6:16PM
+OIPOC
+METERING MANAGEMENT TOOL
+FUNCTIONAL SPECIFICATION
+IS93502 OOSDOMPF550001 C 1 PAGE 14 of 26
+After approved, MMT will check for two options:
+1. If UC was triggered by some change on metering system, UC will be stored on
+MMT for future reference. UC may be exported in PDF anytime.
+2. If UC was triggered on demand, MMT will ask the user if UC should be stored first.
+3. If UC is rejected, it will not be stored.
+6.4.9 FC Update
+For a set of equipment (to be configurable by unit and tag on Configuration Module), ME
+will be prompted to upload a set of files as evidence that FC was updated. The prompt
+will show one box for each category of file expected (for example, FC backup, audit trail,
+XML generator screenshot). Categories will be created by ME and linked to metering tags
+on Configuration Module.
+6.4.10 UC CA Issued
+With a different set of rules, UC will also go through a CA step same as 6.4.6. UC CA
+report will be stored in MMT for future reference. Exporting CA report in PDF will be
+possible.
+6.4.11 FC Checking
+Last step on the metrological confirmation process is to confirm flow computer is
+configured correctly. A set of rules will be defined and MMT will check FC
+parametrization. A non-exhaustive list of rules is shown below. Rules will be managed on
+module 6.8.
+- alarm on FC is less restrictive than the UC results
+- alarm on FC is more than 5% more restrictive than UC results
+- for primary meters, check calibration curve, serial number, diameter
+- for secondary meters, check zero, span and serial number
+- for oil/gas sampling, check oil density/gas composition
+MMT will check FC data based on the data available inside MMT tool, if any (from
+module 6.7) or directly from the evidence uploaded on step 6.4.9.
+If deviations are found, MMT will trigger an alert (see module 6.8) with expected values to
+be configured and the ones in place.
+6.4.12 Closing
+After all previous steps are completed, MMT will ask ME if calibration service may be
+closed. After closing is approved, MMT will close IFS WO and generate the WO for the
+next service following predefined frequencies.
+6.4.13 On demand UC
+In some cases, ME will need to issue specific UC to evaluate the system or prepare
+some change.
+In this situation, MMT will allow user to replace instruments of the system with other
+spares from the module described on item 6.3.
+ME must be able to select a date in the past for the UC and MMT will preload all last
+certificates, lab reports and production data, but allow ME to override it if needed, by
+selecting on a dropdown list (or other search mechanism) old
+certificates/reports/production data available on MMT database.
+The changes will not be saved to the metering system and will just be used to issue the
+
+--- Page 15 ---
+2 - Restricted - OFFICIAL COPY - IS93502 - OOSDOMPF550001C1 - PDF Generated on 16-Jul-2024 6:16PM
+OIPOC
+METERING MANAGEMENT TOOL
+FUNCTIONAL SPECIFICATION
+IS93502 OOSDOMPF550001 C 1 PAGE 15 of 26
+UC. The ME will have the ability to export the UC or save it to the internal database as a
+“standby UC”.
+6.5 CHEMICAL ANALYSIS MODULE
+This module will be responsible to manage all gas, oil, and water sampling on the
+metering system.
+The module must be capable to manage all steps of the chemical analysis, from sampling
+to updating the flow computer and keep all necessary data available inside the software.
+MMT will keep track on the status of each sample, being:
+1. Planned
+2. Sampled
+3. Disembark preparation
+4. Disembark logistics
+5. Warehouse
+6. Logistics to vendor
+7. Delivered at vendor
+8. Report issued
+9. Report under validation*
+10. Report approved/reproved*
+11. Flow computer updated*
+* These items are not used on all process as described on the following sessions
+At each status, MMT will track the date it entered the status and a text field for comments.
+Comments for all status will be compiled together but will have an identification of which
+step it relates to. User will be able to step back.
+Every sample is taken from a specific sample point, which has its own tag. Each metering
+system will be linked to one sample point. One sample point may be linked to multiple
+meter systems. The results from a sample will be updated on the flow computer of all
+metering systems related to that sample point.
+Sampling is always done on board, but the analysis of the sample is sometimes done on
+board and sometimes onshore, in this case, a cylinder with the sample is disembarked.
+There is multiple different process on this module, listed below, and detailed later on this
+chapter.
+1. Oil from well test or gas in general
+1.1. With validation
+1.1.1. Validation done by client
+1.1.2. Validation done by SBM
+1.2. Without validation
+2. Oil not from well test
+2.1. Fiscal oil (daily)
+
+--- Page 16 ---
+2 - Restricted - OFFICIAL COPY - IS93502 - OOSDOMPF550001C1 - PDF Generated on 16-Jul-2024 6:16PM
+OIPOC
+METERING MANAGEMENT TOOL
+FUNCTIONAL SPECIFICATION
+IS93502 OOSDOMPF550001 C 1 PAGE 16 of 26
+2.2. Offloading (every operation)
+3. Oil annual
+3.1. Sulphur analysis
+6.5.1 Oil from Well Test or Gas in General
+Figure 2 – Summary of process – Sampling oil well test/gas in general
+The process starts with the lab tech taking a sample on board on a pressurized cylinder.
+The sample is then disembarked and delivered to the laboratory onshore. After receiving
+it, laboratory will issue the report.
+The time between taking the sample and issuing the report will be no longer than 45 days
+for Operational sample points and 25 days for the others. This parameter will be
+adjustable on module 6.2.
+MMT will keep track of the sampling date, disembark date, delivery date to the laboratory
+and report issue date.
+ME will receive alerts about steps close to due date on module 6.8 and will see each of
+the next steps on module 6.10.
+After ME input sampling date, IFS WO will be closed (if it is still open) and WO for next
+sample, based on sampling interval, will be opened).
+After report is issued, process splits in to two possibilities:
+1. Does this sample point have validation method implemented or not? If it does not
+have, it will ignore the validation step described on item 6.5.1.1.
+2. If sample point does not have a validation method implemented or if report was
+approved on validation, next step is for the ME to upload the report to the MMT as well
+as input all its data. MMT will be prepared with all fields to receive the data from the
+
+--- Page 17 ---
+2 - Restricted - OFFICIAL COPY - IS93502 - OOSDOMPF550001C1 - PDF Generated on 16-Jul-2024 6:16PM
+OIPOC
+METERING MANAGEMENT TOOL
+FUNCTIONAL SPECIFICATION
+IS93502 OOSDOMPF550001 C 1 PAGE 17 of 26
+report and will be capable of importing it all from a spreadsheet.
+The MT will update the flow computer and send the evidence to the ME who will upload it
+to MMT. MMT will then check the flow computer files against the data it has from the
+report and alert ME if any mistakes found. It will then store the report with all evidence.
+The number of days between sample report is issued and flow computer is updated
+cannot be bigger than 10 working days for Operational meters and 3 working days for the
+others. These number of days will be configurable on module 6.2. If the sample report is
+from a well test, it will not be configured on the flow computer.
+The interval between samples will be based on sample point classification and fluid and
+will be configurable on module 6.2.
+In case of test separator, the interval will be managed by well, where each well will have
+its own interval, configurable on module 6.2. All wells will be sampled on the same
+sampling point.
+On this module, ME will be able to manage all steps as described on process flow from
+Figure 2.
+6.5.1.1 Validation Step
+In case a validation step is authorized, it can be done by the client or by SBM. In case it is
+done by SBM, MMT shall implement the validation algorithm but also allow ME to choose
+to use the algorithm or to manually input the status approved/reproved. In this case, MMT
+will issue a “validation report” on a template approved by SBM. The algorithm will be
+discussed in detail during the development phase. It basically consists of averaging and
+calculating the standard deviation of some amount of previous sample data to check if
+currently one falls in between calculated limits.
+If sample result is approved, then the validation step is finished, and the flow goes back
+for the same steps described on item 6.5.1.
+If sample is rejected, a new sample must be taken within 3 working days (except if the
+sample is from a well test or operational system). If a new sample was already taken,
+then no extra sample is needed. If a new sample was not taken already, but the date of
+the next sample will fulfil this requirement, then no additional action is required, otherwise
+a new work order must be created for a new sample, unless the sample point is
+operational, in this case no extra sample is needed.
+After this step, ME will upload data/report to MMT same way as described on item 6.5.1,
+and MMT will store report.
+
+--- Page 18 ---
+2 - Restricted - OFFICIAL COPY - IS93502 - OOSDOMPF550001C1 - PDF Generated on 16-Jul-2024 6:16PM
+OIPOC
+METERING MANAGEMENT TOOL
+FUNCTIONAL SPECIFICATION
+IS93502 OOSDOMPF550001 C 1 PAGE 18 of 26
+6.5.2 Daily Oil Sample or per Operation
+Figure 3 - Summary of process – Sampling per operation/daily
+This process is valid for the daily samples, usually taken on oil fiscal systems, and “on
+demand” samples, usually taken on offloading custody transfer systems.
+ME will be able to configure which(s) sample point tag from equipment database will have
+daily samples and MMT will alert ME every time a daily sample is missing. MMT will have
+a screen where ME can upload daily reports and evidence that flow computer was
+correctly updated. MMT will check the report against evidence files to confirm flow
+computer is correctly updated.
+For samples “per operation”, ME will manually create the sample and upload the reports,
+to follow the same flow as daily samples.
+For fiscal sample points, MMT will also validate if BS&W is lower than 1%. In case it is
+higher than 1%, it will require ME to inform on MMT which is the failure notification from
+module 6.11 related to this event.
+On this module, ME will be able to manage all steps as described on process flow from
+Figure 3.
+
+--- Page 19 ---
+2 - Restricted - OFFICIAL COPY - IS93502 - OOSDOMPF550001C1 - PDF Generated on 16-Jul-2024 6:16PM
+OIPOC
+METERING MANAGEMENT TOOL
+FUNCTIONAL SPECIFICATION
+IS93502 OOSDOMPF550001 C 1 PAGE 19 of 26
+6.5.3 Periodic samples
+Figure 4 - Summary of process – Periodic Sampling
+ME will have a screen on module 6.2 to configure periodic samples. On this screen, ME
+will select sample point tag from equipment database, name the type of sample (sulphur,
+viscosity etc), the interval at which samples should be taken and the amount of time
+between sampling and issuing the sample report. ME will be able to upload the sample
+report to MMT, informing the sampling date and report issue date, so MMT can validate
+interval is correct and forecast the new sampling date based on configured interval.
+On this module, ME will be able to manage all steps as described on process flow from
+Figure 4.
+6.6 ONSHORE MAINTENANCE MODULE
+This module will be used to keep track of the onshore maintenance and calibration
+process. A Kanban view should be implemented, a simplified version of Microsoft
+Planner. Admin will be able to create columns on the Kanban and users will create cards.
+Cards will have FPSO, labels, status(completed/not completed), title, description,
+duedate and responsible person (one or many). Admin will have the ability to create
+available labels. Users will add one or more labels to the card. Cards will have a section
+to add comments. It will be possible to add/edit/remove comments. User will be able to
+attach files to the card. User will have the option to “connect” cards, so if you open one
+card there is a place with links to directly open connected cards.
+The card will have a way to inform which equipment are being maintained on that card,
+selecting tags and/or serial numbers from MMT database.
+Module will have a filter tool to allow filtering the cards by status (overdue, due next week,
+due tomorrow, completed), FPSO, equipment (tag and/or serial number), responsible or
+free text that will be search on title, description or comments.
+When accessing module 6.3, user will be able to open directly cards related to that
+equipment.
+Development of specific UI for this module can be replaced with an integration with
+existing tools such as Microsoft Planner. SBM approval is required.
+
+--- Page 20 ---
+2 - Restricted - OFFICIAL COPY - IS93502 - OOSDOMPF550001C1 - PDF Generated on 16-Jul-2024 6:16PM
+OIPOC
+METERING MANAGEMENT TOOL
+FUNCTIONAL SPECIFICATION
+IS93502 OOSDOMPF550001 C 1 PAGE 20 of 26
+6.7 SYNCRONIZE DATA MODULE
+This module will be responsible to get data from the flow metering system offshore.
+Contractor will create a single software to be installed on the HMI running Windows to
+connect to flow computers Omni 6000, Floboss S600, Floboss S600+ and ABB Flow X
+and read required data.
+The software will be able to automatically share the data through the internet to MMT
+according to SBM IT requirements and to dump, on demand and daily, the data to a file
+that can be retrieved from the HMI via flash drive and uploaded to MMT.
+For high frequency data such as process variables like flowrates, pressure, temperature
+etc., contractor will deliver a software that will read data from AVEVA PI system on SBM
+servers and upload to MMT.
+6.8 MONITORING & ALERTS MODULE
+This module will be responsible for checking if the metering system is in conformity with
+standards and regulations in terms of deadlines and configuration. In case any deviation
+is found, ME will be alerted by e-mail, Whatsapp (or SMS) and on a dedicated screen
+inside MMT. The alerts will be configured on module 6.2 and segregated by FPSO and
+type of alert (system configuration, metrological confirmation, calibration/inspection
+deadline, sampling deadlines etc). For each type of alert and each FPSO user will be
+able to include an e-mail and Whatsapp list and select which users from MMT will receive
+the alert inside the tool.
+On the alerts screen, users will need to acknowledge every alert to confirm it was read
+and understood. MMT will keep track of which user acknowledged and when. For a set of
+alerts which will be described later at this section, users will need to write a justification on
+the alert or link it with other events inside MMT (equipment replacement, failure
+notification etc). User will have an option, turned on by default, to select if MMT should
+run the check for that parameter again after acknowledging the error. This can be used
+for example if a calibration certificate was not loaded into the system and MMT identified
+a wrong calibration curve, but in fact was a managing problem. After uploading certificate,
+user may want MMT to check again if calibration curve is correct.
+User will be able to filter alerts per FPSO, date, metering system tag, type of alert (system
+configuration, metrological confirmation etc) and alert status (acknowledged/not
+acknowledged).
+6.8.1 System Configuration
+MMT will check the flow metering system offshore configuration, with data provided per
+module 6.7, to confirm everything is configured according to last certificates, uncertainty
+calculation, laboratory analysis etc. The purpose is to confirm that system is operating
+according to all metrological data.
+These checks must be done on both, system configuration directly and ANP regulatory
+XML files generated and loaded to MMT.
+In these alerts, during the acknowledgement, user will have the option to link it to an
+existing failure notification or equipment replacement action.
+These checks must be done for each production day.
+
+--- Page 21 ---
+2 - Restricted - OFFICIAL COPY - IS93502 - OOSDOMPF550001C1 - PDF Generated on 16-Jul-2024 6:16PM
+OIPOC
+METERING MANAGEMENT TOOL
+FUNCTIONAL SPECIFICATION
+IS93502 OOSDOMPF550001 C 1 PAGE 21 of 26
+Rules to be applied may be found on the non-extensive list below:
+1. Orifice plate/straight run/cone diameter, expansion coefficient and reference
+temperature according to last valid inspection certificate.
+2. Flowmeter calibration curve (k-factor and/or meter factor) according to last valid
+calibration certificate.
+3. Equipment serial numbers according to information of currently installed equipment
+on module 6.3.
+4. Analogic transmitters range (zero/span) according to last valid calibration
+certificate.
+5. Split range transmitters switch thresholds according to transmitters range.
+6. Alarm limits according to uncertainty calculation, operational limits, calibration
+certificate and legal limits (INMETRO PAM). Rules for calculating alarm limits to be
+set on module 6.2.
+7. Alert for parameters that should not change and changed (reference pressure,
+reference temperature, atmospheric pressure etc)
+8. Alert for parameters that should change every day but did not change (daily
+production volume if not zero, CPL, CTL etc)
+9. Meter factor/k-factor Deviation
+10. High Deviation on pipe or orifice plate bore size
+6.8.2 Metrological confirmation
+MMT will check for document control gaps. Alerts will be issued if documents that should
+already be loaded to MMT are still pending, based on calibration/inspection executed
+date (filled in advance), certificate issue date, etc.
+MMT will check if system variables (daily averages for pressure, temperature, differential
+pressure, and flowrate) are operating inside alarm limits. Flowrate average will be
+calculated based on daily volume divided by the number of hours system operated.
+MMT will check the perpetual totalizers. The value for the totalizer at the end of the day
+should be equal to the beginning of the day plus the production of the day.
+6.8.3 Calibration/Inspection frequency
+MMT will keep track of the calibration/inspection plan and alert users when
+calibration/inspection is close to expiration date (number of days to be configured on
+module 6.2), a new alert on the day of the expiration and new alert when it becomes
+overdue.
+6.8.4 Sampling
+MMT will create alerts in advance for each step of the sampling process (take sample,
+deliver sample to lab, issue report, validate report, issue validation report, configure flow
+computer). The number of days in advance for each step will be configurable on module
+6.2. Alerts will also be created on the last day and one the day it becomes overdue.
+6.8.5 Failure notification
+MMT will create alert when failure notification is open by the last day of the month, so
+user can create an “intermediate” one.
+Alert will also be created if a failure notification of type “initial” is open for more than 240
+
+--- Page 22 ---
+2 - Restricted - OFFICIAL COPY - IS93502 - OOSDOMPF550001C1 - PDF Generated on 16-Jul-2024 6:16PM
+OIPOC
+METERING MANAGEMENT TOOL
+FUNCTIONAL SPECIFICATION
+IS93502 OOSDOMPF550001 C 1 PAGE 22 of 26
+hours so user can create the “final” type.
+6.8.6 Oil/Gas properties
+Check oil density, gas composition and gas isentropic/viscosity when applicable, against
+latest approved and validated laboratory report and alert in case of inconsistence.
+If case of daily laboratory reports, alert if the report for the day is not available on MMT.
+6.9 EXPORT DATA MODULE
+This module will be resposible of exporting data for auditing purposes.
+The intent of this tool is to comply with the audit process, where client and government
+agencies request all files to be sent on a digital format.
+As a basis, MMT will be capable of exporting in Excel and PDF file all lists that are
+available on the software itself.
+On top of that, MMT will export all files and reports available on the tool in a structured
+way.
+ME will have a selection window to inform MMT which files should be exported. The filter
+will have at least the following parameters:
+1. Show the FPSO tree so ME can select FPSO, systems and/or tags.
+2. Date interval.
+3. Which files should be exported:
+ Calibration certificates
+ Uncertainty calculations uploaded
+ Uncertainty calculations generated by MMT
+ Calibration flow computer evidence
+ Sampling report, validation report and/or flow computer evidence
+ Equipment change report from module 6.3
+MMT will export a zip file with folders following the structure below, where the text
+between quotes means the literal name of the folder and the others are the information to
+be filled by MMT:
+4. FPSO trigram
+ “Metrological Confirmation”
+ System Tag
+ YYYY-MM-DD * (see below for * details)
+ Chemical analysis
+ Sample point tag – Sample point name
+ YYYY-MM-DD (sample date)
+* YYYY-MM-DD is the date of the event (calibration, inspection, replacement etc)
+followed by one or a combination of the letters as per description below:
+5. P – Primary – to be used for flowmeter calibrations
+6. S – Secondary – to be used for PT/TT/DP calibrations
+
+--- Page 23 ---
+2 - Restricted - OFFICIAL COPY - IS93502 - OOSDOMPF550001C1 - PDF Generated on 16-Jul-2024 6:16PM
+OIPOC
+METERING MANAGEMENT TOOL
+FUNCTIONAL SPECIFICATION
+IS93502 OOSDOMPF550001 C 1 PAGE 23 of 26
+7. OP – Orifice plate – to be used for orifice plate inspection/replacement
+8. SR – Straight run – to be used for straight run/zanker inspection/replacement
+9. UN – Unavailable – to be used when system is made unavailable as per reference
+[4]
+10. AV – Available – to be used when system is made available as per reference [4]
+11. R – Removal – to be used when primary element is removed from the line without
+system being made unavailable
+6.10 PLANNING MODULE
+This module will be where the user will spend most of his time. Its where he sees all
+outstanding activities, set planned dates, report completion and get shortcuts to upload
+documentation.
+User will be able to quickly alternate using tabs between two views: calendar and list. On
+the calendar view, it will be possible to select to see a specific day, week or month or a
+user defined period. On each view, acitivities will be grouped by day of expiration. A
+button will be available to export outstanding activities on the view to a Excel or PDF file.
+User will have the option to export only selected items according to filtering in place or all
+available items.
+A filter will be available to select FPSO, time period and activity. Activities will be the type
+of work that needs to be done: plan calibration/inspection, execute calibration/inspection,
+take sample, issue report, issue certificate, issue uncertainty calculation, update flow
+computer etc.
+When the user clicks on the outstanding item, he will have a popup to complete that task.
+For example, if activity is to plan a calibration, a popup will have required fields such as
+planned date, so user can complete and save, updating the calendar immediately.
+Both views will be collor coded based on the activity and have a traffic light icon showing
+if activity is overdue, close to expiration date or there is still time to complete it. The
+adjustment of each collor limit on the traffic light icon will be done on module 6.2.
+User will be able to mark tasks as “mitigated”, providing attachments and a new due date
+will them show this task on a different collor and handle it sepparetly on the KPIs.
+6.11 FAILURE NOTIFICATION MODULE
+The specification for this module is ANP Resolution 18/2014. Module must be capable of
+creating, editing, storing and managing all aspects of the failure notification process
+according to regulation, except creating XML file and sending it to ANP using web
+service. But the data necessarly to generate XML file must be available in the tool.
+Each failure notification must be approved by ME.
+User will be able to save the failure notification report in PDF or Excel.
+It will be possible to set up a list for each FPSO for e-mail addresses to receive the report
+in PDF and Excel format automatically after its approved by ME.
+
+--- Page 24 ---
+2 - Restricted - OFFICIAL COPY - IS93502 - OOSDOMPF550001C1 - PDF Generated on 16-Jul-2024 6:16PM
+OIPOC
+METERING MANAGEMENT TOOL
+FUNCTIONAL SPECIFICATION
+IS93502 OOSDOMPF550001 C 1 PAGE 24 of 26
+6.12 HISTORICAL REPORT MODULE
+This module will be used to store generic report from the unit, which are not necessarly
+regularly done.
+User will just have a window to select the file, date, FPSO and type of report. Tool will
+keep track of the user who uploaded the file and when.
+On module 6.2 admin will configure type of reports available (offloading report, ANP
+letter, daily HMI file collect etc).
+Bulk upload options will be available, so multiple files are uploaded at once.
+Each file may or may not be linked to a FPSO, a metering system or a serial number.
+7. POWER BI REPORTS
+Three reports will need to be developed on Power BI using data from the software:
+1. Calibration KPI – lagging + leading
+2. Sampling KPI – lagging+ leading
+3. Outstanding activities
+4. Completed activities
+Each report will have filters for the period (selectable per month or exact date), units and
+system classification (Fiscal, Allocation, Custody Transfer, Operational).
+The activities report will have a table with at least the following columns: FPSO, system
+tag, instrument tag, system description, instrument description, due date, planned date,
+executed date. Report will have an s-curve showing planned versus executed calibration.
+8. NON-FUNCTIONAL REQUIREMENTS
+Software shall be web based with all its functionalities accessable using a web browser
+without the need of installation of any aditional software on end users computers.
+9. USER ACCESS
+Admin will be able to create a user, giving it at least a username, name, password, e-mail
+and company.
+Admin will have the ability to create user “roles” and to each role configure the level of
+access.
+When creating a role, admin will be able to choose for each module if user will have read
+and/or write access and which FPSOs are accessible.
+Admin will then add a role to a existing user. Each user may have one or more roles.
+Users will have access to a “forgot my password” link to recover forgotten passwords.
+10. USER INTERFACE
+The user interface should be intuitive and all screens must be easy to access. MMT must
+be developed around the process described in this document in a way that a logical
+sequence is available on the software to navigate from one step of the process to the
+
+--- Page 25 ---
+2 - Restricted - OFFICIAL COPY - IS93502 - OOSDOMPF550001C1 - PDF Generated on 16-Jul-2024 6:16PM
+OIPOC
+METERING MANAGEMENT TOOL
+FUNCTIONAL SPECIFICATION
+IS93502 OOSDOMPF550001 C 1 PAGE 25 of 26
+other without requiring multiple clicks and change of screens.
+A general arrangement for the software is shown on Figure 5. This is just a mockup and
+improvements to it shall be done by contractor. The colors are used just for contrast and
+are not the required colors for the final application.
+Figure 5 – General MMT Layout
+11. DATA REQUIREMENTS
+Contractor will liaise with all necessary stakeholders at SBM to guarantee all data
+requirements are mapped and a plan on how to get the data, store and use it is in place,
+specially for item 6.7.
+12. PERFORMANCE AND SCALABILITY
+MMT performance will be evaluated for acceptance. No screen loading time should be
+bigger than 10 seconds. Registering a calibration and issuing an uncertainty calculation
+report shouldn’t take more than 1 minute for a trained user.
+MMT must be able to support at least 10 simultaneous SBM users.
+13. DEPLOYMENT
+MMT will be deployed in phases, each phase will consist of an individual module. After
+each deployment, users will test and provide feedback for the developers. Timeline for
+repairs to be discussed at each phase.
+Deployment plan and procedures to be defined between Contractor and SBM IT.
+A suggested prioritization for the modules development is indicated below:
+
+--- Page 26 ---
+2 - Restricted - OFFICIAL COPY - IS93502 - OOSDOMPF550001C1 - PDF Generated on 16-Jul-2024 6:16PM
+OIPOC
+METERING MANAGEMENT TOOL
+FUNCTIONAL SPECIFICATION
+IS93502 OOSDOMPF550001 C 1 PAGE 26 of 26
+1. Configuration
+2. Managing Equipment
+3. Chemical Analysis
+4. Planning
+5. Export Data
+6. Syncronize Data
+7. Monitoring & Alerts
+8. Metrological Confirmation
+9. Failure Notification
+10. Historical Report
+11. Onshore Maintenance
+Care must be taken to ensure that when a module is developed, required features
+dependending on other modules are already implemented. For example, to use Manage
+Equipment Module, you need Configuration Module to have the features to create
+equipment.
+14. TESTING
+The Contractor's deliverables will undergo UAT to ensure their validity.
+Contractor shall issue a UAT document to guide the users on the validation, with test
+cases and a feedback form that shall be compiled on a final testing report for the
+application.
+The entire solution will be delivered incrementally, allowing for independent deployment
+and validation.
+15. APPENDIX
+APPENDIX A OFFSHORE PROVING CERTIFICATE
+APPENDIX B VALVE LEAK TEST REPORT
+APPENDIX C SAMPLER TEST REPORT
+APPENDIX D EQUIPMENT CHANGE REPORT
+
