@@ -120,33 +120,20 @@ def seed_data():
         db.add_all(tasks)
         db.commit()
 
-        # 4. Sampling Campaigns
+        # 4. Sampling Campaigns (M3)
         sampling_campaign = models.SamplingCampaign(
-            name="Monthly Oil Analysis Jan/24",
+            name="Quarterly Gas Analysis - Q1 2024",
             fpso_name="FPSO PARATY",
-            start_date=datetime.now().date() - timedelta(days=5),
-            status=models.CampaignStatus.COMPLETED.value,
+            start_date=datetime.now().date() - timedelta(days=10),
+            status=models.CampaignStatus.ACTIVE.value,
             responsible="Daniel Bernoulli"
         )
         db.add(sampling_campaign)
         db.commit()
         db.refresh(sampling_campaign)
 
-        # 5. Samples
-        sample = models.Sample(
-            campaign_id=sampling_campaign.id,
-            sample_id="OIL-2401-001",
-            type="Oil",
-            collection_date=datetime.now().date() - timedelta(days=4),
-            location="62-FT-1103 - Sampling Point",
-            status=models.SampleStatus.ANALYZED.value,
-            responsible="Daniel Bernoulli",
-            compliance_status="Compliant",
-            lab_report_url="/docs/lab_reports/OIL-2401-001.pdf",
-            notes="Sampling evidence verified on FC."
-        )
-        db.add(sample)
-        db.commit()
+        # Legacy section 5 removed as it is handled by the new M3 seeding in section 16.
+        pass
 
         # 5.1 Calibration Results (M2) - Needed for M7 Export
         res1 = models.CalibrationResult(
@@ -433,6 +420,75 @@ def seed_data():
             author="Daniel Bernoulli"
         )
         db.add(comment)
+        db.commit()
+
+        # 16. M3 - Chemical Analysis (Sample Points & Lifecycle)
+        print("Seeding Chemical Analysis (M3)...")
+        # Sample Points
+        sp1 = models.SamplePoint(
+            tag_number="62-SP-1101", 
+            description="Gas Export Sample Point", 
+            fpso_name="FPSO PARATY", 
+            fluid_type="Gas",
+            is_operational=1,
+            sampling_interval_days=30,
+            validation_method_implemented=1
+        )
+        sp2 = models.SamplePoint(
+            tag_number="65-SP-2101", 
+            description="Oil Export Sample Point", 
+            fpso_name="FPSO SEPETIBA", 
+            fluid_type="Oil",
+            is_operational=1,
+            sampling_interval_days=15,
+            validation_method_implemented=0
+        )
+        db.add_all([sp1, sp2])
+        db.commit()
+        db.refresh(sp1)
+        
+        # Link meter to sample point
+        tag1.sample_point_id = sp1.id
+        db.commit()
+
+        # Create a Sample with History
+        s1 = models.Sample(
+            sample_id="SAM-2024-001",
+            sample_point_id=sp1.id,
+            type="Gas",
+            status=models.SampleStatus.REPORT_UNDER_VALIDATION,
+            responsible="Daniel Bernoulli",
+            planned_date=datetime.now().date() - timedelta(days=20),
+            sampling_date=datetime.now().date() - timedelta(days=15),
+            disembark_date=datetime.now().date() - timedelta(days=14),
+            delivery_date=datetime.now().date() - timedelta(days=12),
+            report_issue_date=datetime.now().date() - timedelta(days=2),
+            lab_report_url="/reports/lab_gas_001.pdf"
+        )
+        db.add(s1)
+        db.commit()
+        db.refresh(s1)
+
+        # History for s1
+        history_steps = [
+            (models.SampleStatus.PLANNED, "Initial planning", datetime.now() - timedelta(days=20)),
+            (models.SampleStatus.SAMPLED, "Sample taken on board", datetime.now() - timedelta(days=15)),
+            (models.SampleStatus.DISEMBARK_PREP, "Preparing cylinder for disembark", datetime.now() - timedelta(days=14.5)),
+            (models.SampleStatus.DISEMBARK_LOGISTICS, "Cylinder on the boat to shore", datetime.now() - timedelta(days=14)),
+            (models.SampleStatus.WAREHOUSE, "Arrived at onshore warehouse", datetime.now() - timedelta(days=13)),
+            (models.SampleStatus.LOGISTICS_TO_VENDOR, "Sent to Lab-Tech Onshore", datetime.now() - timedelta(days=12.5)),
+            (models.SampleStatus.DELIVERED_AT_VENDOR, "Laboratory confirmed receipt", datetime.now() - timedelta(days=12)),
+            (models.SampleStatus.REPORT_ISSUED, "Report issued by lab", datetime.now() - timedelta(days=2)),
+            (models.SampleStatus.REPORT_UNDER_VALIDATION, "SBM/ME analyzing results", datetime.now() - timedelta(days=1))
+        ]
+        
+        for ost, ocm, oda in history_steps:
+            db.add(models.SampleStatusHistory(sample_id=s1.id, status=ost, comments=ocm, entered_at=oda))
+        
+        # Add a Result to s1 for validation testing
+        res1 = models.SampleResult(sample_id=s1.id, parameter="Methane Content", value=89.5, unit="%")
+        res2 = models.SampleResult(sample_id=s1.id, parameter="H2S Content", value=2.1, unit="ppm")
+        db.add_all([res1, res2])
         db.commit()
 
         print("Seeding completed successfully.")

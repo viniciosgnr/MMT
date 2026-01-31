@@ -95,13 +95,37 @@ export async function createSamplingCampaign(data: any) {
   return res.json();
 }
 
-export async function fetchSamples(campaignId?: number, status?: string) {
+export async function fetchSamplePoints(fpsoName?: string) {
   const params = new URLSearchParams();
-  if (campaignId) params.append("campaign_id", campaignId.toString());
+  if (fpsoName) params.append("fpso_name", fpsoName);
+  const res = await fetch(`${API_URL}/api/chemical/sample-points?${params}`);
+  if (!res.ok) throw new Error("Failed to fetch sample points");
+  return res.json();
+}
+
+export async function createSamplePoint(data: any) {
+  const res = await fetch(`${API_URL}/api/chemical/sample-points`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Failed to create sample point");
+  return res.json();
+}
+
+export async function fetchSamples(fpsoName?: string, status?: string) {
+  const params = new URLSearchParams();
+  if (fpsoName) params.append("fpso_name", fpsoName);
   if (status) params.append("status", status);
 
   const res = await fetch(`${API_URL}/api/chemical/samples?${params}`);
   if (!res.ok) throw new Error("Failed to fetch samples");
+  return res.json();
+}
+
+export async function fetchSampleDetails(sampleId: number) {
+  const res = await fetch(`${API_URL}/api/chemical/samples/${sampleId}`);
+  if (!res.ok) throw new Error("Failed to fetch sample details");
   return res.json();
 }
 
@@ -115,11 +139,44 @@ export async function createSample(data: any) {
   return res.json();
 }
 
-export async function updateSampleStatus(sampleId: number, status: string) {
-  const res = await fetch(`${API_URL}/api/chemical/samples/${sampleId}/status?status=${status}`, {
-    method: "PUT",
+export async function updateSampleStatus(sampleId: number, data: {
+  status: string;
+  comments?: string;
+  user?: string;
+  event_date?: string;
+  url?: string;
+  validation_status?: string;
+}) {
+  const res = await fetch(`${API_URL}/api/chemical/samples/${sampleId}/update-status`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
   });
   if (!res.ok) throw new Error("Failed to update sample status");
+  return res.json();
+}
+
+export async function validateSampleResults(sampleId: number) {
+  const res = await fetch(`${API_URL}/api/chemical/samples/${sampleId}/validate`);
+  if (!res.ok) throw new Error("Failed to validate sample results");
+  return res.json();
+}
+
+export async function addSampleResult(sampleId: number, data: any) {
+  const res = await fetch(`${API_URL}/api/chemical/samples/${sampleId}/results`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Failed to add sample result");
+  return res.json();
+}
+
+export async function checkSamplingSlas() {
+  const res = await fetch(`${API_URL}/api/chemical/check-slas`, {
+    method: "POST"
+  });
+  if (!res.ok) throw new Error("Failed to check SLAs");
   return res.json();
 }
 

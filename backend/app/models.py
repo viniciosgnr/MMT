@@ -29,10 +29,17 @@ class CalibrationTaskType(str, enum.Enum):
     INSPECTION = "Inspection"
 
 class SampleStatus(str, enum.Enum):
-    COLLECTED = "Collected"
-    IN_LAB = "In Lab"
-    ANALYZED = "Analyzed"
-    APPROVED = "Approved"
+    PLANNED = "Planned"
+    SAMPLED = "Sampled"
+    DISEMBARK_PREP = "Disembark preparation"
+    DISEMBARK_LOGISTICS = "Disembark logistics"
+    WAREHOUSE = "Warehouse"
+    LOGISTICS_TO_VENDOR = "Logistics to vendor"
+    DELIVERED_AT_VENDOR = "Delivered at vendor"
+    REPORT_ISSUED = "Report issued"
+    REPORT_UNDER_VALIDATION = "Report under validation"
+    REPORT_APPROVED_REPROVED = "Report approved/reproved"
+    FLOW_COMPUTER_UPDATED = "Flow computer updated"
 
 class MaintenanceStatus(str, enum.Enum):
     TO_SEND = "To Send"
@@ -129,6 +136,9 @@ class InstrumentTag(Base):
 
     # Relationships
     installations = relationship("EquipmentTagInstallation", back_populates="tag")
+    # Link to Sample Point (M3)
+    sample_point_id = Column(Integer, ForeignKey("sample_points.id"), nullable=True)
+    sample_point = relationship("SamplePoint", back_populates="meters")
 
 class EquipmentTagInstallation(Base):
     """Tracks the history of which Equipment was installed on which Tag."""
@@ -228,6 +238,25 @@ class CalibrationResult(Base):
     task = relationship("CalibrationTask", back_populates="results")
 
 # M3 - Chemical Analysis
+class SamplePoint(Base):
+    """A physical point where samples are taken. Can be linked to multiple meters."""
+    __tablename__ = "sample_points"
+
+    id = Column(Integer, primary_key=True, index=True)
+    tag_number = Column(String, unique=True, index=True) # e.g., 62-SP-1101
+    description = Column(String)
+    fpso_name = Column(String)
+    fluid_type = Column(String) # Gas, Oil, Water
+    is_operational = Column(Integer, default=1) # Operational vs others (affects SLA)
+    sampling_interval_days = Column(Integer, default=30)
+    validation_method_implemented = Column(Integer, default=0) # Boolean
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    meters = relationship("InstrumentTag", back_populates="sample_point")
+    samples = relationship("Sample", back_populates="sample_point")
+
 class SamplingCampaign(Base):
     __tablename__ = "sampling_campaigns"
 
@@ -248,22 +277,51 @@ class Sample(Base):
     __tablename__ = "samples"
 
     id = Column(Integer, primary_key=True, index=True)
-    campaign_id = Column(Integer, ForeignKey("sampling_campaigns.id"))
-    sample_id = Column(String, unique=True, index=True)
+    campaign_id = Column(Integer, ForeignKey("sampling_campaigns.id"), nullable=True)
+    sample_point_id = Column(Integer, ForeignKey("sample_points.id"))
+    sample_id = Column(String, unique=True, index=True) # Barcode or unique string
+    
+    # Process Details
     type = Column(String)  # Gas, Oil, Water
-    collection_date = Column(Date)
-    location = Column(String)
-    cylinder_location = Column(String, nullable=True)
-    status = Column(String, default=SampleStatus.COLLECTED.value)
+    status = Column(String, default=SampleStatus.PLANNED.value)
     responsible = Column(String)
+    
+    # Logistics Dates (for SLA Tracking)
+    planned_date = Column(Date, nullable=True)
+    sampling_date = Column(Date, nullable=True)
+    disembark_date = Column(Date, nullable=True)
+    delivery_date = Column(Date, nullable=True)
+    report_issue_date = Column(Date, nullable=True)
+    fc_update_date = Column(DateTime, nullable=True)
+    
+    # Results & Validation
     lab_report_url = Column(String, nullable=True)
-    compliance_status = Column(String, nullable=True)
+    validation_status = Column(String, nullable=True) # Approved / Reproved
+    validation_report_url = Column(String, nullable=True)
+    fc_evidence_url = Column(String, nullable=True)
+    
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     
     # Relationships
     campaign = relationship("SamplingCampaign", back_populates="samples")
+    sample_point = relationship("SamplePoint", back_populates="samples")
     results = relationship("SampleResult", back_populates="sample")
+    history = relationship("SampleStatusHistory", back_populates="sample")
+
+class SampleStatusHistory(Base):
+    """Tracks every status change with specific comments as per spec."""
+    __tablename__ = "sample_status_histories"
+
+    id = Column(Integer, primary_key=True, index=True)
+    sample_id = Column(Integer, ForeignKey("samples.id"))
+    status = Column(String)
+    entered_at = Column(DateTime, default=datetime.utcnow)
+    comments = Column(Text, nullable=True)
+    user = Column(String, nullable=True)
+
+    # Relationships
+    sample = relationship("Sample", back_populates="history")
 
 class SampleResult(Base):
     __tablename__ = "sample_results"
