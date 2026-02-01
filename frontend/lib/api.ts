@@ -428,3 +428,20 @@ export async function updateMaintenanceRecord(recordId: number, data: any) {
   if (!res.ok) throw new Error("Failed to update maintenance record");
   return res.json();
 }
+// Phase 1: Audit Simulation (Gap Closure)
+export async function runAuditSimulation() {
+  return fetchApi("/api/audit/simulate", {
+    method: "POST"
+  });
+}
+
+export async function runFCVerificationSimulation() {
+  return fetchApi("/api/audit/fc-verification-simulate", {
+    method: "GET",
+  });
+}
+
+
+
+
+

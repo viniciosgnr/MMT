@@ -32,7 +32,10 @@ app.include_router(sync.router)
 app.include_router(planning.router)
 app.include_router(export.router)
 app.include_router(history.router)
+app.include_router(history.router)
 app.include_router(configuration.router)
+from .routers import audit_simulation
+app.include_router(audit_simulation.router)
 
 @app.get("/")
 def read_root():

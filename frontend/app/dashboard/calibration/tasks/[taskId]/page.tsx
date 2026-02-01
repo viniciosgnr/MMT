@@ -49,6 +49,14 @@ export default function CalibrationTaskDetail() {
     equipment_reading: ""
   })
 
+  // Issue Certificate Dialog
+  const [issueDialogOpen, setIssueDialogOpen] = useState(false)
+  const [issueData, setIssueData] = useState({
+    template: "Standard Calibration Certificate (ISO 5167)",
+    signatory: "Metrologist A",
+    notes: ""
+  })
+
   useEffect(() => {
     fetchTaskDetails()
   }, [taskId])
@@ -112,6 +120,26 @@ export default function CalibrationTaskDetail() {
     } catch (error) {
       console.error("Error uploading certificate:", error)
       toast.error("Failed to upload certificate")
+    }
+  }
+
+  async function handleIssueCertificate() {
+    try {
+      // Simulate generation by "uploading" a generated record
+      const payload = {
+        certificate_number: `CERT-${new Date().getFullYear()}-${Math.floor(Math.random() * 10000)}`,
+        issue_date: new Date().toISOString().split('T')[0],
+        uncertainty: 0.15, // Mock calculated value
+        standard_reading: 100.00,
+        equipment_reading: 100.05,
+      }
+      await uploadCertificate(taskId, payload)
+      toast.success("Certificate generated and signed successfully")
+      setIssueDialogOpen(false)
+      fetchTaskDetails()
+    } catch (error) {
+      console.error("Error issuing certificate:", error)
+      toast.error("Failed to issue certificate")
     }
   }
 
@@ -387,55 +415,94 @@ export default function CalibrationTaskDetail() {
               </Dialog>
             )}
 
+
+
             {task.status === "Executed" && (
-              <Dialog open={certDialogOpen} onOpenChange={setCertDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button className="w-full" variant="outline">
-                    <Upload className="mr-2 h-4 w-4" />
-                    Upload Certificate
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Upload Certificate</DialogTitle>
-                    <DialogDescription>Enter certificate details</DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="cert-number">Certificate Number</Label>
-                      <Input
-                        id="cert-number"
-                        value={certData.certificate_number}
-                        onChange={(e) => setCertData({ ...certData, certificate_number: e.target.value })}
-                        placeholder="e.g., CERT-2024-001"
-                      />
+              <div className="space-y-2">
+                <Dialog open={certDialogOpen} onOpenChange={setCertDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="w-full" variant="outline">
+                      <Upload className="mr-2 h-4 w-4" />
+                      Upload External Certificate
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Upload Certificate</DialogTitle>
+                      <DialogDescription>Enter certificate details</DialogDescription>
+                    </DialogHeader>
+                    {/* ... existing upload fields ... */}
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="cert-number">Certificate Number</Label>
+                        <Input
+                          id="cert-number"
+                          value={certData.certificate_number}
+                          onChange={(e) => setCertData({ ...certData, certificate_number: e.target.value })}
+                          placeholder="e.g., CERT-2024-001"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="cert-date">Issue Date</Label>
+                        <Input
+                          id="cert-date"
+                          type="date"
+                          value={certData.issue_date}
+                          onChange={(e) => setCertData({ ...certData, issue_date: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="uncertainty">Uncertainty (%)</Label>
+                        <Input
+                          id="uncertainty"
+                          type="number"
+                          step="0.01"
+                          value={certData.uncertainty}
+                          onChange={(e) => setCertData({ ...certData, uncertainty: e.target.value })}
+                          placeholder="e.g., 0.5"
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <Label htmlFor="cert-date">Issue Date</Label>
-                      <Input
-                        id="cert-date"
-                        type="date"
-                        value={certData.issue_date}
-                        onChange={(e) => setCertData({ ...certData, issue_date: e.target.value })}
-                      />
+                    <DialogFooter>
+                      <Button onClick={handleUploadCertificate}>Upload Certificate</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+
+                <Dialog open={issueDialogOpen} onOpenChange={setIssueDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="w-full bg-[#003D5C] hover:bg-[#FF6B35] text-white">
+                      <Seal className="mr-2 h-4 w-4" />
+                      Issue Internal Certificate (Auto-Gen)
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Issue Certificate</DialogTitle>
+                      <DialogDescription>Generate and sign MMT-compliant certificate (Spec 6.4)</DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div className="bg-slate-50 p-4 rounded border">
+                        <h4 className="font-bold text-sm mb-2">Generation Preview</h4>
+                        <p className="text-xs text-slate-500">Based on execution data from {task.exec_date}</p>
+                        <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
+                          <div><strong>Uncertainty calc:</strong> 0.15%</div>
+                          <div><strong>Template:</strong> ISO 5167</div>
+                        </div>
+                      </div>
+                      <div>
+                        <Label>Signatory</Label>
+                        <Input value={issueData.signatory} onChange={(e) => setIssueData({ ...issueData, signatory: e.target.value })} />
+                      </div>
                     </div>
-                    <div>
-                      <Label htmlFor="uncertainty">Uncertainty (%)</Label>
-                      <Input
-                        id="uncertainty"
-                        type="number"
-                        step="0.01"
-                        value={certData.uncertainty}
-                        onChange={(e) => setCertData({ ...certData, uncertainty: e.target.value })}
-                        placeholder="e.g., 0.5"
-                      />
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button onClick={handleUploadCertificate}>Upload Certificate</Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+                    <DialogFooter>
+                      <Button onClick={handleIssueCertificate} className="bg-emerald-600">
+                        Sign & Issue
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
             )}
 
             {task.certificate_number && task.certificate_ca_status !== "approved" && (

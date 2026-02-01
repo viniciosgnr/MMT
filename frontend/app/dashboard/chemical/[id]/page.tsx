@@ -90,8 +90,17 @@ export default function SampleDetailPage() {
     }
   }
 
+
   const handleUpdateStatus = async () => {
     try {
+      // Strict Validation Check (Spec 6.5.1)
+      if (nextStatus === "Report approved/reproved" && (!validationResult || validationResult.overall_status === "Reproved")) {
+        if (!statusComments.includes("JUSTIFICATION-OVERRIDE")) {
+          toast.error("Statistical Validation Failed! You must add 'JUSTIFICATION-OVERRIDE' to comments to proceed.")
+          return
+        }
+      }
+
       await updateSampleStatus(sample.id, {
         status: nextStatus,
         comments: statusComments,
@@ -108,6 +117,16 @@ export default function SampleDetailPage() {
       toast.error("Failed to update status")
     }
   }
+
+  useEffect(() => {
+    // Only run validation if there are results to validate (Spec 6.5.1)
+    if (sample && sample.status === "Report under validation" && !validationResult) {
+      if (sample.results && sample.results.length > 0) {
+        handleSbmValidation()
+      }
+    }
+  }, [sample?.status, sample?.results])
+
 
   const handleSbmValidation = async () => {
     try {
@@ -248,6 +267,54 @@ export default function SampleDetailPage() {
             </CardContent>
           </Card>
 
+          {/* Results Entry Section (Gap Closure) */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Analysis Results</CardTitle>
+              <CardDescription>Enter laboratory measurements for this sample.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {sample.results && sample.results.length > 0 ? (
+                <div className="space-y-2">
+                  {sample.results.map((res: any, idx: number) => (
+                    <div key={idx} className="flex justify-between items-center p-2 bg-muted/50 rounded">
+                      <span className="font-medium">{res.parameter}</span>
+                      <span className="font-mono">{res.value}</span>
+                    </div>
+                  ))}
+                  <Button variant="outline" size="sm" className="w-full mt-2" onClick={() => toast.info("Edit feature coming in future update")}>+ Add More Results</Button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-4">
+                  <p className="text-sm text-muted-foreground">No results recorded yet.</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Parameter</Label>
+                      <Input id="new-param-name" placeholder="e.g. Density" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Value</Label>
+                      <Input id="new-param-val" type="number" step="0.001" placeholder="0.000" />
+                    </div>
+                  </div>
+                  <Button onClick={async () => {
+                    const name = (document.getElementById('new-param-name') as HTMLInputElement).value
+                    const val = (document.getElementById('new-param-val') as HTMLInputElement).value
+                    if (!name || !val) return toast.error("Enter name and value")
+
+                    try {
+                      await addSampleResult(sample.id, { parameter: name, value: parseFloat(val), unit: "unit" })
+                      loadSample()
+                      toast.success("Result added")
+                    } catch (err) {
+                      toast.error("Failed to add result")
+                    }
+                  }}>Add Result</Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Validation Tool */}
           <Card className="overflow-hidden border-amber-500/20">
             <CardHeader className="bg-amber-500/[0.03] border-b border-amber-500/10 flex flex-row items-center justify-between">
@@ -290,8 +357,8 @@ export default function SampleDetailPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {validationResult.parameters.map((p: any) => (
-                          <TableRow key={p.parameter}>
+                        {validationResult.parameters.map((p: any, idx: number) => (
+                          <TableRow key={`${p.parameter}-${idx}`}>
                             <TableCell className="font-medium">{p.parameter}</TableCell>
                             <TableCell>{p.current?.toFixed(3) || '-'}</TableCell>
                             <TableCell>{p.avg?.toFixed(3)}</TableCell>

@@ -62,6 +62,8 @@ class EquipmentTagInstallationBase(BaseModel):
 
 class EquipmentTagInstallationCreate(EquipmentTagInstallationBase):
     installation_date: Optional[datetime] = None
+    checklist_data: Optional[str] = None # Added for explicit input
+
 
 class EquipmentTagInstallation(EquipmentTagInstallationBase):
     id: int

@@ -5,6 +5,7 @@ import { Package, Hash, FileDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import EquipmentInventory from "./equipment-inventory"
 import TagRegister from "./tag-register"
+import { InstallationWizard } from "./installation-wizard"
 
 export default function ManagingEquipmentPage() {
   return (
@@ -15,6 +16,7 @@ export default function ManagingEquipmentPage() {
           <p className="text-muted-foreground">Manage physical lifecycle (Serial Numbers) and logical locations (Instrument Tags).</p>
         </div>
         <div className="flex gap-2">
+          <InstallationWizard onSuccess={() => window.location.reload()} />
           <Button variant="outline" className="border-slate-200">
             <FileDown className="mr-2 h-4 w-4" /> Reports
           </Button>

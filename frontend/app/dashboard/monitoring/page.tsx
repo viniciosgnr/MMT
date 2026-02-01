@@ -66,7 +66,11 @@ type Alert = {
   linked_event_type?: string
   linked_event_id?: number
   run_recheck: number
+  run_recheck: number
 }
+
+import { AuditPanel } from "./audit-panel"
+import { FCVerificationPanel } from "./fc-verification-panel"
 
 export default function MonitoringPage() {
   const [alerts, setAlerts] = useState<Alert[]>([])
@@ -276,6 +280,8 @@ export default function MonitoringPage() {
           <TabsList className="bg-transparent h-auto p-0 gap-6">
             <TabsTrigger value="active" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF6B35] data-[state=active]:bg-transparent data-[state=active]:shadow-none text-[#003D5C] font-bold px-0 pb-2">Active Alerts</TabsTrigger>
             <TabsTrigger value="history" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF6B35] data-[state=active]:bg-transparent data-[state=active]:shadow-none text-[#003D5C] font-bold px-0 pb-2">History & Audit</TabsTrigger>
+            <TabsTrigger value="audit" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF6B35] data-[state=active]:bg-transparent data-[state=active]:shadow-none text-[#003D5C] font-bold px-0 pb-2">Audit (6.8)</TabsTrigger>
+            <TabsTrigger value="fc-verification" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF6B35] data-[state=active]:bg-transparent data-[state=active]:shadow-none text-[#003D5C] font-bold px-0 pb-2">FC Config Check (6.8)</TabsTrigger>
             <TabsTrigger value="configuration" className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#FF6B35] data-[state=active]:bg-transparent data-[state=active]:shadow-none text-[#003D5C] font-bold px-0 pb-2">Configuration (6.2)</TabsTrigger>
           </TabsList>
 
@@ -517,6 +523,16 @@ export default function MonitoringPage() {
             )}
           </div>
         </TabsContent>
+
+
+        <TabsContent value="audit" className="mt-6">
+          <AuditPanel />
+        </TabsContent>
+
+        <TabsContent value="fc-verification" className="mt-6">
+          <FCVerificationPanel />
+        </TabsContent>
+
       </Tabs>
 
       {/* Acknowledge Dialog */}
@@ -715,7 +731,7 @@ export default function MonitoringPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </div >
   )
 }
 
