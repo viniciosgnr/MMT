@@ -177,13 +177,18 @@ class MaintenanceCardCreate(MaintenanceCardBase):
     equipment_ids: List[int] = []
     tag_ids: List[int] = []
 
+class MaintenanceCardLink(MaintenanceCardBase):
+    id: int
+    class Config:
+        from_attributes = True
+
 class MaintenanceCard(MaintenanceCardBase):
     id: int
     created_at: datetime
     labels: List[MaintenanceLabel] = []
     comments: List[MaintenanceComment] = []
     attachments: List[MaintenanceAttachment] = []
-    connections: List["MaintenanceCard"] = []
+    connections: List[MaintenanceCardLink] = []
     linked_equipments: List[Equipment] = []
     linked_tags: List[InstrumentTag] = []
 

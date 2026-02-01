@@ -25,7 +25,7 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSam
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { ACTIVITY_TYPES, TYPE_COLORS, TrafficLight } from "./planning-utils"
-import { ActivityActionDialog } from "./task-dialogs"
+import { ActivityActionDialog, NewStrategyDialog } from "./task-dialogs"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
 
@@ -43,6 +43,7 @@ export default function PlanningPage() {
   const [selectedActivity, setSelectedActivity] = useState<any>(null)
   const [dialogMode, setDialogMode] = useState<'complete' | 'mitigate'>('complete')
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isNewStrategyOpen, setIsNewStrategyOpen] = useState(false)
 
   const fetchActivities = async () => {
     setLoading(true)
@@ -104,7 +105,10 @@ export default function PlanningPage() {
           <Button variant="outline" className="border-[#003D5C]/20 text-[#003D5C] hover:bg-[#003D5C]/5">
             <Download className="mr-2 h-4 w-4" /> Export Actions
           </Button>
-          <Button className="bg-[#FF6B35] hover:bg-[#e05a2b] text-white shadow-lg shadow-orange-500/20 font-bold uppercase text-xs tracking-widest px-6">
+          <Button
+            className="bg-[#FF6B35] hover:bg-[#e05a2b] text-white shadow-lg shadow-orange-500/20 font-bold uppercase text-xs tracking-widest px-6"
+            onClick={() => setIsNewStrategyOpen(true)}
+          >
             New Strategy
           </Button>
         </div>
@@ -323,6 +327,14 @@ export default function PlanningPage() {
           onRefresh={fetchActivities}
         />
       )}
+
+      <NewStrategyDialog
+        open={isNewStrategyOpen}
+        onOpenChange={setIsNewStrategyOpen}
+        onRefresh={fetchActivities}
+        fpsos={fpsos}
+        activityTypes={ACTIVITY_TYPES}
+      />
     </div>
   )
 }

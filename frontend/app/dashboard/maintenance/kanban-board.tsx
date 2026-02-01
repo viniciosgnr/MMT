@@ -191,11 +191,11 @@ export function KanbanBoard({ search, fpsoFilter, onAddNew }: KanbanBoardProps) 
                             <span className="text-[10px]">{card.attachments.length}</span>
                           </div>
                         )}
-                        {(card.linked_equipments?.length > 0 || card.linked_tags?.length > 0) && (
+                        {(card.linked_equipments?.length > 0 || card.linked_tags?.length > 0 || card.connections?.length > 0) && (
                           <div className="flex items-center gap-1 text-blue-500/80">
                             <ArrowRightLeft className="h-3 w-3" />
                             <span className="text-[10px] font-bold">
-                              {(card.linked_equipments?.length || 0) + (card.linked_tags?.length || 0)}
+                              {(card.linked_equipments?.length || 0) + (card.linked_tags?.length || 0) + (card.connections?.length || 0)}
                             </span>
                           </div>
                         )}

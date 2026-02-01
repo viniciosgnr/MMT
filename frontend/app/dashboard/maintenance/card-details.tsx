@@ -47,6 +47,7 @@ export function CardDetails({ cardId, open, onOpenChange, onUpdated }: CardDetai
   const [comment, setComment] = useState("")
   const [availableEquipment, setAvailableEquipment] = useState<any[]>([])
   const [availableTags, setAvailableTags] = useState<any[]>([])
+  const [availableCards, setAvailableCards] = useState<any[]>([])
   const [isEditing, setIsEditing] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
@@ -64,12 +65,14 @@ export function CardDetails({ cardId, open, onOpenChange, onUpdated }: CardDetai
 
   const fetchOptions = async () => {
     try {
-      const [eqRes, tagRes] = await Promise.all([
+      const [eqRes, tagRes, cardRes] = await Promise.all([
         fetch(`${API_URL}/equipment`),
-        fetch(`${API_URL}/equipment/tags`)
+        fetch(`${API_URL}/equipment/tags`),
+        fetch(`${API_URL}/maintenance/cards`)
       ])
       if (eqRes.ok) setAvailableEquipment(await eqRes.json())
       if (tagRes.ok) setAvailableTags(await tagRes.json())
+      if (cardRes.ok) setAvailableCards(await cardRes.json())
     } catch (e) { }
   }
 
@@ -129,6 +132,18 @@ export function CardDetails({ cardId, open, onOpenChange, onUpdated }: CardDetai
     const currentIds = card.linked_tags?.map((t: any) => t.id) || []
     if (currentIds.includes(id)) return
     handleUpdate({ tag_ids: [...currentIds, id] })
+  }
+
+  const linkCard = async (id: number) => {
+    const currentIds = card.connections?.map((c: any) => c.id) || []
+    if (currentIds.includes(id) || id === card.id) return
+    handleUpdate({ connected_card_ids: [...currentIds, id] })
+  }
+
+  const unlinkCard = async (id: number) => {
+    const currentIds = card.connections?.map((c: any) => c.id) || []
+    const newIds = currentIds.filter((cid: number) => cid !== id)
+    handleUpdate({ connected_card_ids: newIds })
   }
 
   if (loading && !card) return null
@@ -203,7 +218,7 @@ export function CardDetails({ cardId, open, onOpenChange, onUpdated }: CardDetai
               <MessageSquare className="h-3.5 w-3.5" />
               Description
             </h3>
-            <div className="bg-slate-50/50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200/50 dark:border-slate-800/50 text-sm text-slate-700 dark:text-slate-300 min-h-[120px] leading-relaxed shadow-inner">
+            <div className="bg-slate-50/50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200/50 dark:border-slate-800/50 text-sm text-slate-700 dark:text-slate-300 min-h-[120px] leading-relaxed shadow-inner whitespace-pre-wrap">
               {card?.description || "No description provided. Click the edit icon to add context to this maintenance task."}
             </div>
           </div>
@@ -265,6 +280,45 @@ export function CardDetails({ cardId, open, onOpenChange, onUpdated }: CardDetai
                   {availableTags.map(tag => (
                     <SelectItem key={tag.id} value={tag.id.toString()}>{tag.tag_number} - {tag.description}</SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Connected Cards */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold flex items-center gap-2">
+              <LinkIcon className="h-4 w-4 text-purple-500" />
+              Connected Cards
+            </h3>
+            <div className="space-y-2">
+              {card?.connections?.map((conn: any) => (
+                <div key={conn.id} className="flex items-center justify-between p-2 bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 rounded-md">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-xs text-purple-700 dark:text-purple-300">#{conn.id}</span>
+                    <span className="text-xs text-slate-500 line-clamp-1">{conn.title}</span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0 text-slate-400 hover:text-red-500"
+                    onClick={() => unlinkCard(conn.id)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              ))}
+              <Select onValueChange={(v) => linkCard(parseInt(v))}>
+                <SelectTrigger className="h-8 text-xs bg-white dark:bg-slate-900">
+                  <SelectValue placeholder="Link related card..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableCards
+                    .filter(c => c.id !== card?.id)
+                    .map(c => (
+                      <SelectItem key={c.id} value={c.id.toString()}>#{c.id} - {c.title}</SelectItem>
+                    ))
+                  }
                 </SelectContent>
               </Select>
             </div>
