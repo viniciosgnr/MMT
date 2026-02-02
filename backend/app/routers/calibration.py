@@ -90,7 +90,7 @@ def plan_calibration(
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
     
-    task.status = models.CalibrationTaskStatus.PLANNED.value
+    task.status = models.CalibrationTaskStatus.SCHEDULED.value
     task.plan_date = date.today()
     if plan_data.procurement_ids:
         task.spare_procurement_ids = json.dumps(plan_data.procurement_ids)

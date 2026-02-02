@@ -11,8 +11,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { toast } from "sonner"
-import { Calendar, CheckCircle2, Clock, FileCheck, Seal, Upload, AlertCircle } from "lucide-react"
-import { planCalibration, executeCalibration, uploadCertificate, validateCertificate, getTagSealHistory } from "@/lib/api"
+import { Calendar, CheckCircle2, Clock, FileCheck, Stamp, Upload, AlertCircle, ArrowLeft } from "lucide-react"
+import { apiFetch, planCalibration, executeCalibration, uploadCertificate, validateCertificate, getTagSealHistory } from "@/lib/api"
 
 export default function CalibrationTaskDetail() {
   const params = useParams()
@@ -64,13 +64,17 @@ export default function CalibrationTaskDetail() {
   async function fetchTaskDetails() {
     try {
       setLoading(true)
-      const res = await fetch(`http://localhost:8000/api/calibration/tasks/${taskId}`)
-      const data = await res.json()
-      setTask(data)
+      const res = await apiFetch(`/calibration/tasks/${taskId}`)
+      if (res.ok) {
+        const data = await res.json()
+        setTask(data)
 
-      // Fetch seal history if task has equipment with tag
-      if (data.equipment_id) {
-        // For now, we'll skip this as we need tag_id
+        // Fetch seal history if task has equipment with tag
+        if (data.equipment_id) {
+          // For now, we'll skip this as we need tag_id
+        }
+      } else {
+        throw new Error("Failed to load task")
       }
     } catch (error) {
       console.error("Error fetching task:", error)
@@ -166,21 +170,28 @@ export default function CalibrationTaskDetail() {
     return <div className="p-8">Task not found</div>
   }
 
-  const statusColor = {
+  const statusColor: Record<string, string> = {
     "Pending": "bg-gray-500",
-    "Planned": "bg-blue-500",
+    "Scheduled": "bg-blue-500",
     "Executed": "bg-yellow-500",
     "Completed": "bg-green-500"
-  }[task.status] || "bg-gray-500"
+  }
+
+  const badgeColor = statusColor[task.status] || "bg-gray-500"
 
   return (
     <div className="p-8 space-y-6">
+      <Button variant="ghost" className="pl-0 hover:pl-2 transition-all" onClick={() => router.push('/dashboard/metrology')}>
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Back to Dashboard
+      </Button>
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">{task.tag}</h1>
           <p className="text-muted-foreground">{task.description}</p>
         </div>
-        <Badge className={statusColor}>{task.status}</Badge>
+        <Badge className={badgeColor}>{task.status}</Badge>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -313,7 +324,7 @@ export default function CalibrationTaskDetail() {
               </Dialog>
             )}
 
-            {task.status === "Planned" && (
+            {task.status === "Scheduled" && (
               <Dialog open={executeDialogOpen} onOpenChange={setExecuteDialogOpen}>
                 <DialogTrigger asChild>
                   <Button className="w-full" variant="outline">
@@ -472,7 +483,7 @@ export default function CalibrationTaskDetail() {
                 <Dialog open={issueDialogOpen} onOpenChange={setIssueDialogOpen}>
                   <DialogTrigger asChild>
                     <Button className="w-full bg-[#003D5C] hover:bg-[#FF6B35] text-white">
-                      <Seal className="mr-2 h-4 w-4" />
+                      <Stamp className="mr-2 h-4 w-4" />
                       Issue Internal Certificate (Auto-Gen)
                     </Button>
                   </DialogTrigger>

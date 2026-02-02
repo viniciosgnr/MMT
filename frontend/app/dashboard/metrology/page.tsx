@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Calendar, Clock, PlayCircle, FileText, CheckCircle2, Ruler, Plus } from "lucide-react"
+import { Calendar, CheckCircle2, Clock, FileText, Plus, Search, Filter } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -124,32 +124,6 @@ export default function MetrologicalConfirmationPage() {
       }
     } catch (error) {
       toast.error("Failed to create campaign")
-    }
-  }
-
-  const handleSaveResults = async () => {
-    if (!selectedTask) return
-
-    try {
-      const res = await apiFetch(`/calibration/tasks/${selectedTask.id}/results`, {
-        method: "POST",
-        body: JSON.stringify({
-          standard_reading: parseFloat(readings.standard),
-          equipment_reading: parseFloat(readings.equipment),
-          uncertainty: readings.uncertainty ? parseFloat(readings.uncertainty) : undefined
-        })
-      })
-
-      if (res.ok) {
-        toast.success(`Calibration results for ${selectedTask.tag} saved successfully`)
-        setIsInputOpen(false)
-        setReadings({ standard: "", equipment: "", uncertainty: "" })
-        loadData()
-      } else {
-        throw new Error("Failed")
-      }
-    } catch (error) {
-      toast.error("Failed to save results")
     }
   }
 
@@ -286,11 +260,7 @@ export default function MetrologicalConfirmationPage() {
                     <Button size="sm" variant="ghost" onClick={() => window.location.href = `/dashboard/calibration/tasks/${task.id}`}>
                       View Details
                     </Button>
-                    {task.status === 'Scheduled' && (
-                      <Button size="sm" className="bg-[#003D5C] hover:bg-[#002d45] text-white" onClick={() => { setSelectedTask(task); setIsInputOpen(true); }}>
-                        Execute
-                      </Button>
-                    )}
+
                   </CardFooter>
                 </Card>
               ))}
@@ -439,45 +409,7 @@ export default function MetrologicalConfirmationPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Input Results Dialog */}
-      <Dialog open={isInputOpen} onOpenChange={setIsInputOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Input Calibration Results</DialogTitle>
-            <DialogDescription>
-              Enter the readings for {selectedTask?.tag}.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Standard Reading</Label>
-                <div className="relative">
-                  <Ruler className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input className="pl-8" placeholder="e.g. 10.00" value={readings.standard} onChange={e => setReadings({ ...readings, standard: e.target.value })} />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Equipment Reading</Label>
-                <div className="relative">
-                  <Clock className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input className="pl-8" placeholder="e.g. 10.05" value={readings.equipment} onChange={e => setReadings({ ...readings, equipment: e.target.value })} />
-                </div>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Uncertainty (optional)</Label>
-              <Input placeholder="e.g. 0.01" value={readings.uncertainty} onChange={e => setReadings({ ...readings, uncertainty: e.target.value })} />
-            </div>
-            <div className="p-3 bg-muted/30 rounded text-sm text-muted-foreground">
-              Deviation: {readings.standard && readings.equipment ? (Math.abs(Number(readings.standard) - Number(readings.equipment))).toFixed(3) : '-'}
-            </div>
-          </div>
-          <DialogFooter>
-            <Button onClick={handleSaveResults}>Save & Complete</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
     </div>
   )
 }
