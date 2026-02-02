@@ -17,7 +17,7 @@ import { toast } from "sonner"
 import { format } from "date-fns"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { apiFetch } from "@/lib/api"
+import { apiFetch, API_URL } from "@/lib/api"
 
 export default function HistoricalReportPage() {
   const [reports, setReports] = useState<any[]>([])

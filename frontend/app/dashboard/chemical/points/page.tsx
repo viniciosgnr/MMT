@@ -24,11 +24,7 @@ import {
   Trash2,
   AlertCircle
 } from "lucide-react"
-import {
-  fetchSamplePoints,
-  createSamplePoint,
-  fetchEquipments // Using this to mock fetching available tags if needed, but better use a specific one
-} from "@/lib/api"
+import { apiFetch } from "@/lib/api"
 import { toast } from "sonner"
 import {
   Dialog,
@@ -71,8 +67,12 @@ export default function SamplePointConfigPage() {
   const loadPoints = async () => {
     try {
       setIsLoading(true)
-      const data = await fetchSamplePoints()
-      setPoints(data)
+      const res = await apiFetch("/chemical/sample-points")
+      if (res.ok) {
+        setPoints(await res.json())
+      } else {
+        toast.error("Failed to load sample points")
+      }
     } catch (error) {
       toast.error("Failed to load sample points")
     } finally {
@@ -86,10 +86,19 @@ export default function SamplePointConfigPage() {
         toast.error("Please fill in all required fields")
         return
       }
-      await createSamplePoint(newPoint)
-      toast.success("Sample point created successfully")
-      setIsDialogOpen(false)
-      loadPoints()
+
+      const res = await apiFetch("/chemical/sample-points", {
+        method: "POST",
+        body: JSON.stringify(newPoint)
+      })
+
+      if (res.ok) {
+        toast.success("Sample point created successfully")
+        setIsDialogOpen(false)
+        loadPoints()
+      } else {
+        toast.error("Failed to create sample point")
+      }
     } catch (error) {
       toast.error("Failed to create sample point")
     }

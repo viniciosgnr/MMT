@@ -58,7 +58,7 @@ export default function ChemicalAnalysisDashboard() {
       setIsLoading(true)
       const [samplesRes, pointsRes] = await Promise.all([
         apiFetch(`/chemical/samples${fpsoFilter !== "all" ? `?fpso_name=${fpsoFilter}` : ''}`),
-        apiFetch(`/chemical/points${fpsoFilter !== "all" ? `?fpso_name=${fpsoFilter}` : ''}`)
+        apiFetch(`/chemical/sample-points${fpsoFilter !== "all" ? `?fpso_name=${fpsoFilter}` : ''}`)
       ])
 
       if (samplesRes.ok && pointsRes.ok) {

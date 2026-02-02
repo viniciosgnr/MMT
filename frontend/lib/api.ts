@@ -1,7 +1,7 @@
 
 import { createClient } from '@/utils/supabase/client'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
 
 type FetchOptions = RequestInit & {
   headers?: Record<string, string>

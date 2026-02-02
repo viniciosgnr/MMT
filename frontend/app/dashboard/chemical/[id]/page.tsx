@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table"
 import {
+
   ArrowLeft,
   CheckCircle2,
   Clock,
@@ -25,12 +26,7 @@ import {
   FlaskConical,
   Plus
 } from "lucide-react"
-import {
-  fetchSampleDetails,
-  updateSampleStatus,
-  validateSampleResults,
-  addSampleResult
-} from "@/lib/api"
+import { apiFetch } from "@/lib/api"
 import { toast } from "sonner"
 import {
   Dialog,
@@ -75,14 +71,18 @@ export default function SampleDetailPage() {
   const [evidenceUrl, setEvidenceUrl] = useState("")
 
   useEffect(() => {
-    loadSample()
+    if (id) loadSample()
   }, [id])
 
   const loadSample = async () => {
     try {
       setIsLoading(true)
-      const data = await fetchSampleDetails(parseInt(id as string))
-      setSample(data)
+      const res = await apiFetch(`/chemical/samples/${id}`)
+      if (res.ok) {
+        setSample(await res.json())
+      } else {
+        toast.error("Failed to load sample details")
+      }
     } catch (error) {
       toast.error("Failed to load sample details")
     } finally {
@@ -94,25 +94,35 @@ export default function SampleDetailPage() {
   const handleUpdateStatus = async () => {
     try {
       // Strict Validation Check (Spec 6.5.1)
+      // Strict Validation Check (Spec 6.5.1)
       if (nextStatus === "Report approved/reproved" && (!validationResult || validationResult.overall_status === "Reproved")) {
-        if (!statusComments.includes("JUSTIFICATION-OVERRIDE")) {
-          toast.error("Statistical Validation Failed! You must add 'JUSTIFICATION-OVERRIDE' to comments to proceed.")
+        if (!statusComments || statusComments.length < 3) {
+          toast.error("Validation issues found. Please provide a justification comment to proceed.")
           return
         }
       }
 
-      await updateSampleStatus(sample.id, {
-        status: nextStatus,
-        comments: statusComments,
-        user: "Current User",
-        event_date: eventDate,
-        url: evidenceUrl
+      const res = await apiFetch(`/chemical/samples/${sample.id}/update-status`, {
+        method: "POST",
+        body: JSON.stringify({
+          status: nextStatus,
+          comments: statusComments,
+          user: "Current User",
+          event_date: eventDate,
+          url: evidenceUrl,
+          validation_status: validationResult?.overall_status
+        })
       })
-      toast.success(`Status updated to ${nextStatus}`)
-      setIsStatusDialogOpen(false)
-      setStatusComments("")
-      setEvidenceUrl("")
-      loadSample()
+
+      if (res.ok) {
+        toast.success(`Status updated to ${nextStatus}`)
+        setIsStatusDialogOpen(false)
+        setStatusComments("")
+        setEvidenceUrl("")
+        loadSample()
+      } else {
+        toast.error("Failed to update status")
+      }
     } catch (error) {
       toast.error("Failed to update status")
     }
@@ -131,9 +141,13 @@ export default function SampleDetailPage() {
   const handleSbmValidation = async () => {
     try {
       setIsValidating(true)
-      const result = await validateSampleResults(sample.id)
-      setValidationResult(result)
-      toast.success("Validation completed")
+      const res = await apiFetch(`/chemical/samples/${sample.id}/validate`)
+      if (res.ok) {
+        setValidationResult(await res.json())
+        toast.success("Validation completed")
+      } else {
+        toast.error("Validation failed.")
+      }
     } catch (error) {
       toast.error("Validation failed. Ensure sample results are present.")
     } finally {
@@ -303,9 +317,17 @@ export default function SampleDetailPage() {
                     if (!name || !val) return toast.error("Enter name and value")
 
                     try {
-                      await addSampleResult(sample.id, { parameter: name, value: parseFloat(val), unit: "unit" })
-                      loadSample()
-                      toast.success("Result added")
+                      const res = await apiFetch(`/chemical/samples/${sample.id}/results`, {
+                        method: "POST",
+                        body: JSON.stringify({ parameter: name, value: parseFloat(val), unit: "unit" })
+                      })
+
+                      if (res.ok) {
+                        loadSample()
+                        toast.success("Result added")
+                      } else {
+                        toast.error("Failed to add result")
+                      }
                     } catch (err) {
                       toast.error("Failed to add result")
                     }
