@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ShieldCheck, AlertTriangle, CheckCircle2, XCircle, RefreshCcw, Activity } from "lucide-react"
-import { runAuditSimulation } from "@/lib/api"
+import { apiFetch } from "@/lib/api"
 import { toast } from "sonner"
 import { format } from "date-fns"
 
@@ -28,10 +28,14 @@ export function AuditPanel() {
   const handleRunAudit = async () => {
     setLoading(true)
     try {
-      const data = await runAuditSimulation()
-      setResults(data)
-      setHasRun(true)
-      toast.success("Regulatory audit simulation completed successfully.")
+      const response = await apiFetch("/audit/simulate", { method: "POST" })
+      if (response.ok) {
+        setResults(await response.json())
+        setHasRun(true)
+        toast.success("Regulatory audit simulation completed successfully.")
+      } else {
+        throw new Error("Simulation failed")
+      }
     } catch (error) {
       console.error(error)
       toast.error("Failed to run audit simulation")

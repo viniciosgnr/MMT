@@ -26,7 +26,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Search, MapPin, Replace, History, Info, Plus } from "lucide-react"
 import { toast } from "sonner"
-import { fetchInstrumentTags, fetchEquipments, installEquipment as installEquipmentAPI, removeEquipment as removeEquipmentAPI } from "@/lib/api"
+import { apiFetch } from "@/lib/api"
 
 export default function TagRegister() {
   const [tags, setTags] = useState<any[]>([])
@@ -46,8 +46,12 @@ export default function TagRegister() {
   async function fetchTags() {
     try {
       setLoading(true)
-      const data = await fetchInstrumentTags()
-      setTags(data)
+      const res = await apiFetch("/equipment/tags")
+      if (res.ok) {
+        setTags(await res.json())
+      } else {
+        toast.error("Failed to load instrument tags")
+      }
     } catch (error) {
       console.error("Error fetching tags:", error)
       toast.error("Failed to load instrument tags")
@@ -58,10 +62,13 @@ export default function TagRegister() {
 
   async function fetchAvailableEquipment() {
     try {
-      const data = await fetchEquipments()
-      // Filter those without active installations would be better on backend
-      // For simplicity, we'll just show all active ones for now
-      setAvailableEquipment(data.filter((eq: any) => eq.status === "Active"))
+      const res = await apiFetch("/equipment")
+      if (res.ok) {
+        const data = await res.json()
+        // Filter those without active installations would be better on backend
+        // For simplicity, we'll just show all active ones for now
+        setAvailableEquipment(data.filter((eq: any) => eq.status === "Active"))
+      }
     } catch (error) {
       console.error("Error fetching available equipment:", error)
       toast.error("Failed to load available equipment")
@@ -73,15 +80,24 @@ export default function TagRegister() {
 
     try {
       setSubmitting(true)
-      await installEquipmentAPI({
-        equipment_id: parseInt(selectedEquipmentId),
-        tag_id: selectedTag.id,
-        installed_by: "Daniel Bernoulli" // Hardcoded for demo
+      const res = await apiFetch("/equipment/install", {
+        method: "POST",
+        body: JSON.stringify({
+          equipment_id: parseInt(selectedEquipmentId),
+          tag_id: selectedTag.id,
+          installed_by: "Daniel Bernoulli" // Hardcoded for demo
+        })
       })
-      toast.success(`Equipment successfully installed on ${selectedTag.tag_number}`)
-      setInstallDialogOpen(false)
-      fetchTags()
-      fetchAvailableEquipment()
+
+      if (res.ok) {
+        toast.success(`Equipment successfully installed on ${selectedTag.tag_number}`)
+        setInstallDialogOpen(false)
+        fetchTags()
+        fetchAvailableEquipment()
+      } else {
+        const err = await res.json()
+        toast.error(err.detail || "Installation failed")
+      }
     } catch (error: any) {
       toast.error(error.message || "Installation failed")
     } finally {
@@ -93,10 +109,17 @@ export default function TagRegister() {
     if (!confirm("Are you sure you want to remove the equipment from this tag?")) return
 
     try {
-      await removeEquipmentAPI(installationId)
-      toast.success("Equipment removed from tag.")
-      fetchTags()
-      fetchAvailableEquipment()
+      const res = await apiFetch(`/equipment/remove/${installationId}`, {
+        method: "POST"
+      })
+
+      if (res.ok) {
+        toast.success("Equipment removed from tag.")
+        fetchTags()
+        fetchAvailableEquipment()
+      } else {
+        toast.error("Removal failed")
+      }
     } catch (error: any) {
       toast.error(error.message || "Removal failed")
     }

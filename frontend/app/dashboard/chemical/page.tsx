@@ -31,13 +31,6 @@ import {
   Layers,
   Calendar
 } from "lucide-react"
-import {
-  fetchSamples,
-  fetchSamplingCampaigns,
-  fetchSamplePoints,
-  // Trigger SLA check on dashboard load
-  checkSamplingSlas
-} from "@/lib/api"
 import { toast } from "sonner"
 import {
   Select,
@@ -46,6 +39,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { apiFetch } from "@/lib/api"
 
 export default function ChemicalAnalysisDashboard() {
   const router = useRouter()
@@ -62,12 +56,17 @@ export default function ChemicalAnalysisDashboard() {
   const loadData = async () => {
     try {
       setIsLoading(true)
-      const [samplesData, pointsData] = await Promise.all([
-        fetchSamples(fpsoFilter === "all" ? undefined : fpsoFilter),
-        fetchSamplePoints(fpsoFilter === "all" ? undefined : fpsoFilter)
+      const [samplesRes, pointsRes] = await Promise.all([
+        apiFetch(`/chemical/samples${fpsoFilter !== "all" ? `?fpso_name=${fpsoFilter}` : ''}`),
+        apiFetch(`/chemical/points${fpsoFilter !== "all" ? `?fpso_name=${fpsoFilter}` : ''}`)
       ])
-      setSamples(samplesData)
-      setSamplePoints(pointsData)
+
+      if (samplesRes.ok && pointsRes.ok) {
+        setSamples(await samplesRes.json())
+        setSamplePoints(await pointsRes.json())
+      } else {
+        toast.error("Failed to load sampling data")
+      }
     } catch (error) {
       toast.error("Failed to load sampling data")
     } finally {

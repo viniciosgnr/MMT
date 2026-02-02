@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { AlertCircle, CheckCircle2, RefreshCw, Server, AlertTriangle } from "lucide-react"
 import { toast } from "sonner"
-import { runFCVerificationSimulation } from "@/lib/api"
+import { apiFetch } from "@/lib/api"
 
 interface FCVerificationResult {
   tag: string
@@ -26,10 +26,14 @@ export function FCVerificationPanel() {
   const handleRunVerification = async () => {
     setLoading(true)
     try {
-      const data = await runFCVerificationSimulation()
-      setResults(data)
-      setHasRun(true)
-      toast.success("Flow Computer Verification Check completed.")
+      const response = await apiFetch("/audit/fc-verification-simulate")
+      if (response.ok) {
+        setResults(await response.json())
+        setHasRun(true)
+        toast.success("Flow Computer Verification Check completed.")
+      } else {
+        throw new Error("Verification failed")
+      }
     } catch (error) {
       console.error(error)
       toast.error("Failed to connect to Flow Computer Simulation")

@@ -10,12 +10,22 @@ import {
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
-import { ChevronLeft, ChevronRight, Database } from "lucide-react"
+import { ChevronLeft, ChevronRight, Database, LogOut } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
+import { createClient } from "@/utils/supabase/client"
 
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const router = useRouter()
+  const supabase = createClient()
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.push("/login")
+    router.refresh()
+  }
 
   return (
     <aside className={cn(
@@ -149,15 +159,20 @@ export function Sidebar() {
         "p-4 border-t bg-slate-50/50",
         isCollapsed && "flex items-center justify-center px-2"
       )}>
-        <div className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
+        <div className="flex items-center gap-3 w-full">
           <div className="h-10 w-10 rounded-full bg-white border-2 border-[#FF6B35] overflow-hidden flex-shrink-0">
             <Image src="/user-avatar.png" alt="User" width={40} height={40} className="object-cover" />
           </div>
           {!isCollapsed && (
-            <div className="flex flex-col min-w-0">
+            <div className="flex flex-col min-w-0 flex-1">
               <span className="text-sm font-bold text-[#003D5C] truncate">Daniel Bernoulli</span>
               <span className="text-[10px] text-slate-500 font-medium truncate uppercase tracking-tighter">Senior Metering Engineer</span>
             </div>
+          )}
+          {!isCollapsed && (
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-red-600 hover:bg-red-50" onClick={handleLogout} title="Sign Out">
+              <LogOut className="h-4 w-4" />
+            </Button>
           )}
         </div>
       </div>

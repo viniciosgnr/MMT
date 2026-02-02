@@ -19,7 +19,7 @@ import { HierarchyTree } from "./hierarchy-tree"
 import { AttributeRules } from "./attribute-rules"
 import { SpecializedConfigs } from "./specialized-configs"
 import { PropertyEditor } from "./property-editor"
-import { fetchParameters, setParameter } from "@/lib/api"
+import { apiFetch } from "@/lib/api"
 import { toast } from "sonner"
 import { useEffect, useState } from "react"
 
@@ -31,8 +31,12 @@ export default function ConfigurationsPage() {
   const loadParams = async () => {
     try {
       // Don't filter by FPSO - show all parameters
-      const data = await fetchParameters()
-      setParams(data)
+      const res = await apiFetch("/config/parameters")
+      if (res.ok) {
+        setParams(await res.json())
+      } else {
+        toast.error("Failed to load parameters")
+      }
     } catch (error) {
       toast.error("Failed to load parameters")
     } finally {
@@ -50,9 +54,16 @@ export default function ConfigurationsPage() {
 
   const handleSaveParam = async (key: string, value: string) => {
     try {
-      await setParameter({ key, value, fpso: "SEPETIBA" })
-      toast.success("Parameter updated")
-      loadParams()
+      const res = await apiFetch("/config/parameters", {
+        method: "POST",
+        body: JSON.stringify({ key, value, fpso: "SEPETIBA" })
+      })
+      if (res.ok) {
+        toast.success("Parameter updated")
+        loadParams()
+      } else {
+        throw new Error("Failed")
+      }
     } catch (error) {
       toast.error("Failed to update parameter")
     }

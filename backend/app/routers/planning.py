@@ -4,6 +4,7 @@ from typing import List, Optional
 from datetime import datetime, date
 from ..database import get_db
 from ..models import PlannedActivity
+from ..dependencies import get_current_user
 from ..schemas.phase3 import (
     PlannedActivityCreate,
     PlannedActivityUpdate,
@@ -41,7 +42,8 @@ def get_activities(
 @router.post("/activities", response_model=PlannedActivitySchema)
 def create_activity(
     activity: PlannedActivityCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
 ):
     """Create a new planned activity"""
     db_activity = PlannedActivity(**activity.model_dump())
@@ -54,7 +56,8 @@ def create_activity(
 def update_activity(
     activity_id: int,
     activity: PlannedActivityUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
 ):
     """Update a planned activity"""
     db_activity = db.query(PlannedActivity).filter(PlannedActivity.id == activity_id).first()
@@ -72,7 +75,8 @@ def update_activity(
 def mitigate_activity(
     activity_id: int,
     mitigation: PlannedActivityMitigate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
 ):
     """Mark an activity as mitigated with a new due date"""
     db_activity = db.query(PlannedActivity).filter(PlannedActivity.id == activity_id).first()
@@ -90,7 +94,7 @@ def mitigate_activity(
     return db_activity
 
 @router.delete("/activities/{activity_id}")
-def cancel_activity(activity_id: int, db: Session = Depends(get_db)):
+def cancel_activity(activity_id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     """Cancel a planned activity"""
     activity = db.query(PlannedActivity).filter(PlannedActivity.id == activity_id).first()
     if not activity:

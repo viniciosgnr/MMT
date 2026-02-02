@@ -26,6 +26,7 @@ import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { ACTIVITY_TYPES, TYPE_COLORS, TrafficLight } from "./planning-utils"
 import { ActivityActionDialog, NewStrategyDialog } from "./task-dialogs"
+import { apiFetch } from "@/lib/api"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
 
@@ -50,12 +51,12 @@ export default function PlanningPage() {
     try {
       const start = startOfMonth(currentDate)
       const end = endOfMonth(currentDate)
-      let url = `${API_URL}/planning/activities?start_date=${format(start, 'yyyy-MM-dd')}&end_date=${format(end, 'yyyy-MM-dd')}`
+      let url = `/planning/activities?start_date=${format(start, 'yyyy-MM-dd')}&end_date=${format(end, 'yyyy-MM-dd')}`
 
       if (filters.fpso !== "All FPSOs") url += `&fpso_name=${filters.fpso}`
       if (filters.type !== "All Activities") url += `&activity_type=${filters.type}`
 
-      const res = await fetch(url)
+      const res = await apiFetch(url)
       const data = await res.json()
       setActivities(Array.isArray(data) ? data : [])
     } catch (e) {

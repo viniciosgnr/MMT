@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from .. import models, database
 from ..schemas import configuration as schemas
+from ..dependencies import get_current_user
 
 router = APIRouter(
     prefix="/api/config",
@@ -33,7 +34,7 @@ def get_hierarchy_tree(db: Session = Depends(database.get_db)):
     return tree
 
 @router.post("/hierarchy/nodes", response_model=schemas.HierarchyNode)
-def create_hierarchy_node(node: schemas.HierarchyNodeCreate, db: Session = Depends(database.get_db)):
+def create_hierarchy_node(node: schemas.HierarchyNodeCreate, db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
     db_node = models.HierarchyNode(**node.model_dump())
     db.add(db_node)
     db.commit()
@@ -41,7 +42,7 @@ def create_hierarchy_node(node: schemas.HierarchyNodeCreate, db: Session = Depen
     return db_node
 
 @router.delete("/hierarchy/nodes/{node_id}")
-def delete_hierarchy_node(node_id: int, db: Session = Depends(database.get_db)):
+def delete_hierarchy_node(node_id: int, db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
     db_node = db.query(models.HierarchyNode).filter(models.HierarchyNode.id == node_id).first()
     if not db_node:
         raise HTTPException(status_code=404, detail="Node not found")
@@ -65,7 +66,7 @@ def get_attributes(entity_type: Optional[str] = None, db: Session = Depends(data
     return query.all()
 
 @router.post("/attributes", response_model=schemas.AttributeDefinition)
-def create_attribute_definition(attr: schemas.AttributeDefinitionCreate, db: Session = Depends(database.get_db)):
+def create_attribute_definition(attr: schemas.AttributeDefinitionCreate, db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
     db_attr = models.AttributeDefinition(**attr.model_dump())
     db.add(db_attr)
     db.commit()
@@ -77,7 +78,7 @@ def get_attribute_values(entity_id: int, db: Session = Depends(database.get_db))
     return db.query(models.AttributeValue).filter(models.AttributeValue.entity_id == entity_id).all()
 
 @router.post("/values", response_model=schemas.AttributeValue)
-def set_attribute_value(val: schemas.AttributeValueCreate, db: Session = Depends(database.get_db)):
+def set_attribute_value(val: schemas.AttributeValueCreate, db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
     # 1. Fetch Definition
     definition = db.query(models.AttributeDefinition).filter(models.AttributeDefinition.id == val.attribute_id).first()
     if not definition:
@@ -138,7 +139,7 @@ def get_wells(fpso: Optional[str] = None, db: Session = Depends(database.get_db)
     return query.all()
 
 @router.post("/wells", response_model=schemas.Well)
-def create_well(well: schemas.WellCreate, db: Session = Depends(database.get_db)):
+def create_well(well: schemas.WellCreate, db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
     db_well = models.Well(**well.model_dump())
     db.add(db_well)
     db.commit()
@@ -153,7 +154,7 @@ def get_holidays(fpso: Optional[str] = None, db: Session = Depends(database.get_
     return query.all()
 
 @router.post("/holidays", response_model=schemas.Holiday)
-def create_holiday(holiday: schemas.HolidayCreate, db: Session = Depends(database.get_db)):
+def create_holiday(holiday: schemas.HolidayCreate, db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
     db_holiday = models.Holiday(**holiday.model_dump())
     db.add(db_holiday)
     db.commit()
@@ -168,7 +169,7 @@ def get_stock_locations(fpso: Optional[str] = None, db: Session = Depends(databa
     return query.all()
 
 @router.post("/stock-locations", response_model=schemas.StockLocation)
-def create_stock_location(loc: schemas.StockLocationCreate, db: Session = Depends(database.get_db)):
+def create_stock_location(loc: schemas.StockLocationCreate, db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
     db_loc = models.StockLocation(**loc.model_dump())
     db.add(db_loc)
     db.commit()
@@ -183,7 +184,7 @@ def get_parameters(fpso: Optional[str] = None, db: Session = Depends(database.ge
     return query.all()
 
 @router.post("/parameters", response_model=schemas.ConfigParameter)
-def set_parameter(param: schemas.ConfigParameterCreate, db: Session = Depends(database.get_db)):
+def set_parameter(param: schemas.ConfigParameterCreate, db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
     db_param = db.query(models.ConfigParameter).filter(
         models.ConfigParameter.key == param.key,
         models.ConfigParameter.fpso == param.fpso

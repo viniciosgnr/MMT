@@ -48,6 +48,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "sonner"
 import { format } from "date-fns"
+import { apiFetch } from "@/lib/api"
 
 // Types
 type Alert = {
@@ -101,7 +102,7 @@ export default function MonitoringPage() {
   const fetchAlerts = async () => {
     setLoading(true)
     try {
-      let url = "/api/alerts"
+      let url = "/alerts"
       const params = new URLSearchParams()
       if (filterStatus === "active") params.append("acknowledged", "false")
       if (filterStatus === "history") params.append("acknowledged", "true")
@@ -109,9 +110,12 @@ export default function MonitoringPage() {
 
       if (params.toString()) url += `?${params.toString()}`
 
-      const response = await fetch(url)
-      const data = await response.json()
-      setAlerts(data)
+      const response = await apiFetch(url)
+      if (response.ok) {
+        setAlerts(await response.json())
+      } else {
+        toast.error("Failed to load alerts")
+      }
     } catch (error) {
       console.error("Failed to fetch alerts", error)
       toast.error("Failed to load alerts")
@@ -122,9 +126,10 @@ export default function MonitoringPage() {
 
   const fetchConfigs = async () => {
     try {
-      const response = await fetch("/api/alerts/configs")
-      const data = await response.json()
-      setConfigs(data)
+      const response = await apiFetch("/alerts/configs")
+      if (response.ok) {
+        setConfigs(await response.json())
+      }
     } catch (error) {
       console.error("Failed to fetch configs", error)
     }
@@ -141,9 +146,8 @@ export default function MonitoringPage() {
   const handleAcknowledge = async () => {
     if (!selectedAlert) return
     try {
-      const response = await fetch(`/api/alerts/${selectedAlert.id}/acknowledge`, {
+      const response = await apiFetch(`/alerts/${selectedAlert.id}/acknowledge`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           acknowledged_by: "Current User", // In a real app, this would be the logged-in user
           justification: ackJustification,
@@ -170,9 +174,8 @@ export default function MonitoringPage() {
 
   const handleCreateConfig = async () => {
     try {
-      const response = await fetch("/api/alerts/configs", {
+      const response = await apiFetch("/alerts/configs", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newConfig)
       })
 

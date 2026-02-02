@@ -5,6 +5,7 @@ from datetime import date, datetime
 import json
 from .. import models, database
 from ..schemas import calibration as schemas
+from ..dependencies import get_current_user
 
 router = APIRouter(
     prefix="/api/calibration",
@@ -13,7 +14,7 @@ router = APIRouter(
 
 # Campaign Endpoints
 @router.post("/campaigns", response_model=schemas.CalibrationCampaign)
-def create_campaign(campaign: schemas.CalibrationCampaignCreate, db: Session = Depends(database.get_db)):
+def create_campaign(campaign: schemas.CalibrationCampaignCreate, db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
     db_campaign = models.CalibrationCampaign(**campaign.dict())
     db.add(db_campaign)
     db.commit()
@@ -45,7 +46,7 @@ def get_campaign(campaign_id: int, db: Session = Depends(database.get_db)):
 
 # Task Endpoints
 @router.post("/tasks", response_model=schemas.CalibrationTask)
-def create_task(task: schemas.CalibrationTaskCreate, db: Session = Depends(database.get_db)):
+def create_task(task: schemas.CalibrationTaskCreate, db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
     db_task = models.CalibrationTask(**task.dict())
     db.add(db_task)
     db.commit()
@@ -81,7 +82,8 @@ def get_task(task_id: int, db: Session = Depends(database.get_db)):
 def plan_calibration(
     task_id: int,
     plan_data: schemas.CalibrationPlanData,
-    db: Session = Depends(database.get_db)
+    db: Session = Depends(database.get_db),
+    current_user = Depends(get_current_user)
 ):
     """Transition task from PENDING to PLANNED."""
     task = db.query(models.CalibrationTask).filter(models.CalibrationTask.id == task_id).first()
@@ -101,7 +103,8 @@ def plan_calibration(
 def execute_calibration(
     task_id: int,
     exec_data: schemas.CalibrationExecutionData,
-    db: Session = Depends(database.get_db)
+    db: Session = Depends(database.get_db),
+    current_user = Depends(get_current_user)
 ):
     """Record calibration execution with temporary completion date."""
     task = db.query(models.CalibrationTask).filter(models.CalibrationTask.id == task_id).first()
@@ -138,7 +141,8 @@ def execute_calibration(
 @router.post("/seals", response_model=schemas.SealHistoryRead)
 def record_seal_installation(
     seal_data: schemas.SealInstallationData,
-    db: Session = Depends(database.get_db)
+    db: Session = Depends(database.get_db),
+    current_user = Depends(get_current_user)
 ):
     """Record a new seal installation."""
     # Deactivate previous seal if exists
@@ -194,7 +198,8 @@ def get_active_seals(
 def upload_certificate(
     task_id: int,
     certificate_data: schemas.CertificateData,
-    db: Session = Depends(database.get_db)
+    db: Session = Depends(database.get_db),
+    current_user = Depends(get_current_user)
 ):
     """Upload certificate metadata and mark task as definitively complete."""
     task = db.query(models.CalibrationTask).filter(models.CalibrationTask.id == task_id).first()
@@ -232,7 +237,8 @@ def upload_certificate(
 @router.post("/tasks/{task_id}/certificate/validate")
 def validate_certificate(
     task_id: int,
-    db: Session = Depends(database.get_db)
+    db: Session = Depends(database.get_db),
+    current_user = Depends(get_current_user)
 ):
     """Run CA validation rules on certificate data."""
     task = db.query(models.CalibrationTask).filter(models.CalibrationTask.id == task_id).first()
@@ -294,7 +300,7 @@ def validate_certificate(
 
 # Result Endpoints (existing)
 @router.post("/tasks/{task_id}/results", response_model=schemas.CalibrationResult)
-def submit_results(task_id: int, result: schemas.CalibrationResultBase, db: Session = Depends(database.get_db)):
+def submit_results(task_id: int, result: schemas.CalibrationResultBase, db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
     # Check if task exists
     task = db.query(models.CalibrationTask).filter(models.CalibrationTask.id == task_id).first()
     if not task:

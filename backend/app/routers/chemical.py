@@ -5,6 +5,7 @@ from typing import List, Optional
 from datetime import datetime, date, timedelta
 from .. import models, database
 from ..schemas import chemical as schemas
+from ..dependencies import get_current_user
 
 router = APIRouter(
     prefix="/api/chemical",
@@ -14,7 +15,7 @@ router = APIRouter(
 # --- Sample Points (M3 Configuration) ---
 
 @router.post("/sample-points", response_model=schemas.SamplePoint)
-def create_sample_point(sp: schemas.SamplePointCreate, db: Session = Depends(database.get_db)):
+def create_sample_point(sp: schemas.SamplePointCreate, db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
     db_sp = models.SamplePoint(**sp.model_dump())
     db.add(db_sp)
     db.commit()
@@ -29,7 +30,7 @@ def list_sample_points(fpso_name: Optional[str] = None, db: Session = Depends(da
     return query.all()
 
 @router.post("/sample-points/{sp_id}/link-meters")
-def link_meters(sp_id: int, tag_ids: List[int], db: Session = Depends(database.get_db)):
+def link_meters(sp_id: int, tag_ids: List[int], db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
     db.query(models.InstrumentTag).filter(models.InstrumentTag.id.in_(tag_ids)).update({"sample_point_id": sp_id})
     db.commit()
     return {"message": f"{len(tag_ids)} meters linked to sample point"}
@@ -37,7 +38,7 @@ def link_meters(sp_id: int, tag_ids: List[int], db: Session = Depends(database.g
 # --- Sampling Campaigns ---
 
 @router.post("/campaigns", response_model=schemas.SamplingCampaign)
-def create_campaign(campaign: schemas.SamplingCampaignCreate, db: Session = Depends(database.get_db)):
+def create_campaign(campaign: schemas.SamplingCampaignCreate, db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
     db_campaign = models.SamplingCampaign(**campaign.model_dump())
     db.add(db_campaign)
     db.commit()
@@ -56,7 +57,7 @@ def list_campaigns(fpso_name: Optional[str] = None, status: Optional[str] = None
 # --- Samples & Lifecycle (M3 Core) ---
 
 @router.post("/samples", response_model=schemas.Sample)
-def create_sample(sample: schemas.SampleCreate, db: Session = Depends(database.get_db)):
+def create_sample(sample: schemas.SampleCreate, db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
     # Verify sample point
     sp = db.query(models.SamplePoint).filter(models.SamplePoint.id == sample.sample_point_id).first()
     if not sp:
@@ -158,7 +159,7 @@ def check_sampling_slas(db: Session = Depends(database.get_db)):
     return {"message": "SLA check completed", "alerts_created": alerts_created}
 
 @router.post("/samples/{sample_id}/update-status", response_model=schemas.Sample)
-def update_sample_status(sample_id: int, update: schemas.SampleStatusUpdate, db: Session = Depends(database.get_db)):
+def update_sample_status(sample_id: int, update: schemas.SampleStatusUpdate, db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
     sample = db.query(models.Sample).filter(models.Sample.id == sample_id).first()
     if not sample:
         raise HTTPException(status_code=404, detail="Sample not found")
@@ -260,7 +261,7 @@ def perform_sbm_validation(sample_id: int, db: Session = Depends(database.get_db
 # --- Results ---
 
 @router.post("/samples/{sample_id}/results", response_model=schemas.SampleResult)
-def add_sample_result(sample_id: int, result: schemas.SampleResultBase, db: Session = Depends(database.get_db)):
+def add_sample_result(sample_id: int, result: schemas.SampleResultBase, db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
     db_result = models.SampleResult(sample_id=sample_id, **result.model_dump())
     db.add(db_result)
     db.commit()

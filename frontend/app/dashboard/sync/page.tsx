@@ -26,10 +26,8 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
-
+import { apiFetch } from "@/lib/api"
 import { SyncSourceDialog } from "./sync-source-dialog"
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
 
 export default function SynchronizationPage() {
   const [sources, setSources] = useState<any[]>([])
@@ -41,15 +39,21 @@ export default function SynchronizationPage() {
   const fetchData = async () => {
     try {
       const [sourcesRes, jobsRes] = await Promise.all([
-        fetch(`${API_URL}/sync/sources`),
-        fetch(`${API_URL}/sync/jobs`)
+        apiFetch("/sync/sources"),
+        apiFetch("/sync/jobs")
       ])
-      const sourcesData = await sourcesRes.json()
-      const jobsData = await jobsRes.json()
-      if (Array.isArray(sourcesData)) setSources(sourcesData)
-      else setSources([])
-      if (Array.isArray(jobsData)) setJobs(jobsData)
-      else setJobs([])
+
+      if (sourcesRes.ok) {
+        setSources(await sourcesRes.json())
+      } else {
+        setSources([])
+      }
+
+      if (jobsRes.ok) {
+        setJobs(await jobsRes.json())
+      } else {
+        setJobs([])
+      }
     } catch (error) {
       toast.error("Failed to fetch synchronization data")
     } finally {
@@ -72,7 +76,7 @@ export default function SynchronizationPage() {
     formData.append("file", file)
 
     try {
-      const res = await fetch(`${API_URL}/sync/upload?source_id=${sourceId}`, {
+      const res = await apiFetch(`/sync/upload?source_id=${sourceId}`, {
         method: "POST",
         body: formData,
       })

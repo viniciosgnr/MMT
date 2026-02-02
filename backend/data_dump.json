@@ -1,0 +1,2133 @@
+{
+    "equipments": [
+        {
+            "id": 1,
+            "manufacturer": "Emerson",
+            "specifications": null,
+            "calibration_frequency_months": 12,
+            "created_at": "2026-01-31T22:12:23.726705",
+            "serial_number": "SN-PT1101-2023",
+            "model": "Rosemount 3051S",
+            "equipment_type": "Pressure Transmitter",
+            "status": "Active",
+            "calculation_base": "Calibration Date"
+        },
+        {
+            "id": 2,
+            "manufacturer": "Emerson",
+            "specifications": null,
+            "calibration_frequency_months": 24,
+            "created_at": "2026-01-31T22:12:23.726709",
+            "serial_number": "SN-TT1102-B",
+            "model": "Rosemount 644",
+            "equipment_type": "Temperature Transmitter",
+            "status": "Active",
+            "calculation_base": "Calibration Date"
+        },
+        {
+            "id": 3,
+            "manufacturer": "Krohne",
+            "specifications": null,
+            "calibration_frequency_months": 12,
+            "created_at": "2026-01-31T22:12:23.726710",
+            "serial_number": "KROHNE-2022-X1",
+            "model": "Krohne Altosonic V12",
+            "equipment_type": "Ultrasonic Flow Meter",
+            "status": "Active",
+            "calculation_base": "Calibration Date"
+        },
+        {
+            "id": 4,
+            "manufacturer": "ABB",
+            "specifications": null,
+            "calibration_frequency_months": 12,
+            "created_at": "2026-01-31T22:12:23.726711",
+            "serial_number": "SN-PT2201-W",
+            "model": "ABB 266MST",
+            "equipment_type": "Pressure Transmitter",
+            "status": "Maintenance",
+            "calculation_base": "Calibration Date"
+        }
+    ],
+    "instrument_tags": [
+        {
+            "id": 1,
+            "description": "Export Gas Pressure",
+            "service": "Gas Export",
+            "created_at": "2026-01-31T22:12:23.739489",
+            "tag_number": "62-PT-1101",
+            "area": "Main Deck",
+            "hierarchy_node_id": null,
+            "sample_point_id": null
+        },
+        {
+            "id": 2,
+            "description": "Oil Rundown Temp",
+            "service": "Oil Rundown",
+            "created_at": "2026-01-31T22:12:23.739491",
+            "tag_number": "62-TT-1102",
+            "area": "Separator Skid",
+            "hierarchy_node_id": null,
+            "sample_point_id": null
+        },
+        {
+            "id": 3,
+            "description": "Fiscal Gas Flow",
+            "service": "Gas Export",
+            "created_at": "2026-01-31T22:12:23.739492",
+            "tag_number": "62-FT-1103",
+            "area": "Metering Skid",
+            "hierarchy_node_id": null,
+            "sample_point_id": null
+        },
+        {
+            "id": 4,
+            "description": "Injection Pressure",
+            "service": "Water Injection",
+            "created_at": "2026-01-31T22:12:23.739492",
+            "tag_number": "65-PT-2201",
+            "area": "Water Injection Skid",
+            "hierarchy_node_id": null,
+            "sample_point_id": null
+        }
+    ],
+    "equipment_tag_installations": [
+        {
+            "tag_id": 1,
+            "equipment_id": 1,
+            "removal_date": null,
+            "installation_report_path": null,
+            "is_active": 1,
+            "id": 1,
+            "installation_date": "2026-01-31T22:12:23.750418",
+            "installed_by": "Daniel Bernoulli",
+            "checklist_data": null
+        },
+        {
+            "tag_id": 2,
+            "equipment_id": 2,
+            "removal_date": null,
+            "installation_report_path": null,
+            "is_active": 1,
+            "id": 2,
+            "installation_date": "2026-01-31T22:12:23.750421",
+            "installed_by": "Daniel Bernoulli",
+            "checklist_data": null
+        },
+        {
+            "tag_id": 3,
+            "equipment_id": 3,
+            "removal_date": null,
+            "installation_report_path": null,
+            "is_active": 1,
+            "id": 3,
+            "installation_date": "2026-01-31T22:12:23.750421",
+            "installed_by": "Daniel Bernoulli",
+            "checklist_data": null
+        }
+    ],
+    "equipment_certificates": [
+        {
+            "id": 1,
+            "issue_date": "2025-10-23",
+            "certificate_type": null,
+            "tag_id": null,
+            "certificate_number": "CERT-PT-2023-001",
+            "equipment_id": 1,
+            "expiry_date": "2026-10-23",
+            "file_path": "/docs/certs/ Rosemount_3051S_SN123.pdf"
+        }
+    ],
+    "calibration_campaigns": [
+        {
+            "start_date": "2026-01-21",
+            "id": 1,
+            "status": "Active",
+            "description": "Routine quarterly calibration campaign.",
+            "name": "Q1 2024 Campaign - PARATY",
+            "fpso_name": "FPSO PARATY",
+            "end_date": null,
+            "responsible": "Daniel Bernoulli",
+            "created_at": "2026-01-31T22:12:23.757685"
+        }
+    ],
+    "calibration_tasks": [
+        {
+            "campaign_id": 1,
+            "equipment_id": 1,
+            "description": "Quarterly Calibration",
+            "due_date": "2026-01-29",
+            "exec_date": "2026-01-30",
+            "created_at": "2026-01-31T22:12:23.767486",
+            "id": 1,
+            "tag": "62-PT-1101",
+            "type": "Calibration",
+            "plan_date": null,
+            "status": "Executed"
+        },
+        {
+            "campaign_id": 1,
+            "equipment_id": 3,
+            "description": "Annual Verification",
+            "due_date": "2026-02-05",
+            "exec_date": null,
+            "created_at": "2026-01-31T22:12:23.767488",
+            "id": 2,
+            "tag": "62-FT-1103",
+            "type": "Calibration",
+            "plan_date": "2026-02-05",
+            "status": "Scheduled"
+        }
+    ],
+    "calibration_results": [
+        {
+            "id": 1,
+            "equipment_reading": 10.1,
+            "uncertainty_report_url": "/docs/uncertainty/UNC-62PT1101-2401.pdf",
+            "approved_by": "Metrology Manager",
+            "certificate_url": "/docs/certs/CERT-62PT1101-2401.pdf",
+            "created_at": "2026-01-31T22:12:23.779815",
+            "standard_reading": 10.0,
+            "task_id": 1,
+            "uncertainty": 0.015,
+            "fc_evidence_url": "/docs/evidence/FC-62PT1101-2401.png",
+            "approved_at": "2026-01-31T22:12:23.778934",
+            "notes": "As-found within tolerance."
+        }
+    ],
+    "sample_points": [
+        {
+            "id": 1,
+            "fpso_name": "FPSO PARATY",
+            "is_operational": 1,
+            "validation_method_implemented": 0,
+            "created_at": "2026-01-31T22:31:20.887089",
+            "description": "Gas Export Quality Sample Point",
+            "tag_number": "62-SP-1101",
+            "fluid_type": "Gas",
+            "sampling_interval_days": 15
+        },
+        {
+            "id": 2,
+            "fpso_name": "FPSO SEPETIBA",
+            "is_operational": 1,
+            "validation_method_implemented": 0,
+            "created_at": "2026-01-31T22:31:20.887092",
+            "description": "Oil Export Quality Sample Point",
+            "tag_number": "62-SP-1201",
+            "fluid_type": "Oil",
+            "sampling_interval_days": 30
+        },
+        {
+            "id": 3,
+            "fpso_name": "FPSO MARIC\u00c1",
+            "is_operational": 1,
+            "validation_method_implemented": 0,
+            "created_at": "2026-01-31T22:31:20.887093",
+            "description": "Water Injection Quality Sample Point",
+            "tag_number": "65-SP-2101",
+            "fluid_type": "Water",
+            "sampling_interval_days": 7
+        },
+        {
+            "id": 4,
+            "fpso_name": "FPSO ILHABELA",
+            "is_operational": 1,
+            "validation_method_implemented": 0,
+            "created_at": "2026-01-31T22:31:20.887093",
+            "description": "Gas Chromatograph Sample Point",
+            "tag_number": "62-SP-1301",
+            "fluid_type": "Gas",
+            "sampling_interval_days": 10
+        }
+    ],
+    "sampling_campaigns": [
+        {
+            "id": 1,
+            "start_date": "2026-01-21",
+            "status": "Active",
+            "description": null,
+            "fpso_name": "FPSO PARATY",
+            "name": "Quarterly Gas Analysis - Q1 2024",
+            "end_date": null,
+            "responsible": "Daniel Bernoulli",
+            "created_at": "2026-01-31T22:12:23.772686"
+        }
+    ],
+    "samples": [
+        {
+            "responsible": "Daniel Bernoulli",
+            "validation_status": "Approved",
+            "planned_date": "2026-01-21",
+            "validation_report_url": null,
+            "campaign_id": 1,
+            "sampling_date": "2026-01-31",
+            "fc_evidence_url": null,
+            "id": 1,
+            "disembark_date": "2026-01-31",
+            "notes": "CH4: 89.5%, C2H6: 7.2%, C3H8: 2.1%",
+            "sample_point_id": 1,
+            "delivery_date": "2026-01-31",
+            "created_at": "2026-01-31T22:32:18.514602",
+            "sample_id": "LAB-2026-001",
+            "report_issue_date": "2026-01-31",
+            "type": "Gas",
+            "fc_update_date": null,
+            "status": "Report under validation",
+            "lab_report_url": null
+        },
+        {
+            "responsible": "Daniel Bernoulli",
+            "validation_status": null,
+            "planned_date": "2026-01-28",
+            "validation_report_url": null,
+            "campaign_id": 1,
+            "sampling_date": "2026-02-01",
+            "fc_evidence_url": null,
+            "id": 2,
+            "disembark_date": null,
+            "notes": null,
+            "sample_point_id": 1,
+            "delivery_date": "2026-01-30",
+            "created_at": "2026-01-31T22:32:18.514604",
+            "sample_id": "LAB-2026-002",
+            "report_issue_date": null,
+            "type": "Gas",
+            "fc_update_date": null,
+            "status": "Sampled",
+            "lab_report_url": null
+        },
+        {
+            "responsible": "Carlos Silva",
+            "validation_status": "Approved",
+            "planned_date": "2026-01-26",
+            "validation_report_url": null,
+            "campaign_id": 1,
+            "sampling_date": "2026-01-26",
+            "fc_evidence_url": null,
+            "id": 3,
+            "disembark_date": null,
+            "notes": "API: 28.5\u00b0, BSW: 0.8%",
+            "sample_point_id": 2,
+            "delivery_date": "2026-01-28",
+            "created_at": "2026-01-31T22:32:18.514605",
+            "sample_id": "LAB-2026-003",
+            "report_issue_date": "2026-01-30",
+            "type": "Oil",
+            "fc_update_date": null,
+            "status": "Analyzed",
+            "lab_report_url": null
+        },
+        {
+            "responsible": "Roberto Lima",
+            "validation_status": null,
+            "planned_date": "2026-01-30",
+            "validation_report_url": null,
+            "campaign_id": 1,
+            "sampling_date": "2026-01-30",
+            "fc_evidence_url": null,
+            "id": 4,
+            "disembark_date": null,
+            "notes": null,
+            "sample_point_id": 3,
+            "delivery_date": null,
+            "created_at": "2026-01-31T22:32:18.514605",
+            "sample_id": "LAB-2026-004",
+            "report_issue_date": null,
+            "type": "Water",
+            "fc_update_date": null,
+            "status": "Collected",
+            "lab_report_url": null
+        }
+    ],
+    "sample_status_histories": [
+        {
+            "id": 1,
+            "entered_at": "2026-01-31T22:34:09.223719",
+            "user": "Current User",
+            "status": "Planned",
+            "sample_id": 1,
+            "comments": ""
+        },
+        {
+            "id": 2,
+            "entered_at": "2026-01-31T22:34:23.203445",
+            "user": "Current User",
+            "status": "Sampled",
+            "sample_id": 1,
+            "comments": ""
+        },
+        {
+            "id": 3,
+            "entered_at": "2026-01-31T22:34:28.072922",
+            "user": "Current User",
+            "status": "Disembark preparation",
+            "sample_id": 1,
+            "comments": ""
+        },
+        {
+            "id": 4,
+            "entered_at": "2026-01-31T22:34:29.592373",
+            "user": "Current User",
+            "status": "Disembark logistics",
+            "sample_id": 1,
+            "comments": ""
+        },
+        {
+            "id": 5,
+            "entered_at": "2026-01-31T22:34:30.880874",
+            "user": "Current User",
+            "status": "Warehouse",
+            "sample_id": 1,
+            "comments": ""
+        },
+        {
+            "id": 6,
+            "entered_at": "2026-01-31T22:34:37.136962",
+            "user": "Current User",
+            "status": "Logistics to vendor",
+            "sample_id": 1,
+            "comments": ""
+        },
+        {
+            "id": 7,
+            "entered_at": "2026-01-31T22:34:39.993359",
+            "user": "Current User",
+            "status": "Delivered at vendor",
+            "sample_id": 1,
+            "comments": ""
+        },
+        {
+            "id": 8,
+            "entered_at": "2026-01-31T22:34:42.280211",
+            "user": "Current User",
+            "status": "Report issued",
+            "sample_id": 1,
+            "comments": ""
+        },
+        {
+            "id": 9,
+            "entered_at": "2026-01-31T22:34:44.521356",
+            "user": "Current User",
+            "status": "Report under validation",
+            "sample_id": 1,
+            "comments": ""
+        },
+        {
+            "id": 10,
+            "entered_at": "2026-01-31T23:18:28.678985",
+            "user": "Current User",
+            "status": "Planned",
+            "sample_id": 2,
+            "comments": ""
+        },
+        {
+            "id": 11,
+            "entered_at": "2026-02-01T13:53:34.686547",
+            "user": "Current User",
+            "status": "Sampled",
+            "sample_id": 2,
+            "comments": ""
+        }
+    ],
+    "sample_results": [
+        {
+            "value": 850.0,
+            "id": 1,
+            "approved_by": null,
+            "created_at": "2026-02-01T18:39:23.082760",
+            "sample_id": 1,
+            "parameter": "Density",
+            "unit": "unit",
+            "approved_at": null
+        },
+        {
+            "value": 900.0,
+            "id": 2,
+            "approved_by": null,
+            "created_at": "2026-02-01T18:40:08.210409",
+            "sample_id": 1,
+            "parameter": "Density",
+            "unit": "unit",
+            "approved_at": null
+        },
+        {
+            "value": 500.0,
+            "id": 3,
+            "approved_by": null,
+            "created_at": "2026-02-01T18:40:23.212133",
+            "sample_id": 1,
+            "parameter": "Density",
+            "unit": "unit",
+            "approved_at": null
+        },
+        {
+            "value": 100.0,
+            "id": 4,
+            "approved_by": null,
+            "created_at": "2026-02-01T18:40:37.679614",
+            "sample_id": 1,
+            "parameter": "Density",
+            "unit": "unit",
+            "approved_at": null
+        }
+    ],
+    "maintenance_records": [
+        {
+            "description": "Pressure Transmitter Repair",
+            "id": 1,
+            "vendor_contact": null,
+            "expected_return": "2026-02-15",
+            "status": "At Vendor",
+            "notes": null,
+            "equipment_id": 4,
+            "tag": "65-PT-2201",
+            "vendor": "Emerson Service Center",
+            "sent_date": "2026-01-16",
+            "actual_return": null,
+            "reason": "Electronics Failure",
+            "created_at": "2026-01-31T22:12:23.792412"
+        }
+    ],
+    "installation_history": [
+        {
+            "equipment_id": 1,
+            "fpso_name": null,
+            "removal_date": null,
+            "reason": "Initial Commissioning",
+            "notes": "System startup.",
+            "created_at": "2026-01-31T22:12:23.800251",
+            "id": 1,
+            "installation_date": "2025-01-31T19:12:23.798807",
+            "location": "62-PT-1101",
+            "installed_by": "Daniel Bernoulli"
+        },
+        {
+            "equipment_id": 2,
+            "fpso_name": null,
+            "removal_date": null,
+            "reason": "Replacement",
+            "notes": "Previous unit failed drift test.",
+            "created_at": "2026-01-31T22:12:23.800253",
+            "id": 2,
+            "installation_date": "2025-07-15T19:12:23.799328",
+            "location": "62-TT-1102",
+            "installed_by": "Daniel Bernoulli"
+        }
+    ],
+    "sync_sources": [
+        {
+            "fpso": "FPSO PARATY",
+            "id": 1,
+            "is_active": 1,
+            "name": "FPSO PARATY - Omni 6000",
+            "type": "FLOW_COMPUTER",
+            "connection_details": "{\"ip\": \"10.50.1.101\", \"port\": 502, \"model\": \"Omni 6000\"}"
+        },
+        {
+            "fpso": "FPSO SEPETIBA",
+            "id": 2,
+            "is_active": 1,
+            "name": "FPSO SEPETIBA - Floboss S600+",
+            "type": "FLOW_COMPUTER",
+            "connection_details": "{\"ip\": \"10.50.2.105\", \"port\": 502, \"model\": \"Floboss S600+\"}"
+        },
+        {
+            "fpso": "FPSO MARIC\u00c1",
+            "id": 3,
+            "is_active": 1,
+            "name": "FPSO MARIC\u00c1 - ABB Flow X",
+            "type": "FLOW_COMPUTER",
+            "connection_details": "{\"ip\": \"10.50.3.110\", \"port\": 502, \"model\": \"ABB Flow X\"}"
+        },
+        {
+            "fpso": "FPSO ILHABELA",
+            "id": 4,
+            "is_active": 0,
+            "name": "FPSO ILHABELA - Floboss S600",
+            "type": "FLOW_COMPUTER",
+            "connection_details": "{\"ip\": \"10.50.4.102\", \"port\": 502, \"model\": \"Floboss S600\"}"
+        },
+        {
+            "fpso": "All",
+            "id": 5,
+            "is_active": 1,
+            "name": "SBM AVEVA PI Server",
+            "type": "AVEVA_PI",
+            "connection_details": "{\"server\": \"pi-sbm-prod.sbm.local\", \"port\": 5450}"
+        }
+    ],
+    "sync_jobs": [
+        {
+            "end_time": "2026-01-28T22:41:05.191362",
+            "id": 1,
+            "records_processed": 1214,
+            "artifact_path": "/data/dumps/FPSO_ILHABELA_dump_20260128_224101.csv",
+            "source_id": 4,
+            "start_time": "2026-01-28T22:41:01.191362",
+            "status": "Synced",
+            "error_log": null
+        },
+        {
+            "end_time": "2026-01-17T21:14:08.192595",
+            "id": 2,
+            "records_processed": 0,
+            "artifact_path": "/data/dumps/FPSO_PARATY_dump_20260117_211401.csv",
+            "source_id": 1,
+            "start_time": "2026-01-17T21:14:01.192595",
+            "status": "Failed",
+            "error_log": "Authentication failed - Invalid credentials"
+        },
+        {
+            "end_time": "2026-01-16T23:49:10.192656",
+            "id": 3,
+            "records_processed": 14168,
+            "artifact_path": null,
+            "source_id": 5,
+            "start_time": "2026-01-16T23:49:01.192656",
+            "status": "Synced",
+            "error_log": null
+        },
+        {
+            "end_time": "2026-01-23T08:52:04.192679",
+            "id": 4,
+            "records_processed": 0,
+            "artifact_path": null,
+            "source_id": 3,
+            "start_time": "2026-01-23T08:52:01.192679",
+            "status": "Failed",
+            "error_log": "Authentication failed - Invalid credentials"
+        },
+        {
+            "end_time": "2026-01-17T03:45:09.192701",
+            "id": 5,
+            "records_processed": 13729,
+            "artifact_path": null,
+            "source_id": 5,
+            "start_time": "2026-01-17T03:45:01.192701",
+            "status": "Synced",
+            "error_log": null
+        },
+        {
+            "end_time": "2026-01-22T16:29:03.192722",
+            "id": 6,
+            "records_processed": 876,
+            "artifact_path": null,
+            "source_id": 1,
+            "start_time": "2026-01-22T16:29:01.192722",
+            "status": "Synced",
+            "error_log": null
+        },
+        {
+            "end_time": "2026-01-04T23:32:09.192742",
+            "id": 7,
+            "records_processed": 1017,
+            "artifact_path": null,
+            "source_id": 2,
+            "start_time": "2026-01-04T23:32:01.192742",
+            "status": "Synced",
+            "error_log": null
+        },
+        {
+            "end_time": "2026-01-23T21:45:07.192762",
+            "id": 8,
+            "records_processed": 0,
+            "artifact_path": "/data/dumps/FPSO_MARIC\u00c1_dump_20260123_214501.csv",
+            "source_id": 3,
+            "start_time": "2026-01-23T21:45:01.192762",
+            "status": "Failed",
+            "error_log": "Network interruption during transfer"
+        },
+        {
+            "end_time": "2026-01-11T10:19:07.192787",
+            "id": 9,
+            "records_processed": 1134,
+            "artifact_path": null,
+            "source_id": 1,
+            "start_time": "2026-01-11T10:19:01.192787",
+            "status": "Synced",
+            "error_log": null
+        },
+        {
+            "end_time": "2026-01-27T21:20:07.192820",
+            "id": 10,
+            "records_processed": 236,
+            "artifact_path": null,
+            "source_id": 3,
+            "start_time": "2026-01-27T21:20:01.192820",
+            "status": "Synced",
+            "error_log": null
+        },
+        {
+            "end_time": "2026-01-21T12:15:04.192841",
+            "id": 11,
+            "records_processed": 7274,
+            "artifact_path": null,
+            "source_id": 5,
+            "start_time": "2026-01-21T12:15:01.192841",
+            "status": "Synced",
+            "error_log": null
+        },
+        {
+            "end_time": "2026-01-24T10:06:06.192861",
+            "id": 12,
+            "records_processed": 11189,
+            "artifact_path": null,
+            "source_id": 5,
+            "start_time": "2026-01-24T10:06:01.192861",
+            "status": "Synced",
+            "error_log": null
+        },
+        {
+            "end_time": "2026-01-08T05:28:08.192880",
+            "id": 13,
+            "records_processed": 1911,
+            "artifact_path": null,
+            "source_id": 2,
+            "start_time": "2026-01-08T05:28:01.192880",
+            "status": "Synced",
+            "error_log": null
+        },
+        {
+            "end_time": "2026-01-04T13:14:03.192899",
+            "id": 14,
+            "records_processed": 1258,
+            "artifact_path": null,
+            "source_id": 4,
+            "start_time": "2026-01-04T13:14:01.192899",
+            "status": "Synced",
+            "error_log": null
+        },
+        {
+            "end_time": "2026-01-30T14:00:09.192917",
+            "id": 15,
+            "records_processed": 277,
+            "artifact_path": null,
+            "source_id": 1,
+            "start_time": "2026-01-30T14:00:01.192917",
+            "status": "Synced",
+            "error_log": null
+        },
+        {
+            "end_time": "2026-01-24T08:22:10.192936",
+            "id": 16,
+            "records_processed": 498,
+            "artifact_path": null,
+            "source_id": 2,
+            "start_time": "2026-01-24T08:22:01.192936",
+            "status": "Synced",
+            "error_log": null
+        },
+        {
+            "end_time": "2026-01-26T03:55:06.192955",
+            "id": 17,
+            "records_processed": 1051,
+            "artifact_path": "/data/dumps/FPSO_PARATY_dump_20260126_035501.csv",
+            "source_id": 1,
+            "start_time": "2026-01-26T03:55:01.192955",
+            "status": "Synced",
+            "error_log": null
+        },
+        {
+            "end_time": "2026-01-06T10:24:09.192978",
+            "id": 18,
+            "records_processed": 705,
+            "artifact_path": "/data/dumps/FPSO_SEPETIBA_dump_20260106_102401.csv",
+            "source_id": 2,
+            "start_time": "2026-01-06T10:24:01.192978",
+            "status": "Synced",
+            "error_log": null
+        },
+        {
+            "end_time": "2026-01-06T08:03:08.193000",
+            "id": 19,
+            "records_processed": 14172,
+            "artifact_path": "/data/dumps/All_dump_20260106_080301.csv",
+            "source_id": 5,
+            "start_time": "2026-01-06T08:03:01.193000",
+            "status": "Synced",
+            "error_log": null
+        },
+        {
+            "end_time": "2026-01-26T19:07:11.193024",
+            "id": 20,
+            "records_processed": 1985,
+            "artifact_path": null,
+            "source_id": 1,
+            "start_time": "2026-01-26T19:07:01.193024",
+            "status": "Synced",
+            "error_log": null
+        },
+        {
+            "end_time": "2026-01-04T02:28:05.193045",
+            "id": 21,
+            "records_processed": 994,
+            "artifact_path": "/data/dumps/FPSO_SEPETIBA_dump_20260104_022801.csv",
+            "source_id": 2,
+            "start_time": "2026-01-04T02:28:01.193045",
+            "status": "Synced",
+            "error_log": null
+        },
+        {
+            "end_time": "2026-01-28T06:42:08.193067",
+            "id": 22,
+            "records_processed": 10447,
+            "artifact_path": null,
+            "source_id": 5,
+            "start_time": "2026-01-28T06:42:01.193067",
+            "status": "Synced",
+            "error_log": null
+        },
+        {
+            "end_time": "2026-01-03T11:34:02.193087",
+            "id": 23,
+            "records_processed": 146,
+            "artifact_path": "/data/dumps/FPSO_PARATY_dump_20260103_113401.csv",
+            "source_id": 1,
+            "start_time": "2026-01-03T11:34:01.193087",
+            "status": "Synced",
+            "error_log": null
+        },
+        {
+            "end_time": "2026-01-03T17:54:10.193122",
+            "id": 24,
+            "records_processed": 1826,
+            "artifact_path": "/data/dumps/FPSO_SEPETIBA_dump_20260103_175401.csv",
+            "source_id": 2,
+            "start_time": "2026-01-03T17:54:01.193122",
+            "status": "Synced",
+            "error_log": null
+        },
+        {
+            "end_time": "2026-01-18T05:49:09.193143",
+            "id": 25,
+            "records_processed": 14433,
+            "artifact_path": "/data/dumps/All_dump_20260118_054901.csv",
+            "source_id": 5,
+            "start_time": "2026-01-18T05:49:01.193143",
+            "status": "Synced",
+            "error_log": null
+        }
+    ],
+    "operational_data": [],
+    "sync_status": [],
+    "alerts": [
+        {
+            "id": 1,
+            "title": "Calibration Overdue - Pressure Transmitter",
+            "fpso_name": "FPSO PARATY",
+            "equipment_id": null,
+            "acknowledged": 0,
+            "acknowledged_at": null,
+            "linked_event_type": null,
+            "run_recheck": 1,
+            "message": "PT-1101 calibration certificate expired 15 days ago. Immediate action required per ANP regulations.",
+            "severity": "Critical",
+            "type": "Metrological Confirmation",
+            "tag_number": "62-PT-1101",
+            "created_at": "2026-01-31T22:45:10.851446",
+            "acknowledged_by": null,
+            "justification": null,
+            "linked_event_id": null
+        },
+        {
+            "id": 2,
+            "title": "Gas Sampling Due in 3 Days",
+            "fpso_name": "FPSO SEPETIBA",
+            "equipment_id": null,
+            "acknowledged": 0,
+            "acknowledged_at": null,
+            "linked_event_type": null,
+            "run_recheck": 1,
+            "message": "Bimonthly gas quality sampling approaching deadline for fiscal metering compliance.",
+            "severity": "Warning",
+            "type": "Sampling",
+            "tag_number": "62-SP-1201",
+            "created_at": "2026-01-31T22:45:10.851448",
+            "acknowledged_by": null,
+            "justification": null,
+            "linked_event_id": null
+        },
+        {
+            "id": 3,
+            "title": "Flow Computer Update Completed",
+            "fpso_name": "FPSO MARIC\u00c1",
+            "equipment_id": null,
+            "acknowledged": 0,
+            "acknowledged_at": null,
+            "linked_event_type": null,
+            "run_recheck": 0,
+            "message": "Flow computer parameters successfully updated with new uncertainty calculations.",
+            "severity": "Info",
+            "type": "System Configuration",
+            "tag_number": "62-FT-2301",
+            "created_at": "2026-01-31T22:45:10.851449",
+            "acknowledged_by": null,
+            "justification": null,
+            "linked_event_id": null
+        },
+        {
+            "id": 4,
+            "title": "Equipment Failure Notification Pending Approval",
+            "fpso_name": "FPSO ILHABELA",
+            "equipment_id": null,
+            "acknowledged": 0,
+            "acknowledged_at": null,
+            "linked_event_type": null,
+            "run_recheck": 1,
+            "message": "Failure notification #3 awaiting ANP approval - deadline in 2 days.",
+            "severity": "Critical",
+            "type": "Failure Notification",
+            "tag_number": null,
+            "created_at": "2026-01-31T22:45:10.851449",
+            "acknowledged_by": null,
+            "justification": null,
+            "linked_event_id": null
+        },
+        {
+            "id": 5,
+            "title": "Uncertainty Calculation Missing",
+            "fpso_name": "FPSO PARATY",
+            "equipment_id": null,
+            "acknowledged": 0,
+            "acknowledged_at": null,
+            "linked_event_type": null,
+            "run_recheck": 1,
+            "message": "Flow meter FT-1103 missing uncertainty calculation for Q1 2026.",
+            "severity": "Warning",
+            "type": "Metrological Confirmation",
+            "tag_number": "62-FT-1103",
+            "created_at": "2026-01-31T22:45:10.851449",
+            "acknowledged_by": null,
+            "justification": null,
+            "linked_event_id": null
+        }
+    ],
+    "alert_configurations": [],
+    "alert_recipients": [],
+    "planned_activities": [
+        {
+            "title": "Gas Export USM Verification",
+            "responsible": "Daniel Bernoulli",
+            "description": "Full verification of the USM metering system.",
+            "status": "Planned",
+            "equipment_id": 3,
+            "mitigation_reason": null,
+            "tag_id": null,
+            "mitigation_attachment_url": null,
+            "fpso_name": "FPSO PARATY",
+            "new_due_date": null,
+            "type": "Calibration",
+            "scheduled_date": "2026-02-05T19:14:14.508169",
+            "mitigated_at": null,
+            "id": 1,
+            "completed_at": null,
+            "created_at": "2026-01-31T22:14:14.510405",
+            "duration_hours": 1
+        },
+        {
+            "title": "Pressure Transmitter Calibration - 62-PT-1101",
+            "responsible": "Carlos Silva",
+            "description": "Annual calibration of export gas pressure transmitter.",
+            "status": "Planned",
+            "equipment_id": 1,
+            "mitigation_reason": null,
+            "tag_id": 1,
+            "mitigation_attachment_url": null,
+            "fpso_name": "FPSO SEPETIBA",
+            "new_due_date": null,
+            "type": "Execute Calibration/Inspection",
+            "scheduled_date": "2026-02-03T19:14:14.508229",
+            "mitigated_at": null,
+            "id": 2,
+            "completed_at": null,
+            "created_at": "2026-01-31T22:14:14.510408",
+            "duration_hours": 1
+        },
+        {
+            "title": "Plan Temperature Transmitter Calibration",
+            "responsible": "Ana Costa",
+            "description": "Schedule calibration of oil rundown temperature sensor.",
+            "status": "Planned",
+            "equipment_id": 2,
+            "mitigation_reason": null,
+            "tag_id": 2,
+            "mitigation_attachment_url": null,
+            "fpso_name": "FPSO SAQUAREMA",
+            "new_due_date": null,
+            "type": "Plan Calibration/Inspection",
+            "scheduled_date": "2026-02-15T19:14:14.508249",
+            "mitigated_at": null,
+            "id": 3,
+            "completed_at": null,
+            "created_at": "2026-01-31T22:14:14.510408",
+            "duration_hours": 1
+        },
+        {
+            "title": "Water Injection Pressure Calibration",
+            "responsible": "Roberto Lima",
+            "description": "Calibration of injection pressure transmitter.",
+            "status": "Planned",
+            "equipment_id": 4,
+            "mitigation_reason": null,
+            "tag_id": 4,
+            "mitigation_attachment_url": null,
+            "fpso_name": "FPSO MARIC\u00c1",
+            "new_due_date": null,
+            "type": "Execute Calibration/Inspection",
+            "scheduled_date": "2026-01-29T19:14:14.508263",
+            "mitigated_at": null,
+            "id": 4,
+            "completed_at": null,
+            "created_at": "2026-01-31T22:14:14.511592",
+            "duration_hours": 1
+        },
+        {
+            "title": "Bimonthly Gas Sampling",
+            "responsible": "Daniel Bernoulli",
+            "description": "Gas analysis for fiscal reporting.",
+            "status": "Planned",
+            "equipment_id": null,
+            "mitigation_reason": null,
+            "tag_id": null,
+            "mitigation_attachment_url": null,
+            "fpso_name": "FPSO PARATY",
+            "new_due_date": null,
+            "type": "Take Sample",
+            "scheduled_date": "2026-02-10T19:14:14.508280",
+            "mitigated_at": null,
+            "id": 5,
+            "completed_at": null,
+            "created_at": "2026-01-31T22:14:14.512098",
+            "duration_hours": 1
+        },
+        {
+            "title": "Oil Quality Sample Collection",
+            "responsible": "Maria Santos",
+            "description": "Monthly oil quality verification sample.",
+            "status": "Planned",
+            "equipment_id": null,
+            "mitigation_reason": null,
+            "tag_id": null,
+            "mitigation_attachment_url": null,
+            "fpso_name": "FPSO SEPETIBA",
+            "new_due_date": null,
+            "type": "Sampling",
+            "scheduled_date": "2026-02-07T19:14:14.508292",
+            "mitigated_at": null,
+            "id": 6,
+            "completed_at": null,
+            "created_at": "2026-01-31T22:14:14.512100",
+            "duration_hours": 1
+        },
+        {
+            "title": "Water Injection Quality Sample",
+            "responsible": "Jo\u00e3o Oliveira",
+            "description": "Weekly water quality check for injection system.",
+            "status": "Planned",
+            "equipment_id": null,
+            "mitigation_reason": null,
+            "tag_id": null,
+            "mitigation_attachment_url": null,
+            "fpso_name": "FPSO ILHABELA",
+            "new_due_date": null,
+            "type": "Take Sample",
+            "scheduled_date": "2026-02-02T19:14:14.508305",
+            "mitigated_at": null,
+            "id": 7,
+            "completed_at": null,
+            "created_at": "2026-01-31T22:14:14.512101",
+            "duration_hours": 1
+        },
+        {
+            "title": "Issue Calibration Certificate - 62-FT-1103",
+            "responsible": "Daniel Bernoulli",
+            "description": "Generate and issue calibration certificate for fiscal meter.",
+            "status": "Planned",
+            "equipment_id": null,
+            "mitigation_reason": null,
+            "tag_id": 3,
+            "mitigation_attachment_url": null,
+            "fpso_name": "FPSO PARATY",
+            "new_due_date": null,
+            "type": "Issue Certificate",
+            "scheduled_date": "2026-02-01T19:14:14.508316",
+            "mitigated_at": null,
+            "id": 8,
+            "completed_at": null,
+            "created_at": "2026-01-31T22:14:14.512102",
+            "duration_hours": 1
+        },
+        {
+            "title": "Issue Annual Certification - Gas Export",
+            "responsible": "Carlos Silva",
+            "description": "Annual certification for gas export metering system.",
+            "status": "Planned",
+            "equipment_id": null,
+            "mitigation_reason": null,
+            "tag_id": null,
+            "mitigation_attachment_url": null,
+            "fpso_name": "FPSO SEPETIBA",
+            "new_due_date": null,
+            "type": "Issue Certificate",
+            "scheduled_date": "2026-02-20T19:14:14.508329",
+            "mitigated_at": null,
+            "id": 9,
+            "completed_at": null,
+            "created_at": "2026-01-31T22:14:14.512102",
+            "duration_hours": 1
+        },
+        {
+            "title": "Monthly Calibration Report - January",
+            "responsible": "Daniel Bernoulli",
+            "description": "Compile monthly calibration activities report.",
+            "status": "Planned",
+            "equipment_id": null,
+            "mitigation_reason": null,
+            "tag_id": null,
+            "mitigation_attachment_url": null,
+            "fpso_name": "FPSO PARATY",
+            "new_due_date": null,
+            "type": "Issue Report",
+            "scheduled_date": "2026-02-04T19:14:14.508341",
+            "mitigated_at": null,
+            "id": 10,
+            "completed_at": null,
+            "created_at": "2026-01-31T22:14:14.512103",
+            "duration_hours": 1
+        },
+        {
+            "title": "Quarterly ANP Compliance Report",
+            "responsible": "Ana Costa",
+            "description": "Prepare quarterly report for ANP submission.",
+            "status": "Planned",
+            "equipment_id": null,
+            "mitigation_reason": null,
+            "tag_id": null,
+            "mitigation_attachment_url": null,
+            "fpso_name": "FPSO SAQUAREMA",
+            "new_due_date": null,
+            "type": "Issue Report",
+            "scheduled_date": "2026-02-12T19:14:14.508351",
+            "mitigated_at": null,
+            "id": 11,
+            "completed_at": null,
+            "created_at": "2026-01-31T22:14:14.512104",
+            "duration_hours": 1
+        },
+        {
+            "title": "Weekly Sampling Summary",
+            "responsible": "Roberto Lima",
+            "description": "Weekly summary of all sampling activities.",
+            "status": "Planned",
+            "equipment_id": null,
+            "mitigation_reason": null,
+            "tag_id": null,
+            "mitigation_attachment_url": null,
+            "fpso_name": "FPSO MARIC\u00c1",
+            "new_due_date": null,
+            "type": "Issue Report",
+            "scheduled_date": "2026-02-06T19:14:14.508361",
+            "mitigated_at": null,
+            "id": 12,
+            "completed_at": null,
+            "created_at": "2026-01-31T22:14:14.512105",
+            "duration_hours": 1
+        },
+        {
+            "title": "Update Flow Computer Configuration - Gas Export",
+            "responsible": "Daniel Bernoulli",
+            "description": "Update flow computer with new calibration factors.",
+            "status": "Planned",
+            "equipment_id": null,
+            "mitigation_reason": null,
+            "tag_id": null,
+            "mitigation_attachment_url": null,
+            "fpso_name": "FPSO PARATY",
+            "new_due_date": null,
+            "type": "Update Flow Computer",
+            "scheduled_date": "2026-02-08T19:14:14.508373",
+            "mitigated_at": null,
+            "id": 13,
+            "completed_at": null,
+            "created_at": "2026-01-31T22:14:14.512106",
+            "duration_hours": 1
+        },
+        {
+            "title": "Flow Computer Firmware Update",
+            "responsible": "Jo\u00e3o Oliveira",
+            "description": "Apply latest firmware patch to flow computer.",
+            "status": "Planned",
+            "equipment_id": null,
+            "mitigation_reason": null,
+            "tag_id": null,
+            "mitigation_attachment_url": null,
+            "fpso_name": "FPSO ILHABELA",
+            "new_due_date": null,
+            "type": "Update Flow Computer",
+            "scheduled_date": "2026-02-14T19:14:14.508383",
+            "mitigated_at": null,
+            "id": 14,
+            "completed_at": null,
+            "created_at": "2026-01-31T22:14:14.512106",
+            "duration_hours": 1
+        },
+        {
+            "title": "Annual Metering System Inspection",
+            "responsible": "Carlos Silva",
+            "description": "Complete visual and functional inspection of metering system.",
+            "status": "Planned",
+            "equipment_id": null,
+            "mitigation_reason": null,
+            "tag_id": null,
+            "mitigation_attachment_url": null,
+            "fpso_name": "FPSO SEPETIBA",
+            "new_due_date": null,
+            "type": "Inspection",
+            "scheduled_date": "2026-02-25T19:14:14.508394",
+            "mitigated_at": null,
+            "id": 15,
+            "completed_at": null,
+            "created_at": "2026-01-31T22:14:14.512107",
+            "duration_hours": 1
+        },
+        {
+            "title": "Quarterly Instrument Panel Inspection",
+            "responsible": "Ana Costa",
+            "description": "Routine inspection of all instrument panels.",
+            "status": "Planned",
+            "equipment_id": null,
+            "mitigation_reason": null,
+            "tag_id": null,
+            "mitigation_attachment_url": null,
+            "fpso_name": "FPSO SAQUAREMA",
+            "new_due_date": null,
+            "type": "Inspection",
+            "scheduled_date": "2026-02-18T19:14:14.508404",
+            "mitigated_at": null,
+            "id": 16,
+            "completed_at": null,
+            "created_at": "2026-01-31T22:14:14.512108",
+            "duration_hours": 1
+        },
+        {
+            "title": "Gas Export Uncertainty Calculation",
+            "responsible": "Daniel Bernoulli",
+            "description": "Calculate measurement uncertainty for fiscal metering.",
+            "status": "Planned",
+            "equipment_id": null,
+            "mitigation_reason": null,
+            "tag_id": null,
+            "mitigation_attachment_url": null,
+            "fpso_name": "FPSO PARATY",
+            "new_due_date": null,
+            "type": "Issue Uncertainty Calculation",
+            "scheduled_date": "2026-02-09T19:14:14.508415",
+            "mitigated_at": null,
+            "id": 17,
+            "completed_at": null,
+            "created_at": "2026-01-31T22:14:14.512109",
+            "duration_hours": 1
+        },
+        {
+            "title": "OVERDUE: Emergency Shutdown System Check",
+            "responsible": "Roberto Lima",
+            "description": "Critical safety system verification - OVERDUE.",
+            "status": "Planned",
+            "equipment_id": null,
+            "mitigation_reason": null,
+            "tag_id": null,
+            "mitigation_attachment_url": null,
+            "fpso_name": "FPSO MARIC\u00c1",
+            "new_due_date": null,
+            "type": "Calibration",
+            "scheduled_date": "2026-01-26T19:14:14.508425",
+            "mitigated_at": null,
+            "id": 18,
+            "completed_at": null,
+            "created_at": "2026-01-31T22:14:14.513297",
+            "duration_hours": 1
+        },
+        {
+            "title": "OVERDUE: Gas Chromatograph Sample",
+            "responsible": "Jo\u00e3o Oliveira",
+            "description": "Delayed gas composition analysis.",
+            "status": "Planned",
+            "equipment_id": null,
+            "mitigation_reason": null,
+            "tag_id": null,
+            "mitigation_attachment_url": null,
+            "fpso_name": "FPSO ILHABELA",
+            "new_due_date": null,
+            "type": "Take Sample",
+            "scheduled_date": "2026-01-28T19:14:14.508437",
+            "mitigated_at": null,
+            "id": 19,
+            "completed_at": null,
+            "created_at": "2026-01-31T22:14:14.513299",
+            "duration_hours": 1
+        },
+        {
+            "title": "Issue Certificate - Pressure Transmitter",
+            "responsible": "Carlos Silva",
+            "description": "Certificate issuance due tomorrow.",
+            "status": "Planned",
+            "equipment_id": null,
+            "mitigation_reason": null,
+            "tag_id": null,
+            "mitigation_attachment_url": null,
+            "fpso_name": "FPSO SEPETIBA",
+            "new_due_date": null,
+            "type": "Issue Certificate",
+            "scheduled_date": "2026-02-01T19:14:14.508452",
+            "mitigated_at": null,
+            "id": 20,
+            "completed_at": null,
+            "created_at": "2026-01-31T22:14:14.513568",
+            "duration_hours": 1
+        },
+        {
+            "title": "Daily Production Report",
+            "responsible": "Daniel Bernoulli",
+            "description": "Daily metering report for operations.",
+            "status": "Planned",
+            "equipment_id": null,
+            "mitigation_reason": null,
+            "tag_id": null,
+            "mitigation_attachment_url": null,
+            "fpso_name": "FPSO PARATY",
+            "new_due_date": null,
+            "type": "Issue Report",
+            "scheduled_date": "2026-02-01T07:14:14.508462",
+            "mitigated_at": null,
+            "id": 21,
+            "completed_at": null,
+            "created_at": "2026-01-31T22:14:14.513570",
+            "duration_hours": 1
+        }
+    ],
+    "failure_notifications": [
+        {
+            "id": 1,
+            "volume_unit": "m3",
+            "status": "Approved",
+            "tag": "62-FT-1103",
+            "cause": null,
+            "approved_by": "Marcos G. (ME)",
+            "fpso_name": "FPSO PARATY",
+            "corrective_action": "Replaced faulty transducer and recalibrated system.",
+            "approved_at": "2026-02-01T14:00:57.088067",
+            "failure_date": "2026-01-29T19:14:14.526868",
+            "responsible": "Daniel Bernoulli",
+            "anp_status": "Pending",
+            "restoration_date": null,
+            "anp_notification_number": null,
+            "created_at": "2026-01-31T22:14:14.529836",
+            "description": "Ultrasonic flow meter signal loss detected during routine monitoring.",
+            "anp_classification": "Grave",
+            "impact": "High",
+            "anp_deadline": null,
+            "equipment_id": 1,
+            "estimated_volume_impact": 150.5,
+            "anp_submitted_date": null
+        },
+        {
+            "id": 2,
+            "volume_unit": "m3",
+            "status": "Approved",
+            "tag": "62-PT-1101",
+            "cause": null,
+            "approved_by": "Marcos G. (ME)",
+            "fpso_name": "FPSO SEPETIBA",
+            "corrective_action": "Recalibrated transmitter and verified measurement chain.",
+            "approved_at": "2026-01-30T19:14:14.526979",
+            "failure_date": "2026-01-26T19:14:14.526976",
+            "responsible": "Carlos Silva",
+            "anp_status": "Pending",
+            "restoration_date": null,
+            "anp_notification_number": null,
+            "created_at": "2026-01-31T22:14:14.529840",
+            "description": "Pressure transmitter reading drift beyond acceptable limits.",
+            "anp_classification": "Toler\u00e1vel",
+            "impact": "Medium",
+            "anp_deadline": null,
+            "equipment_id": 1,
+            "estimated_volume_impact": 45.2,
+            "anp_submitted_date": null
+        },
+        {
+            "id": 3,
+            "volume_unit": "m3",
+            "status": "Draft",
+            "tag": "65-TT-2201",
+            "cause": null,
+            "approved_by": null,
+            "fpso_name": "FPSO MARIC\u00c1",
+            "corrective_action": "Replaced sensor and updated flow computer configuration.",
+            "approved_at": null,
+            "failure_date": "2026-01-30T19:14:14.527021",
+            "responsible": "Roberto Lima",
+            "anp_status": "Pending",
+            "restoration_date": null,
+            "anp_notification_number": null,
+            "created_at": "2026-01-31T22:14:14.529840",
+            "description": "Temperature sensor failure in water injection system.",
+            "anp_classification": "Toler\u00e1vel",
+            "impact": "Low",
+            "anp_deadline": null,
+            "equipment_id": 1,
+            "estimated_volume_impact": 12.0,
+            "anp_submitted_date": null
+        }
+    ],
+    "fpso_failure_email_lists": [
+        {
+            "is_active": 1,
+            "id": 1,
+            "email": "paraty.ops@sbm.com",
+            "created_at": "2026-01-31T22:14:14.528401",
+            "fpso_name": "FPSO PARATY"
+        },
+        {
+            "is_active": 1,
+            "id": 2,
+            "email": "anp.compliance@sbm.com",
+            "created_at": "2026-01-31T22:14:14.528404",
+            "fpso_name": "FPSO PARATY"
+        },
+        {
+            "is_active": 1,
+            "id": 3,
+            "email": "sepetiba.ops@sbm.com",
+            "created_at": "2026-01-31T22:14:14.528404",
+            "fpso_name": "FPSO SEPETIBA"
+        },
+        {
+            "is_active": 1,
+            "id": 4,
+            "email": "marica.ops@sbm.com",
+            "created_at": "2026-01-31T22:14:14.528404",
+            "fpso_name": "FPSO MARIC\u00c1"
+        }
+    ],
+    "report_types": [
+        {
+            "name": "Offloading Report",
+            "description": "Oil/Gas offloading documentation",
+            "id": 1,
+            "is_active": 1
+        },
+        {
+            "name": "ANP Official Letter",
+            "description": "Official correspondence with ANP",
+            "id": 2,
+            "is_active": 1
+        },
+        {
+            "name": "Daily HMI Data",
+            "description": "Daily HMI data collection files",
+            "id": 3,
+            "is_active": 1
+        },
+        {
+            "name": "Monthly Audit Report",
+            "description": "Monthly compliance audit reports",
+            "id": 4,
+            "is_active": 1
+        },
+        {
+            "name": "Calibration Certificate",
+            "description": "Archived calibration certificates",
+            "id": 5,
+            "is_active": 1
+        },
+        {
+            "name": "Maintenance Log",
+            "description": "Maintenance activity logs",
+            "id": 6,
+            "is_active": 1
+        }
+    ],
+    "historical_reports": [
+        {
+            "report_type_id": 1,
+            "title": "January 2026 Offloading Summary",
+            "file_name": "offloading_jan2026.pdf",
+            "report_date": "2026-01-16T19:14:14.550736",
+            "metering_system": null,
+            "uploaded_by": "Daniel Bernoulli",
+            "id": 1,
+            "file_url": "/uploads/reports/offloading_jan2026.pdf",
+            "file_size": 245678,
+            "fpso_name": "FPSO PARATY",
+            "serial_number": null,
+            "uploaded_at": "2026-01-31T22:14:14.552180"
+        },
+        {
+            "report_type_id": 2,
+            "title": "ANP Response - Calibration Compliance",
+            "file_name": "anp_response_cal.pdf",
+            "report_date": "2026-01-01T19:14:14.550814",
+            "metering_system": null,
+            "uploaded_by": "Carlos Silva",
+            "id": 2,
+            "file_url": "/uploads/reports/anp_response_cal.pdf",
+            "file_size": 156234,
+            "fpso_name": "FPSO SEPETIBA",
+            "serial_number": null,
+            "uploaded_at": "2026-01-31T22:14:14.552183"
+        },
+        {
+            "report_type_id": 3,
+            "title": "HMI Data Collection - 2026-01-30",
+            "file_name": "hmi_20260130.csv",
+            "report_date": "2026-01-30T19:14:14.550832",
+            "metering_system": "Gas Export",
+            "uploaded_by": "System Auto",
+            "id": 3,
+            "file_url": "/uploads/reports/hmi_20260130.csv",
+            "file_size": 89456,
+            "fpso_name": "FPSO PARATY",
+            "serial_number": null,
+            "uploaded_at": "2026-01-31T22:14:14.552183"
+        },
+        {
+            "report_type_id": 4,
+            "title": "December 2025 Compliance Audit",
+            "file_name": "audit_dec2025.pdf",
+            "report_date": "2025-12-17T19:14:14.550850",
+            "metering_system": null,
+            "uploaded_by": "Roberto Lima",
+            "id": 4,
+            "file_url": "/uploads/reports/audit_dec2025.pdf",
+            "file_size": 567890,
+            "fpso_name": "FPSO MARIC\u00c1",
+            "serial_number": null,
+            "uploaded_at": "2026-01-31T22:14:14.552184"
+        },
+        {
+            "report_type_id": 3,
+            "title": "HMI Data Collection - 2026-01-29",
+            "file_name": "hmi_20260129.csv",
+            "report_date": "2026-01-29T19:14:14.550871",
+            "metering_system": "Oil Export",
+            "uploaded_by": "System Auto",
+            "id": 5,
+            "file_url": "/uploads/reports/hmi_20260129.csv",
+            "file_size": 91234,
+            "fpso_name": "FPSO SEPETIBA",
+            "serial_number": null,
+            "uploaded_at": "2026-01-31T22:14:14.552184"
+        }
+    ],
+    "hierarchy_nodes": [
+        {
+            "tag": "FPSO-SEPETIBA",
+            "description": "FPSO SEPETIBA - Main Vessel",
+            "parent_id": null,
+            "created_at": "2026-01-31T23:01:58.168411",
+            "id": 1,
+            "level_type": "FPSO"
+        },
+        {
+            "tag": "62-GAS-EXPORT",
+            "description": "Gas Export Metering System",
+            "parent_id": 1,
+            "created_at": "2026-01-31T23:01:58.177346",
+            "id": 2,
+            "level_type": "System"
+        },
+        {
+            "tag": "62-OIL-EXPORT",
+            "description": "Oil Export Metering System",
+            "parent_id": 1,
+            "created_at": "2026-01-31T23:01:58.177348",
+            "id": 3,
+            "level_type": "System"
+        },
+        {
+            "tag": "62-GAS-PRESSURE",
+            "description": "Gas Export Pressure",
+            "parent_id": 2,
+            "created_at": "2026-01-31T23:01:58.184677",
+            "id": 4,
+            "level_type": "Variable"
+        },
+        {
+            "tag": "62-GAS-TEMPERATURE",
+            "description": "Gas Export Temperature",
+            "parent_id": 2,
+            "created_at": "2026-01-31T23:01:58.184680",
+            "id": 5,
+            "level_type": "Variable"
+        },
+        {
+            "tag": "62-GAS-FLOWRATE",
+            "description": "Gas Export Flow Rate",
+            "parent_id": 2,
+            "created_at": "2026-01-31T23:01:58.184680",
+            "id": 6,
+            "level_type": "Variable"
+        },
+        {
+            "tag": "62-PT-1101",
+            "description": "Pressure Transmitter - Gas Export",
+            "parent_id": 4,
+            "created_at": "2026-01-31T23:01:58.190509",
+            "id": 7,
+            "level_type": "Device"
+        },
+        {
+            "tag": "62-TT-1102",
+            "description": "Temperature Transmitter - Gas Export",
+            "parent_id": 5,
+            "created_at": "2026-01-31T23:01:58.190511",
+            "id": 8,
+            "level_type": "Device"
+        },
+        {
+            "tag": "62-FT-1103",
+            "description": "Flow Transmitter - Gas Export USM",
+            "parent_id": 6,
+            "created_at": "2026-01-31T23:01:58.190512",
+            "id": 9,
+            "level_type": "Device"
+        }
+    ],
+    "attribute_definitions": [
+        {
+            "id": 1,
+            "type": "Numerical",
+            "validation_rules": null,
+            "created_at": "2026-01-31T23:01:58.197377",
+            "unit": "months",
+            "name": "Calibration Frequency",
+            "description": "How often device needs calibration",
+            "entity_type": "DEVICE_TYPE"
+        },
+        {
+            "id": 2,
+            "type": "Text",
+            "validation_rules": null,
+            "created_at": "2026-01-31T23:01:58.197379",
+            "unit": null,
+            "name": "Manufacturer",
+            "description": "Equipment manufacturer",
+            "entity_type": "DEVICE_TYPE"
+        },
+        {
+            "id": 3,
+            "type": "Text",
+            "validation_rules": null,
+            "created_at": "2026-01-31T23:01:58.197379",
+            "unit": null,
+            "name": "Model Number",
+            "description": "Device model/part number",
+            "entity_type": "DEVICE_TYPE"
+        },
+        {
+            "id": 4,
+            "type": "Choice",
+            "validation_rules": "{\"choices\": [\"0.1%\", \"0.2%\", \"0.5%\", \"1.0%\"]}",
+            "created_at": "2026-01-31T23:01:58.197379",
+            "unit": null,
+            "name": "Accuracy Class",
+            "description": "Metrological accuracy classification",
+            "entity_type": "DEVICE_TYPE"
+        },
+        {
+            "id": 5,
+            "type": "Text",
+            "validation_rules": null,
+            "created_at": "2026-01-31T23:01:58.197380",
+            "unit": "varies",
+            "name": "Operating Range",
+            "description": "Min-Max operating range",
+            "entity_type": "DEVICE_TYPE"
+        }
+    ],
+    "attribute_values": [
+        {
+            "value": "12",
+            "id": 1,
+            "attribute_id": 1,
+            "entity_id": 7,
+            "created_at": "2026-01-31T23:01:58.205862"
+        },
+        {
+            "value": "Rosemount",
+            "id": 2,
+            "attribute_id": 2,
+            "entity_id": 7,
+            "created_at": "2026-01-31T23:01:58.205864"
+        },
+        {
+            "value": "3051S",
+            "id": 3,
+            "attribute_id": 3,
+            "entity_id": 7,
+            "created_at": "2026-01-31T23:01:58.205907"
+        },
+        {
+            "value": "0.1%",
+            "id": 4,
+            "attribute_id": 4,
+            "entity_id": 7,
+            "created_at": "2026-01-31T23:01:58.205909"
+        }
+    ],
+    "wells": [
+        {
+            "tag": "7-SEP-1D",
+            "description": "Separator Well 1D",
+            "created_at": "2026-01-31T23:01:58.215073",
+            "fpso": "FPSO SEPETIBA",
+            "id": 1
+        },
+        {
+            "tag": "7-SEP-3",
+            "description": "Separator Well 3",
+            "created_at": "2026-01-31T23:01:58.215077",
+            "fpso": "FPSO SEPETIBA",
+            "id": 2
+        },
+        {
+            "tag": "7-SEP-5A",
+            "description": "Separator Well 5A",
+            "created_at": "2026-01-31T23:01:58.215078",
+            "fpso": "FPSO SEPETIBA",
+            "id": 3
+        },
+        {
+            "tag": "7-PAR-2",
+            "description": "Production Well 2",
+            "created_at": "2026-01-31T23:01:58.215078",
+            "fpso": "FPSO PARATY",
+            "id": 4
+        },
+        {
+            "tag": "7-PAR-4D",
+            "description": "Production Well 4D",
+            "created_at": "2026-01-31T23:01:58.215079",
+            "fpso": "FPSO PARATY",
+            "id": 5
+        },
+        {
+            "tag": "7-MAR-1",
+            "description": "Injection Well 1",
+            "created_at": "2026-01-31T23:01:58.215079",
+            "fpso": "FPSO MARIC\u00c1",
+            "id": 6
+        }
+    ],
+    "holidays": [
+        {
+            "fpso": "All",
+            "id": 1,
+            "created_at": "2026-01-31T23:01:58.222895",
+            "date": "2026-01-01",
+            "description": "New Year's Day"
+        },
+        {
+            "fpso": "All",
+            "id": 2,
+            "created_at": "2026-01-31T23:01:58.222898",
+            "date": "2026-02-16",
+            "description": "Carnival Monday"
+        },
+        {
+            "fpso": "All",
+            "id": 3,
+            "created_at": "2026-01-31T23:01:58.222898",
+            "date": "2026-02-17",
+            "description": "Carnival Tuesday"
+        },
+        {
+            "fpso": "All",
+            "id": 4,
+            "created_at": "2026-01-31T23:01:58.222898",
+            "date": "2026-04-03",
+            "description": "Good Friday"
+        },
+        {
+            "fpso": "All",
+            "id": 5,
+            "created_at": "2026-01-31T23:01:58.222899",
+            "date": "2026-04-21",
+            "description": "Tiradentes Day"
+        },
+        {
+            "fpso": "All",
+            "id": 6,
+            "created_at": "2026-01-31T23:01:58.222899",
+            "date": "2026-05-01",
+            "description": "Labor Day"
+        },
+        {
+            "fpso": "All",
+            "id": 7,
+            "created_at": "2026-01-31T23:01:58.222899",
+            "date": "2026-06-03",
+            "description": "Corpus Christi"
+        },
+        {
+            "fpso": "All",
+            "id": 8,
+            "created_at": "2026-01-31T23:01:58.222899",
+            "date": "2026-09-07",
+            "description": "Independence Day"
+        },
+        {
+            "fpso": "All",
+            "id": 9,
+            "created_at": "2026-01-31T23:01:58.222900",
+            "date": "2026-10-12",
+            "description": "Our Lady of Aparecida"
+        },
+        {
+            "fpso": "All",
+            "id": 10,
+            "created_at": "2026-01-31T23:01:58.222900",
+            "date": "2026-11-02",
+            "description": "All Souls' Day"
+        },
+        {
+            "fpso": "All",
+            "id": 11,
+            "created_at": "2026-01-31T23:01:58.222900",
+            "date": "2026-11-15",
+            "description": "Republic Day"
+        },
+        {
+            "fpso": "All",
+            "id": 12,
+            "created_at": "2026-01-31T23:01:58.222901",
+            "date": "2026-12-25",
+            "description": "Christmas Day"
+        }
+    ],
+    "stock_locations": [
+        {
+            "name": "Onshore Warehouse - Rio",
+            "description": "Main warehouse in Rio de Janeiro",
+            "created_at": "2026-01-31T23:01:58.230176",
+            "id": 1,
+            "fpso": "All"
+        },
+        {
+            "name": "FPSO SEPETIBA - Storage Room A",
+            "description": "Primary equipment storage",
+            "created_at": "2026-01-31T23:01:58.230179",
+            "id": 2,
+            "fpso": "FPSO SEPETIBA"
+        },
+        {
+            "name": "FPSO SEPETIBA - Calibration Lab",
+            "description": "Onboard calibration laboratory",
+            "created_at": "2026-01-31T23:01:58.230180",
+            "id": 3,
+            "fpso": "FPSO SEPETIBA"
+        },
+        {
+            "name": "FPSO PARATY - Storage Room B",
+            "description": "Secondary equipment storage",
+            "created_at": "2026-01-31T23:01:58.230180",
+            "id": 4,
+            "fpso": "FPSO PARATY"
+        },
+        {
+            "name": "Supplier - Emerson",
+            "description": "External supplier location",
+            "created_at": "2026-01-31T23:01:58.230181",
+            "id": 5,
+            "fpso": "All"
+        }
+    ],
+    "config_parameters": [
+        {
+            "id": 1,
+            "fpso": "All",
+            "created_at": "2026-01-31T22:33:15.405115",
+            "value": "anp.compliance@sbm.com",
+            "description": "Primary email for ANP notifications",
+            "key": "anp_notification_email"
+        },
+        {
+            "id": 2,
+            "fpso": "All",
+            "created_at": "2026-01-31T22:33:15.405121",
+            "value": "30",
+            "description": "Days before calibration due to trigger alert",
+            "key": "calibration_alert_days"
+        },
+        {
+            "id": 3,
+            "fpso": "All",
+            "created_at": "2026-01-31T22:33:15.405121",
+            "value": "15",
+            "description": "Default sampling frequency in days",
+            "key": "sampling_frequency_default"
+        },
+        {
+            "id": 4,
+            "fpso": "All",
+            "created_at": "2026-01-31T22:33:15.405122",
+            "value": "2555",
+            "description": "Days to retain historical reports (7 years)",
+            "key": "report_retention_days"
+        },
+        {
+            "id": 5,
+            "fpso": "All",
+            "created_at": "2026-01-31T22:33:15.405122",
+            "value": "true",
+            "description": "Automatically send email on failure notification approval",
+            "key": "failure_notification_auto_email"
+        },
+        {
+            "id": 6,
+            "fpso": "FPSO PARATY",
+            "created_at": "2026-01-31T22:33:15.405123",
+            "value": "GUM",
+            "description": "Uncertainty calculation method (GUM/Monte Carlo)",
+            "key": "uncertainty_calculation_method"
+        },
+        {
+            "id": 7,
+            "fpso": "All",
+            "created_at": "2026-01-31T22:33:15.405123",
+            "value": "50",
+            "description": "Maximum file upload size in MB",
+            "key": "max_file_upload_size_mb"
+        },
+        {
+            "id": 8,
+            "fpso": "All",
+            "created_at": "2026-01-31T22:33:15.405124",
+            "value": "60",
+            "description": "User session timeout in minutes",
+            "key": "session_timeout_minutes"
+        },
+        {
+            "id": 9,
+            "fpso": "FPSO PARATY",
+            "created_at": "2026-01-31T22:33:15.405124",
+            "value": "62-FT-1103",
+            "description": "Primary gas export fiscal meter tag",
+            "key": "gas_export_meter_id"
+        },
+        {
+            "id": 10,
+            "fpso": "FPSO SEPETIBA",
+            "created_at": "2026-01-31T22:33:15.405125",
+            "value": "62-FT-2201",
+            "description": "Primary oil export fiscal meter tag",
+            "key": "oil_export_meter_id"
+        },
+        {
+            "id": 11,
+            "fpso": "All",
+            "created_at": "2026-01-31T22:51:43.409755",
+            "value": "1",
+            "description": "Flow meter proving frequency in months",
+            "key": "flow_meter_proving_freq"
+        },
+        {
+            "id": 12,
+            "fpso": "All",
+            "created_at": "2026-01-31T22:51:43.409757",
+            "value": "7",
+            "description": "Default sampling frequency in days",
+            "key": "sampling_freq_days"
+        },
+        {
+            "id": 13,
+            "fpso": "All",
+            "created_at": "2026-01-31T22:51:43.409758",
+            "value": "FPSO SEPETIBA Metering",
+            "description": "Metering system name",
+            "key": "system_name"
+        },
+        {
+            "id": 14,
+            "fpso": "All",
+            "created_at": "2026-01-31T22:51:43.409758",
+            "value": "SBM Offshore",
+            "description": "Operator company name",
+            "key": "operator_name"
+        },
+        {
+            "id": 15,
+            "fpso": "SEPETIBA",
+            "created_at": "2026-01-31T22:56:51.019510",
+            "value": "FPSO SEPETIBA Metering",
+            "description": null,
+            "key": "system_name"
+        }
+    ],
+    "maintenance_columns": [
+        {
+            "id": 1,
+            "name": "Backlog",
+            "order": 0
+        },
+        {
+            "id": 2,
+            "name": "In Progress",
+            "order": 1
+        },
+        {
+            "id": 3,
+            "name": "Review",
+            "order": 2
+        },
+        {
+            "id": 4,
+            "name": "Done",
+            "order": 3
+        }
+    ],
+    "maintenance_labels": [
+        {
+            "name": "Urgent",
+            "color": "#EF4444",
+            "id": 1
+        },
+        {
+            "name": "Calibration",
+            "color": "#3B82F6",
+            "id": 2
+        },
+        {
+            "name": "Inspection",
+            "color": "#10B981",
+            "id": 3
+        },
+        {
+            "name": "Repair",
+            "color": "#F59E0B",
+            "id": 4
+        },
+        {
+            "name": "Preventive",
+            "color": "#8B5CF6",
+            "id": 5
+        }
+    ],
+    "maintenance_cards": [
+        {
+            "id": 1,
+            "fpso": "FPSO PARATY",
+            "due_date": "2026-02-03T19:17:56.589470",
+            "column_id": 2,
+            "title": "Replace Flow Meter Transducer",
+            "description": "USM transducer showing signal degradation. Need to replace and recalibrate.",
+            "status": "Not Completed",
+            "responsible": "Daniel Bernoulli",
+            "created_at": "2026-01-31T22:17:56.593606"
+        },
+        {
+            "id": 2,
+            "fpso": "FPSO SEPETIBA",
+            "due_date": "2026-02-07T19:17:56.589581",
+            "column_id": 1,
+            "title": "Calibrate Pressure Transmitters",
+            "description": "Annual calibration of PT-1101 and PT-1102 as per ANP requirements.",
+            "status": "Not Completed",
+            "responsible": "Carlos Silva",
+            "created_at": "2026-01-31T22:17:56.593609"
+        },
+        {
+            "id": 3,
+            "fpso": "FPSO MARIC\u00c1",
+            "due_date": "2026-02-14T19:17:56.589613",
+            "column_id": 1,
+            "title": "Update Flow Computer Firmware",
+            "description": "Apply security patch v2.4.1 to all flow computers.",
+            "status": "Not Completed",
+            "responsible": "Roberto Lima",
+            "created_at": "2026-01-31T22:17:56.593610"
+        },
+        {
+            "id": 4,
+            "fpso": "FPSO PARATY",
+            "due_date": null,
+            "column_id": 4,
+            "title": "Inspect Metering Skid",
+            "description": "Quarterly visual inspection completed successfully.",
+            "status": "Completed",
+            "responsible": "Daniel Bernoulli",
+            "created_at": "2026-01-31T22:17:56.594790"
+        },
+        {
+            "id": 5,
+            "fpso": "FPSO ILHABELA",
+            "due_date": "2026-01-29T19:17:56.589662",
+            "column_id": 1,
+            "title": "OVERDUE: Emergency Valve Inspection",
+            "description": "Critical safety valve inspection overdue by 2 days.",
+            "status": "Not Completed",
+            "responsible": "Jo\u00e3o Oliveira",
+            "created_at": "2026-01-31T22:17:56.595053"
+        },
+        {
+            "id": 6,
+            "fpso": "FPSO SAQUAREMA",
+            "due_date": "2026-02-05T19:17:56.589691",
+            "column_id": 3,
+            "title": "Gas Chromatograph Maintenance",
+            "description": "Routine maintenance and calibration verification.",
+            "status": "Not Completed",
+            "responsible": "Ana Costa",
+            "created_at": "2026-01-31T22:17:56.595054"
+        }
+    ],
+    "maintenance_comments": [],
+    "maintenance_attachments": [],
+    "card_label_association": [
+        {
+            "card_id": 5,
+            "label_id": 1
+        },
+        {
+            "card_id": 5,
+            "label_id": 3
+        },
+        {
+            "card_id": 1,
+            "label_id": 1
+        },
+        {
+            "card_id": 1,
+            "label_id": 4
+        },
+        {
+            "card_id": 6,
+            "label_id": 2
+        },
+        {
+            "card_id": 6,
+            "label_id": 5
+        },
+        {
+            "card_id": 3,
+            "label_id": 5
+        },
+        {
+            "card_id": 4,
+            "label_id": 3
+        },
+        {
+            "card_id": 2,
+            "label_id": 2
+        }
+    ],
+    "card_connection_association": [
+        {
+            "card_id": 2,
+            "connected_card_id": 3
+        }
+    ],
+    "card_equipment_association": [],
+    "card_tag_association": []
+}

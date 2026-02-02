@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import { Loader2, Save } from "lucide-react"
-import { fetchAttributeDefinitions, fetchAttributeValues, setAttributeValue } from "@/lib/api"
+import { apiFetch } from "@/lib/api"
 
 interface AttributeDefinition {
   id: number
@@ -41,17 +41,23 @@ export function PropertyEditor({ nodeId, nodeTag }: PropertyEditorProps) {
     setLoading(true)
     try {
       // 1. Fetch all definitions (Ideally filtered by entity_type, but for now all)
-      const defData = await fetchAttributeDefinitions()
-      setDefinitions(defData)
+      const defRes = await apiFetch("/config/attributes")
+      const valRes = await apiFetch(`/config/values/${nodeId}`)
 
-      // 2. Fetch existing values for this node
-      const valData: AttributeValue[] = await fetchAttributeValues(nodeId!)
+      if (defRes.ok && valRes.ok) {
+        const defData = await defRes.json()
+        setDefinitions(defData)
 
-      const valMap: Record<number, string> = {}
-      valData.forEach(v => {
-        valMap[v.attribute_id] = v.value
-      })
-      setValues(valMap)
+        const valData: AttributeValue[] = await valRes.json()
+
+        const valMap: Record<number, string> = {}
+        valData.forEach(v => {
+          valMap[v.attribute_id] = v.value
+        })
+        setValues(valMap)
+      } else {
+        toast.error("Failed to load property data")
+      }
     } catch (error) {
       toast.error("Failed to load property data")
     } finally {
@@ -62,13 +68,21 @@ export function PropertyEditor({ nodeId, nodeTag }: PropertyEditorProps) {
   const handleSave = async (attrId: number) => {
     setSaving(true)
     try {
-      await setAttributeValue({
-        attribute_id: attrId,
-        entity_id: nodeId,
-        value: values[attrId] || ""
+      const res = await apiFetch("/config/values", {
+        method: "POST",
+        body: JSON.stringify({
+          attribute_id: attrId,
+          entity_id: nodeId,
+          value: values[attrId] || ""
+        })
       })
 
-      toast.success("Property updated")
+      if (res.ok) {
+        toast.success("Property updated")
+      } else {
+        const errData = await res.json().catch(() => ({}))
+        throw new Error(errData.detail || "Validation failed")
+      }
     } catch (error: any) {
       toast.error(error.message || "Validation failed")
     } finally {

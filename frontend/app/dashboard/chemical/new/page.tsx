@@ -23,12 +23,9 @@ import {
   Save,
   Plus
 } from "lucide-react"
-import {
-  fetchSamplePoints,
-  createSample
-} from "@/lib/api"
 import { toast } from "sonner"
 import { Textarea } from "@/components/ui/textarea"
+import { apiFetch } from "@/lib/api"
 
 export default function NewSamplePage() {
   const router = useRouter()
@@ -51,8 +48,12 @@ export default function NewSamplePage() {
   const loadPoints = async () => {
     try {
       setIsLoadingPoints(true)
-      const data = await fetchSamplePoints()
-      setSamplePoints(data)
+      const res = await apiFetch("/chemical/points")
+      if (res.ok) {
+        setSamplePoints(await res.json())
+      } else {
+        toast.error("Failed to load sample points")
+      }
     } catch (error) {
       toast.error("Failed to load sample points")
     } finally {
@@ -71,14 +72,21 @@ export default function NewSamplePage() {
 
       const selectedPoint = samplePoints.find(p => p.id === parseInt(formData.sample_point_id))
 
-      await createSample({
-        ...formData,
-        sample_point_id: parseInt(formData.sample_point_id),
-        type: selectedPoint?.fluid_type || "Gas"
+      const res = await apiFetch("/chemical/samples", {
+        method: "POST",
+        body: JSON.stringify({
+          ...formData,
+          sample_point_id: parseInt(formData.sample_point_id),
+          type: selectedPoint?.fluid_type || "Gas"
+        })
       })
 
-      toast.success("Sample planned successfully")
-      router.push("/dashboard/chemical")
+      if (res.ok) {
+        toast.success("Sample planned successfully")
+        router.push("/dashboard/chemical")
+      } else {
+        throw new Error("Failed")
+      }
     } catch (error) {
       toast.error("Failed to plan sample")
     } finally {

@@ -30,14 +30,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  fetchCalibrationCampaigns,
-  fetchCalibrationTasks,
-  createCalibrationCampaign,
-  createCalibrationTask,
-  submitCalibrationResults
-} from "@/lib/api"
 import { toast } from "sonner"
+import { apiFetch } from "@/lib/api"
 
 interface CalibrationTask {
   id: number
@@ -88,12 +82,18 @@ export default function MetrologicalConfirmationPage() {
   const loadData = async () => {
     try {
       setIsLoading(true)
-      const [campaignsData, tasksData] = await Promise.all([
-        fetchCalibrationCampaigns(),
-        fetchCalibrationTasks(selectedCampaign || undefined)
+
+      const [campaignsRes, tasksRes] = await Promise.all([
+        apiFetch("/calibration/campaigns"),
+        apiFetch(`/calibration/tasks${selectedCampaign ? `?campaign_id=${selectedCampaign}` : ''}`)
       ])
-      setCampaigns(campaignsData)
-      setTasks(tasksData)
+
+      if (campaignsRes.ok && tasksRes.ok) {
+        setCampaigns(await campaignsRes.json())
+        setTasks(await tasksRes.json())
+      } else {
+        toast.error("Failed to fetch calibration data")
+      }
     } catch (error) {
       toast.error("Failed to fetch calibration data")
     } finally {
@@ -103,17 +103,25 @@ export default function MetrologicalConfirmationPage() {
 
   const handleCreateCampaign = async () => {
     try {
-      await createCalibrationCampaign(newCampaign)
-      toast.success(`Campaign "${newCampaign.name}" created successfully`)
-      setIsCampaignDialogOpen(false)
-      setNewCampaign({
-        name: "",
-        fpso_name: "FPSO SEPETIBA",
-        responsible: "",
-        start_date: "",
-        end_date: ""
+      const res = await apiFetch("/calibration/campaigns", {
+        method: "POST",
+        body: JSON.stringify(newCampaign)
       })
-      loadData()
+
+      if (res.ok) {
+        toast.success(`Campaign "${newCampaign.name}" created successfully`)
+        setIsCampaignDialogOpen(false)
+        setNewCampaign({
+          name: "",
+          fpso_name: "FPSO SEPETIBA",
+          responsible: "",
+          start_date: "",
+          end_date: ""
+        })
+        loadData()
+      } else {
+        throw new Error("Failed")
+      }
     } catch (error) {
       toast.error("Failed to create campaign")
     }
@@ -123,17 +131,23 @@ export default function MetrologicalConfirmationPage() {
     if (!selectedTask) return
 
     try {
-      await submitCalibrationResults(selectedTask.id, {
-        standard_reading: parseFloat(readings.standard),
-        equipment_reading: parseFloat(readings.equipment),
-        uncertainty: readings.uncertainty ? parseFloat(readings.uncertainty) : undefined
+      const res = await apiFetch(`/calibration/tasks/${selectedTask.id}/results`, {
+        method: "POST",
+        body: JSON.stringify({
+          standard_reading: parseFloat(readings.standard),
+          equipment_reading: parseFloat(readings.equipment),
+          uncertainty: readings.uncertainty ? parseFloat(readings.uncertainty) : undefined
+        })
       })
 
-      toast.success(`Calibration results for ${selectedTask.tag} saved successfully`)
-
-      setIsInputOpen(false)
-      setReadings({ standard: "", equipment: "", uncertainty: "" })
-      loadData()
+      if (res.ok) {
+        toast.success(`Calibration results for ${selectedTask.tag} saved successfully`)
+        setIsInputOpen(false)
+        setReadings({ standard: "", equipment: "", uncertainty: "" })
+        loadData()
+      } else {
+        throw new Error("Failed")
+      }
     } catch (error) {
       toast.error("Failed to save results")
     }

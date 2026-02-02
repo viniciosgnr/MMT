@@ -27,7 +27,7 @@ import {
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
-import { fetchEquipments as fetchEquipmentsAPI, createEquipment } from "@/lib/api"
+import { apiFetch } from "@/lib/api"
 
 export default function EquipmentInventory() {
   const [equipments, setEquipments] = useState<any[]>([])
@@ -53,10 +53,16 @@ export default function EquipmentInventory() {
   async function fetchEquipments() {
     try {
       setLoading(true)
-      const data = await fetchEquipmentsAPI()
-      if (Array.isArray(data)) {
-        setEquipments(data)
+      const res = await apiFetch("/equipment")
+      if (res.ok) {
+        const data = await res.json()
+        if (Array.isArray(data)) {
+          setEquipments(data)
+        } else {
+          setEquipments([])
+        }
       } else {
+        toast.error("Failed to load equipment inventory")
         setEquipments([])
       }
     } catch (error) {
@@ -75,7 +81,13 @@ export default function EquipmentInventory() {
 
     try {
       setSubmitting(true)
-      await createEquipment(form)
+      const res = await apiFetch("/equipment", {
+        method: "POST",
+        body: JSON.stringify(form)
+      })
+
+      if (!res.ok) throw new Error("Failed to register equipment")
+
       toast.success("Equipment registered successfully!")
       setIsDialogOpen(false)
       fetchEquipments()

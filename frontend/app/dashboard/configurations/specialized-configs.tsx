@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Plus, Trash2, Calendar as CalendarIcon, MapPin, Droplets } from "lucide-react"
-import { fetchWells, createWell, fetchHolidays, createHoliday, fetchStockLocations, createStockLocation } from "@/lib/api"
+import { apiFetch } from "@/lib/api"
 import { toast } from "sonner"
 import { format } from "date-fns"
 
@@ -27,14 +27,15 @@ export function SpecializedConfigs() {
   const loadAll = async () => {
     setLoading(true)
     try {
-      const [w, h, s] = await Promise.all([
-        fetchWells(),
-        fetchHolidays(),
-        fetchStockLocations()
+      const [wRes, hRes, sRes] = await Promise.all([
+        apiFetch("/config/wells"),
+        apiFetch("/config/holidays"),
+        apiFetch("/config/stock-locations")
       ])
-      setWells(Array.isArray(w) ? w : [])
-      setHolidays(Array.isArray(h) ? h : [])
-      setStockLocations(Array.isArray(s) ? s : [])
+
+      setWells(wRes.ok ? await wRes.json() : [])
+      setHolidays(hRes.ok ? await hRes.json() : [])
+      setStockLocations(sRes.ok ? await sRes.json() : [])
     } catch (error) {
       toast.error("Failed to load specialized configurations")
     } finally {
@@ -49,31 +50,52 @@ export function SpecializedConfigs() {
   const handleCreateWell = async () => {
     if (!newWellTag) return
     try {
-      await createWell({ tag: newWellTag, description: "", fpso: "SEPETIBA" })
-      toast.success("Well added")
-      setNewWellTag("")
-      loadAll()
+      const res = await apiFetch("/config/wells", {
+        method: "POST",
+        body: JSON.stringify({ tag: newWellTag, description: "", fpso: "SEPETIBA" })
+      })
+      if (res.ok) {
+        toast.success("Well added")
+        setNewWellTag("")
+        loadAll()
+      } else {
+        throw new Error("Failed")
+      }
     } catch (error) { toast.error("Failed to add well") }
   }
 
   const handleCreateHoliday = async () => {
     if (!newHolidayDate || !newHolidayDesc) return
     try {
-      await createHoliday({ date: new Date(newHolidayDate).toISOString(), description: newHolidayDesc, fpso: "SEPETIBA" })
-      toast.success("Holiday added")
-      setNewHolidayDate("")
-      setNewHolidayDesc("")
-      loadAll()
+      const res = await apiFetch("/config/holidays", {
+        method: "POST",
+        body: JSON.stringify({ date: new Date(newHolidayDate).toISOString(), description: newHolidayDesc, fpso: "SEPETIBA" })
+      })
+      if (res.ok) {
+        toast.success("Holiday added")
+        setNewHolidayDate("")
+        setNewHolidayDesc("")
+        loadAll()
+      } else {
+        throw new Error("Failed")
+      }
     } catch (error) { toast.error("Failed to add holiday") }
   }
 
   const handleCreateStock = async () => {
     if (!newStockName) return
     try {
-      await createStockLocation({ name: newStockName, description: "", fpso: "SEPETIBA" })
-      toast.success("Stock location added")
-      setNewStockName("")
-      loadAll()
+      const res = await apiFetch("/config/stock-locations", {
+        method: "POST",
+        body: JSON.stringify({ name: newStockName, description: "", fpso: "SEPETIBA" })
+      })
+      if (res.ok) {
+        toast.success("Stock location added")
+        setNewStockName("")
+        loadAll()
+      } else {
+        throw new Error("Failed")
+      }
     } catch (error) { toast.error("Failed to add stock location") }
   }
 

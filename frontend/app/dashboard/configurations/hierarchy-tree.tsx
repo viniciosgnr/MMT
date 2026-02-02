@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react"
 import { ChevronRight, ChevronDown, Package, Layers, Cpu, Radio, Plus, Trash2, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { fetchHierarchyTree, createHierarchyNode, deleteHierarchyNode } from "@/lib/api"
+import { apiFetch } from "@/lib/api"
 import { toast } from "sonner"
 import {
   Dialog,
@@ -68,18 +68,26 @@ const TreeNode = ({
   const handleCreate = async () => {
     try {
       if (!newTag) return
-      await createHierarchyNode({
-        tag: newTag,
-        description: newDesc,
-        level_type: nextTarget,
-        parent_id: node.id
+      const res = await apiFetch("/config/hierarchy/nodes", {
+        method: "POST",
+        body: JSON.stringify({
+          tag: newTag,
+          description: newDesc,
+          level_type: nextTarget,
+          parent_id: node.id
+        })
       })
-      toast.success(`${nextTarget} created successfully`)
-      setIsAdding(false)
-      setNewTag("")
-      setNewDesc("")
-      onRefresh()
-      setIsOpen(true)
+
+      if (res.ok) {
+        toast.success(`${nextTarget} created successfully`)
+        setIsAdding(false)
+        setNewTag("")
+        setNewDesc("")
+        onRefresh()
+        setIsOpen(true)
+      } else {
+        throw new Error("Failed")
+      }
     } catch (error) {
       toast.error("Failed to create node")
     }
@@ -89,9 +97,13 @@ const TreeNode = ({
     e.stopPropagation()
     if (!confirm(`Are you sure you want to delete ${node.tag}?`)) return
     try {
-      await deleteHierarchyNode(node.id)
-      toast.success("Node deleted successfully")
-      onRefresh()
+      const res = await apiFetch(`/config/hierarchy/nodes/${node.id}`, { method: "DELETE" })
+      if (res.ok) {
+        toast.success("Node deleted successfully")
+        onRefresh()
+      } else {
+        throw new Error("Failed")
+      }
     } catch (error: any) {
       toast.error(error.message || "Failed to delete node")
     }
@@ -191,8 +203,12 @@ export function HierarchyTree({ onSelect, selectedId }: HierarchyTreeProps) {
   const loadTree = useCallback(async () => {
     setLoading(true)
     try {
-      const tree = await fetchHierarchyTree()
-      setData(tree)
+      const res = await apiFetch("/config/hierarchy/tree")
+      if (res.ok) {
+        setData(await res.json())
+      } else {
+        throw new Error("Failed")
+      }
     } catch (err) {
       console.error("Failed to fetch tree:", err)
       toast.error("Failed to load asset hierarchy")
@@ -208,16 +224,24 @@ export function HierarchyTree({ onSelect, selectedId }: HierarchyTreeProps) {
   const handleCreateRoot = async () => {
     try {
       if (!newTag) return
-      await createHierarchyNode({
-        tag: newTag,
-        description: "",
-        level_type: "FPSO",
-        parent_id: null
+      const res = await apiFetch("/config/hierarchy/nodes", {
+        method: "POST",
+        body: JSON.stringify({
+          tag: newTag,
+          description: "",
+          level_type: "FPSO",
+          parent_id: null
+        })
       })
-      toast.success("FPSO created successfully")
-      setIsAddingRoot(false)
-      setNewTag("")
-      loadTree()
+
+      if (res.ok) {
+        toast.success("FPSO created successfully")
+        setIsAddingRoot(false)
+        setNewTag("")
+        loadTree()
+      } else {
+        throw new Error("Failed")
+      }
     } catch (error) {
       toast.error("Failed to create FPSO")
     }

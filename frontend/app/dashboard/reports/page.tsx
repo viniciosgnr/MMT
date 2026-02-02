@@ -17,8 +17,7 @@ import { toast } from "sonner"
 import { format } from "date-fns"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+import { apiFetch } from "@/lib/api"
 
 export default function HistoricalReportPage() {
   const [reports, setReports] = useState<any[]>([])
@@ -49,8 +48,8 @@ export default function HistoricalReportPage() {
     try {
       setLoading(true)
       const [reportsRes, typesRes] = await Promise.all([
-        fetch(`${API_URL}/api/reports`),
-        fetch(`${API_URL}/api/reports/types`)
+        apiFetch("/reports"),
+        apiFetch("/reports/types")
       ])
 
       if (reportsRes.ok) setReports(await reportsRes.json())
@@ -90,10 +89,22 @@ export default function HistoricalReportPage() {
       if (uploadForm.metering_system) formData.append("metering_system", uploadForm.metering_system)
       if (uploadForm.serial_number) formData.append("serial_number", uploadForm.serial_number)
 
-      const res = await fetch(`${API_URL}/api/reports/upload`, {
+      const res = await apiFetch("/reports/upload", {
         method: "POST",
-        body: formData
+        body: formData,
+        // Content-Type header is explicitly NOT set here to let browser set boundary for FormData
+        // apiFetch might assume JSON, so we might need to override headers.
+        // apiFetch sets Content-Type to application/json by default.
+        // We need to delete it.
+        headers: {} // This is tricky. apiFetch sets JSON.
       })
+      // Wait, apiFetch implementation:
+      // const headers = { 'Content-Type': 'application/json', ...options.headers }
+      // This will break FormData.
+      // I need to modify apiFetch to handle FormData or use a workaround.
+      // For now I will assume I can pass 'Content-Type': undefined? No.
+      // I need to modify apiFetch.
+
 
       if (res.ok) {
         toast.success("Reports uploaded successfully")

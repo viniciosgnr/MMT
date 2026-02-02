@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select"
 import { ArrowRight, Check, Hammer, AlertTriangle } from "lucide-react"
 import { toast } from "sonner"
-import { fetchEquipments, fetchInstrumentTags, installEquipment } from "@/lib/api"
+import { apiFetch } from "@/lib/api"
 
 // Requirements from Spec Appendix D (Simplified for MVP Visualization)
 const CHECKLIST_ITEMS = [
@@ -61,12 +61,15 @@ export function InstallationWizard({ onSuccess }: { onSuccess: () => void }) {
   const loadData = async () => {
     try {
       // Fetch only available equipment (simplified logic: filters could be better in backend)
-      const eqs = await fetchEquipments()
-      // Filter for active and presumably not installed (backend check handles final validation)
-      setEquipments(eqs)
+      const eqRes = await apiFetch("/equipment")
+      if (eqRes.ok) {
+        setEquipments(await eqRes.json())
+      }
 
-      const tgs = await fetchInstrumentTags()
-      setTags(tgs)
+      const tagRes = await apiFetch("/equipment/tags")
+      if (tagRes.ok) {
+        setTags(await tagRes.json())
+      }
     } catch (e) {
       console.error(e)
       toast.error("Failed to load resources")
@@ -91,19 +94,26 @@ export function InstallationWizard({ onSuccess }: { onSuccess: () => void }) {
 
     setLoading(true)
     try {
-      await installEquipment({
-        equipment_id: parseInt(selectedEq),
-        tag_id: parseInt(selectedTag),
-        installed_by: installedBy,
-        // Send checklist data as serialized JSON string
-        // In a real app, this would be validated by Schema
-        // We added `checklist_data` to schemas.py
-        checklist_data: JSON.stringify(checklist)
-      } as any) // Type casting as we patched the schema but maybe not re-generated client types
+      const res = await apiFetch("/equipment/install", {
+        method: "POST",
+        body: JSON.stringify({
+          equipment_id: parseInt(selectedEq),
+          tag_id: parseInt(selectedTag),
+          installed_by: installedBy,
+          // Send checklist data as serialized JSON string
+          // In a real app, this would be validated by Schema
+          // We added `checklist_data` to schemas.py
+          checklist_data: JSON.stringify(checklist)
+        })
+      })
 
-      toast.success("Equipment successfully installed")
-      setOpen(false)
-      onSuccess()
+      if (res.ok) {
+        toast.success("Equipment successfully installed")
+        setOpen(false)
+        onSuccess()
+      } else {
+        throw new Error("Installation failed")
+      }
     } catch (error) {
       console.error(error)
       toast.error("Installation failed")

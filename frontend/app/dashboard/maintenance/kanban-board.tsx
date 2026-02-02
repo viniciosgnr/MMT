@@ -29,6 +29,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { CardDetails } from "./card-details"
+import { apiFetch } from "@/lib/api"
+import { createClient } from "@/utils/supabase/client"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
 
@@ -49,8 +51,8 @@ export function KanbanBoard({ search, fpsoFilter, onAddNew }: KanbanBoardProps) 
     try {
       setLoading(true)
       const [colsRes, cardsRes] = await Promise.all([
-        fetch(`${API_URL}/maintenance/columns`),
-        fetch(`${API_URL}/maintenance/cards?search=${search}${fpsoFilter ? `&fpso=${fpsoFilter}` : ""}`)
+        apiFetch(`/maintenance/columns`),
+        apiFetch(`/maintenance/cards?search=${search}${fpsoFilter ? `&fpso=${fpsoFilter}` : ""}`)
       ])
 
       if (!colsRes.ok || !cardsRes.ok) {
@@ -84,11 +86,48 @@ export function KanbanBoard({ search, fpsoFilter, onAddNew }: KanbanBoardProps) 
     fetchData()
   }, [search, fpsoFilter])
 
+  useEffect(() => {
+    const supabase = createClient()
+    const channel = supabase
+      .channel('kanban-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'maintenance_cards' },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            // Optimistically add new card with empty relations
+            const newCard = {
+              ...payload.new,
+              labels: [],
+              comments: [],
+              attachments: [],
+              linked_equipments: [],
+              linked_tags: [],
+              connections: []
+            }
+            setCards((prev) => [...prev, newCard])
+          } else if (payload.eventType === 'UPDATE') {
+            // Update existing card, preserving relations (labels, etc.)
+            setCards((prev) =>
+              prev.map((card) => (card.id === payload.new.id ? { ...card, ...payload.new } : card))
+            )
+          } else if (payload.eventType === 'DELETE') {
+            // Remove deleted card
+            setCards((prev) => prev.filter((card) => card.id !== payload.old.id))
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
+
   const moveCard = async (cardId: number, newColumnId: number) => {
     try {
-      const res = await fetch(`${API_URL}/maintenance/cards/${cardId}`, {
+      const res = await apiFetch(`/maintenance/cards/${cardId}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ column_id: newColumnId })
       })
       if (res.ok) fetchData()

@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { toast } from "sonner"
+import { apiFetch } from "@/lib/api"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
 
@@ -43,7 +44,7 @@ export function NewCardDialog({ open, onOpenChange, onCreated, initialColumnId =
 
   useEffect(() => {
     if (open) {
-      fetch(`${API_URL}/maintenance/columns`)
+      apiFetch("/maintenance/columns")
         .then(res => res.json())
         .then(data => {
           setColumns(data)
@@ -52,7 +53,7 @@ export function NewCardDialog({ open, onOpenChange, onCreated, initialColumnId =
           } else if (data.length > 0 && !formData.column_id) {
             setFormData(prev => ({ ...prev, column_id: data[0].id.toString() }))
           }
-        })
+        }).catch(err => console.error("Failed to load columns", err))
     }
   }, [open, initialColumnId])
 
@@ -65,9 +66,8 @@ export function NewCardDialog({ open, onOpenChange, onCreated, initialColumnId =
 
     try {
       setLoading(true)
-      const res = await fetch(`${API_URL}/maintenance/cards`, {
+      const res = await apiFetch("/maintenance/cards", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
           column_id: parseInt(formData.column_id)

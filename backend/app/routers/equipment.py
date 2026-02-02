@@ -4,6 +4,7 @@ from typing import List, Optional
 from datetime import datetime
 from .. import models, database
 from ..schemas import schemas
+from ..dependencies import get_current_user
 
 router = APIRouter(
     prefix="/api/equipment",
@@ -13,7 +14,7 @@ router = APIRouter(
 # --- Physical Equipment (Serial Numbers) ---
 
 @router.post("/", response_model=schemas.Equipment)
-def create_equipment(equipment: schemas.EquipmentCreate, db: Session = Depends(database.get_db)):
+def create_equipment(equipment: schemas.EquipmentCreate, db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
     db_equipment = models.Equipment(**equipment.model_dump())
     db.add(db_equipment)
     db.commit()
@@ -40,7 +41,7 @@ def read_equipments(
 # IMPORTANT: These routes must come BEFORE /{equipment_id} to avoid conflicts
 
 @router.post("/tags", response_model=schemas.InstrumentTag)
-def create_tag(tag: schemas.InstrumentTagCreate, db: Session = Depends(database.get_db)):
+def create_tag(tag: schemas.InstrumentTagCreate, db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
     db_tag = models.InstrumentTag(**tag.model_dump())
     db.add(db_tag)
     db.commit()
@@ -66,7 +67,8 @@ def read_equipment(equipment_id: int, db: Session = Depends(database.get_db)):
 @router.post("/install", response_model=schemas.EquipmentTagInstallation)
 def install_equipment(
     installation: schemas.EquipmentTagInstallationCreate, 
-    db: Session = Depends(database.get_db)
+    db: Session = Depends(database.get_db),
+    current_user = Depends(get_current_user)
 ):
     # Verify equipment and tag exist
     eq = db.query(models.Equipment).filter(models.Equipment.id == installation.equipment_id).first()
@@ -91,7 +93,7 @@ def install_equipment(
     return db_install
 
 @router.post("/remove/{installation_id}")
-def remove_equipment(installation_id: int, db: Session = Depends(database.get_db)):
+def remove_equipment(installation_id: int, db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
     db_install = db.query(models.EquipmentTagInstallation).filter(models.EquipmentTagInstallation.id == installation_id).first()
     if not db_install:
         raise HTTPException(status_code=404, detail="Installation record not found")
@@ -116,7 +118,7 @@ def get_tag_history(tag_id: int, db: Session = Depends(database.get_db)):
 # --- Certificates ---
 
 @router.post("/certificates", response_model=schemas.EquipmentCertificate)
-def add_certificate(cert: schemas.EquipmentCertificateCreate, db: Session = Depends(database.get_db)):
+def add_certificate(cert: schemas.EquipmentCertificateCreate, db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
     db_cert = models.EquipmentCertificate(**cert.model_dump())
     db.add(db_cert)
     db.commit()

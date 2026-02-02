@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Plus, Trash2, ShieldCheck, Settings2, RefreshCw } from "lucide-react"
-import { fetchAttributeDefinitions, createAttributeDefinition } from "@/lib/api"
+import { apiFetch } from "@/lib/api"
 import { toast } from "sonner"
 import {
   Dialog,
@@ -38,8 +38,12 @@ export function AttributeRules() {
   const loadAttributes = async () => {
     setLoading(true)
     try {
-      const data = await fetchAttributeDefinitions()
-      setAttributes(data)
+      const res = await apiFetch("/config/attributes")
+      if (res.ok) {
+        setAttributes(await res.json())
+      } else {
+        toast.error("Failed to load attribute definitions")
+      }
     } catch (err) {
       toast.error("Failed to load attribute definitions")
     } finally {
@@ -54,22 +58,30 @@ export function AttributeRules() {
   const handleCreate = async () => {
     try {
       if (!name) return
-      await createAttributeDefinition({
-        name,
-        description: desc,
-        type,
-        unit,
-        validation_rules: rules,
-        entity_type: "DEVICE_TYPE" // Default for now
+      const res = await apiFetch("/config/attributes", {
+        method: "POST",
+        body: JSON.stringify({
+          name,
+          description: desc,
+          type,
+          unit,
+          validation_rules: rules,
+          entity_type: "DEVICE_TYPE" // Default for now
+        })
       })
-      toast.success("Attribute defined successfully")
-      setIsAdding(false)
-      setName("")
-      setDesc("")
-      setType("Text")
-      setUnit("")
-      setRules("")
-      loadAttributes()
+
+      if (res.ok) {
+        toast.success("Attribute defined successfully")
+        setIsAdding(false)
+        setName("")
+        setDesc("")
+        setType("Text")
+        setUnit("")
+        setRules("")
+        loadAttributes()
+      } else {
+        throw new Error("Failed")
+      }
     } catch (error) {
       toast.error("Failed to define attribute")
     }

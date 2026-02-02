@@ -21,6 +21,7 @@ import { AlertCircle, CheckCircle2, Clock, Download, Mail, Plus, ShieldCheck, Fi
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
+import { apiFetch } from "@/lib/api"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
 
@@ -51,7 +52,7 @@ export default function FailureNotificationPage() {
 
   const fetchFailures = async () => {
     try {
-      const res = await fetch(`${API_URL}/failures`)
+      const res = await apiFetch("/failures")
       if (res.ok) setFailures(await res.json())
     } catch (e) { toast.error("Failed to load failures") }
     finally { setLoading(false) }
@@ -59,16 +60,15 @@ export default function FailureNotificationPage() {
 
   const fetchEmailLists = async () => {
     try {
-      const res = await fetch(`${API_URL}/failures/config/emails`)
+      const res = await apiFetch("/failures/config/emails")
       if (res.ok) setEmailLists(await res.json())
     } catch (e) { }
   }
 
   const handleCreate = async () => {
     try {
-      const res = await fetch(`${API_URL}/failures`, {
+      const res = await apiFetch("/failures", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData)
       })
       if (res.ok) {
@@ -81,9 +81,8 @@ export default function FailureNotificationPage() {
 
   const handleApprove = async (id: number) => {
     try {
-      const res = await fetch(`${API_URL}/failures/${id}/approve`, {
+      const res = await apiFetch(`/failures/${id}/approve`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ approved_by: "Marcos G. (ME)" })
       })
       if (res.ok) {
@@ -95,9 +94,8 @@ export default function FailureNotificationPage() {
 
   const handleAddEmail = async () => {
     try {
-      const res = await fetch(`${API_URL}/failures/config/emails`, {
+      const res = await apiFetch("/failures/config/emails", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ fpso_name: newEmail.fpso, email: newEmail.email })
       })
       if (res.ok) {

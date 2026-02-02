@@ -12,6 +12,7 @@ import { format } from "date-fns"
 import { Calendar as CalIcon, Paperclip } from "lucide-react"
 import { toast } from "sonner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { apiFetch } from "@/lib/api"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
 
@@ -38,7 +39,7 @@ export function ActivityActionDialog({
   const handleAction = async () => {
     setLoading(true)
     try {
-      let endpoint = `${API_URL}/planning/activities/${activity.id}`
+      let endpoint = `/planning/activities/${activity.id}`
       let body: any = {}
 
       if (mode === 'complete') {
@@ -48,9 +49,8 @@ export function ActivityActionDialog({
         body = { reason: formData.reason, attachment_url: formData.attachment, new_due_date: formData.date }
       }
 
-      const res = await fetch(endpoint, {
+      const res = await apiFetch(endpoint, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body)
       })
 
@@ -172,9 +172,8 @@ export function NewStrategyDialog({
 
     setLoading(true)
     try {
-      const res = await fetch(`${API_URL}/planning/activities`, {
+      const res = await apiFetch(`/planning/activities`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: formData.title,
           description: formData.description,

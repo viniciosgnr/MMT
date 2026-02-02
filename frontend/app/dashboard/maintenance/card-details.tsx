@@ -31,6 +31,7 @@ import {
 import { toast } from "sonner"
 import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { apiFetch } from "@/lib/api"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
 
@@ -54,7 +55,7 @@ export function CardDetails({ cardId, open, onOpenChange, onUpdated }: CardDetai
   const fetchCard = async () => {
     try {
       setLoading(true)
-      const res = await fetch(`${API_URL}/maintenance/cards/${cardId}`)
+      const res = await apiFetch(`/maintenance/cards/${cardId}`)
       if (res.ok) setCard(await res.json())
     } catch (error) {
       toast.error("Failed to load card details")
@@ -66,9 +67,9 @@ export function CardDetails({ cardId, open, onOpenChange, onUpdated }: CardDetai
   const fetchOptions = async () => {
     try {
       const [eqRes, tagRes, cardRes] = await Promise.all([
-        fetch(`${API_URL}/equipment`),
-        fetch(`${API_URL}/equipment/tags`),
-        fetch(`${API_URL}/maintenance/cards`)
+        apiFetch(`/equipment`),
+        apiFetch(`/equipment/tags`),
+        apiFetch(`/maintenance/cards`)
       ])
       if (eqRes.ok) setAvailableEquipment(await eqRes.json())
       if (tagRes.ok) setAvailableTags(await tagRes.json())
@@ -86,9 +87,8 @@ export function CardDetails({ cardId, open, onOpenChange, onUpdated }: CardDetai
   const handleUpdate = async (updates: any) => {
     try {
       setSubmitting(true)
-      const res = await fetch(`${API_URL}/maintenance/cards/${cardId}`, {
+      const res = await apiFetch(`/maintenance/cards/${cardId}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updates)
       })
       if (res.ok) {
@@ -107,9 +107,8 @@ export function CardDetails({ cardId, open, onOpenChange, onUpdated }: CardDetai
   const addComment = async () => {
     if (!comment.trim()) return
     try {
-      const res = await fetch(`${API_URL}/maintenance/cards/${cardId}/comments`, {
+      const res = await apiFetch(`/maintenance/cards/${cardId}/comments`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: comment, author: "Daniel Bernoulli" })
       })
       if (res.ok) {
