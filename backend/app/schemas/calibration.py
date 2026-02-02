@@ -8,7 +8,7 @@ class CalibrationCampaignBase(BaseModel):
     fpso_name: str
     start_date: date
     end_date: Optional[date] = None
-    status: str
+    status: str = "Planning"
     responsible: str
     description: Optional[str] = None
 

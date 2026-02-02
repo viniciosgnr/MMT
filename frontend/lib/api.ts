@@ -37,3 +37,37 @@ export async function apiFetch(endpoint: string, options: FetchOptions = {}) {
 
   return response
 }
+
+// M2 - Metrological Confirmation APIs
+export async function planCalibration(taskId: number, data: any) {
+  return apiFetch(`/calibration/tasks/${taskId}/plan`, {
+    method: 'POST',
+    body: JSON.stringify(data)
+  })
+}
+
+export async function executeCalibration(taskId: number, data: any) {
+  return apiFetch(`/calibration/tasks/${taskId}/execute`, {
+    method: 'POST',
+    body: JSON.stringify(data)
+  })
+}
+
+export async function uploadCertificate(taskId: number, data: any) {
+  return apiFetch(`/calibration/tasks/${taskId}/certificate`, {
+    method: 'POST',
+    body: JSON.stringify(data)
+  })
+}
+
+export async function validateCertificate(taskId: number) {
+  const res = await apiFetch(`/calibration/tasks/${taskId}/certificate/validate`, {
+    method: 'POST'
+  })
+  return res.json()
+}
+
+export async function getTagSealHistory(tagId: number) {
+  const res = await apiFetch(`/calibration/tags/${tagId}/seals`)
+  return res.json()
+}

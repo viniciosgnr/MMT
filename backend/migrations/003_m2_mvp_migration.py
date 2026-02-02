@@ -38,38 +38,38 @@ def upgrade():
         print("Adding M2 fields to calibration_results...")
         
         # Add CA validation fields to calibration_results
-        conn.execute(text("ALTER TABLE calibration_results ADD COLUMN ca_validated_at DATETIME"))
+        conn.execute(text("ALTER TABLE calibration_results ADD COLUMN ca_validated_at TIMESTAMP"))
         conn.execute(text("ALTER TABLE calibration_results ADD COLUMN ca_validated_by VARCHAR"))
         conn.execute(text("ALTER TABLE calibration_results ADD COLUMN ca_validation_rules TEXT"))
         conn.execute(text("ALTER TABLE calibration_results ADD COLUMN ca_issues TEXT"))
         conn.execute(text("ALTER TABLE calibration_results ADD COLUMN certificate_pdf_path VARCHAR"))
         conn.execute(text("ALTER TABLE calibration_results ADD COLUMN certificate_xml_path VARCHAR"))
         
-        print("Creating seal_history table...")
+        print("Creating seal_history table... SKIPPED (Already exists)")
         
         # Create seal_history table
-        conn.execute(text("""
-            CREATE TABLE seal_history (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                tag_id INTEGER NOT NULL,
-                seal_number VARCHAR NOT NULL,
-                seal_type VARCHAR NOT NULL,
-                seal_location VARCHAR NOT NULL,
-                installation_date DATE NOT NULL,
-                removal_date DATE,
-                installed_by VARCHAR NOT NULL,
-                removed_by VARCHAR,
-                removal_reason VARCHAR,
-                is_active INTEGER DEFAULT 1,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (tag_id) REFERENCES instrument_tags(id)
-            )
-        """))
+        # conn.execute(text("""
+        #     CREATE TABLE seal_history (
+        #         id SERIAL PRIMARY KEY,
+        #         tag_id INTEGER NOT NULL,
+        #         seal_number VARCHAR NOT NULL,
+        #         seal_type VARCHAR NOT NULL,
+        #         seal_location VARCHAR NOT NULL,
+        #         installation_date DATE NOT NULL,
+        #         removal_date DATE,
+        #         installed_by VARCHAR NOT NULL,
+        #         removed_by VARCHAR,
+        #         removal_reason VARCHAR,
+        #         is_active INTEGER DEFAULT 1,
+        #         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        #         FOREIGN KEY (tag_id) REFERENCES instrument_tags(id)
+        #     )
+        # """))
         
         # Create indexes
-        conn.execute(text("CREATE INDEX idx_seal_history_tag_id ON seal_history(tag_id)"))
-        conn.execute(text("CREATE INDEX idx_seal_history_seal_number ON seal_history(seal_number)"))
-        conn.execute(text("CREATE INDEX idx_seal_history_is_active ON seal_history(is_active)"))
+        # conn.execute(text("CREATE INDEX idx_seal_history_tag_id ON seal_history(tag_id)"))
+        # conn.execute(text("CREATE INDEX idx_seal_history_seal_number ON seal_history(seal_number)"))
+        # conn.execute(text("CREATE INDEX idx_seal_history_is_active ON seal_history(is_active)"))
         
         conn.commit()
         print("M2 migration completed successfully!")

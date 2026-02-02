@@ -162,6 +162,49 @@ export default function MetrologicalConfirmationPage() {
     }
   }
 
+  // Create Task Dialog State
+  const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false)
+  const [newTask, setNewTask] = useState({
+    tag: "",
+    description: "",
+    due_date: "",
+    equipment_id: 1, // Defaulting for MVP
+    campaign_id: ""
+  })
+
+  const handleCreateTask = async () => {
+    try {
+      const payload = {
+        ...newTask,
+        type: "Calibration",
+        status: "Pending",
+        campaign_id: newTask.campaign_id ? parseInt(newTask.campaign_id) : undefined
+      }
+
+      const res = await apiFetch("/calibration/tasks", {
+        method: "POST",
+        body: JSON.stringify(payload)
+      })
+
+      if (res.ok) {
+        toast.success(`Task for "${newTask.tag}" created successfully`)
+        setIsTaskDialogOpen(false)
+        setNewTask({
+          tag: "",
+          description: "",
+          due_date: "",
+          equipment_id: 1,
+          campaign_id: ""
+        })
+        loadData()
+      } else {
+        throw new Error("Failed")
+      }
+    } catch (error) {
+      toast.error("Failed to create task")
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -170,6 +213,9 @@ export default function MetrologicalConfirmationPage() {
           <p className="text-muted-foreground">Manage calibration campaigns, tasks and certificates.</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setIsTaskDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" /> New Task
+          </Button>
           <Button className="bg-[#FF6B35] hover:bg-[#e05a2b] text-white" onClick={() => setIsCampaignDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" /> New Campaign
           </Button>
@@ -219,7 +265,7 @@ export default function MetrologicalConfirmationPage() {
                 <Card key={task.id} className={`${task.status === 'Overdue' ? 'border-destructive/50 bg-destructive/5' : 'hover:border-[#FF6B35]/50 transition-colors'} ${task.status === 'Scheduled' ? 'border-[#003D5C]/10' : ''}`}>
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-start">
-                      <CardTitle className="text-base font-bold text-[#003D5C]">{task.tag}</CardTitle>
+                      <CardTitle className="text-base font-bold text-[#003D5C] hover:underline cursor-pointer" onClick={() => window.location.href = `/dashboard/calibration/tasks/${task.id}`}>{task.tag}</CardTitle>
                       <Badge variant={getStatusBadgeVariant(task.status)} className={task.status === 'Scheduled' ? 'bg-[#FF6B35] text-white' : ''}>{task.status}</Badge>
                     </div>
                     <CardDescription>{task.description}</CardDescription>
@@ -237,6 +283,9 @@ export default function MetrologicalConfirmationPage() {
                     )}
                   </CardContent>
                   <CardFooter className="justify-end gap-2 pt-2">
+                    <Button size="sm" variant="ghost" onClick={() => window.location.href = `/dashboard/calibration/tasks/${task.id}`}>
+                      View Details
+                    </Button>
                     {task.status === 'Scheduled' && (
                       <Button size="sm" className="bg-[#003D5C] hover:bg-[#002d45] text-white" onClick={() => { setSelectedTask(task); setIsInputOpen(true); }}>
                         Execute
@@ -334,6 +383,58 @@ export default function MetrologicalConfirmationPage() {
           </div>
           <DialogFooter>
             <Button onClick={handleCreateCampaign}>Create Campaign</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Task Dialog */}
+      <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Create New Calibration Task</DialogTitle>
+            <DialogDescription>Add a new instrument to the plan.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label>Instrument Tag</Label>
+              <Input
+                placeholder="e.g. 62-FT-1201"
+                value={newTask.tag}
+                onChange={e => setNewTask({ ...newTask, tag: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Input
+                placeholder="Oil Export Flow Trans..."
+                value={newTask.description}
+                onChange={e => setNewTask({ ...newTask, description: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Campaign</Label>
+              <Select value={newTask.campaign_id} onValueChange={v => setNewTask({ ...newTask, campaign_id: v })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Campaign (Optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  {campaigns.map(c => (
+                    <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Due Date</Label>
+              <Input
+                type="date"
+                value={newTask.due_date}
+                onChange={e => setNewTask({ ...newTask, due_date: e.target.value })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleCreateTask}>Create Task</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

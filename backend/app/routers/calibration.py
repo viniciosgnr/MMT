@@ -324,3 +324,94 @@ def get_results(task_id: int, db: Session = Depends(database.get_db)):
     if not result:
         raise HTTPException(status_code=404, detail="Results not found")
     return result
+
+# M2 MVP: Advanced Features
+
+@router.post("/tasks/{task_id}/certificate/generate")
+def generate_certificate_number(
+    task_id: int,
+    cert_type: str = "PRV", # PRV, LT, SMP
+    db: Session = Depends(database.get_db),
+    current_user = Depends(get_current_user)
+):
+    """Generate a compliant certificate number: AAA-BBB-CC-DDD."""
+    task = db.query(models.CalibrationTask).filter(models.CalibrationTask.id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    # 1. Get FPSO Trigram
+    # Assuming task -> campaign -> fpso_name OR task -> equipment -> installation -> fpso
+    # Fallback to a default if logic fails (MVP)
+    fpso_name = "Unknown"
+    if task.campaign:
+        fpso_name = task.campaign.fpso_name
+    
+    # Simple mapping
+    trigrams = {
+        "Cidade de Angra dos Reis": "CDA",
+        "Cidade de Ilhabela": "CDI",
+        "Cidade de Maricá": "CDM",
+        "Cidade de Saquarema": "CDS",
+        "Cidade de Paraty": "CDP",
+        "Espirito Santo": "ESS",
+        "Anchieta": "ATD",
+        "Capixaba": "ADG",
+        "Sepetiba": "SEP"
+    }
+    
+    # Try partial match or exact
+    aaa = "XXX"
+    for name, trigram in trigrams.items():
+        if name in fpso_name:
+            aaa = trigram
+            break
+            
+    # 2. Get Sequence
+    year = datetime.now().year
+    yy = str(year)[-2:]
+    
+    # Find max sequence for this year and type
+    # Using a LIKE query to find matching patterns
+    pattern = f"{aaa}-{cert_type}-{yy}-%"
+    
+    last_cert = db.query(models.CalibrationTask).filter(
+        models.CalibrationTask.certificate_number.like(pattern)
+    ).order_by(models.CalibrationTask.certificate_number.desc()).first()
+    
+    seq = 1
+    if last_cert and last_cert.certificate_number:
+        # Extract DDD
+        try:
+            parts = last_cert.certificate_number.split('-')
+            if len(parts) == 4:
+                seq = int(parts[3]) + 1
+        except:
+            pass # Fallback to 1
+            
+    ddd = f"{seq:03d}"
+    
+    cert_number = f"{aaa}-{cert_type}-{yy}-{ddd}"
+    
+    return {"certificate_number": cert_number}
+
+@router.get("/seals/export")
+def export_seal_report(
+    tag_ids: Optional[str] = None,
+    db: Session = Depends(database.get_db)
+):
+    """Export seal report for selected tags (CSV for MVP)."""
+    # ... logic to build CSV ...
+    query = db.query(models.SealHistory)
+    if tag_ids:
+        tids = [int(x) for x in tag_ids.split(',')]
+        query = query.filter(models.SealHistory.tag_id.in_(tids))
+        
+    seals = query.all()
+    
+    # Simple CSV construction
+    output = "Tag ID,Seal Number,Type,Location,Installed,Removed,Status\n"
+    for s in seals:
+        output += f"{s.tag_id},{s.seal_number},{s.seal_type},{s.seal_location},{s.installation_date},{s.removal_date},{'Active' if s.is_active else 'Inactive'}\n"
+        
+    # In a real app, return StreamingResponse
+    return {"csv_content": output, "count": len(seals)}

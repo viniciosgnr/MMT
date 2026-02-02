@@ -139,6 +139,31 @@ class InstrumentTag(Base):
     # Link to Sample Point (M3)
     sample_point_id = Column(Integer, ForeignKey("sample_points.id"), nullable=True)
     sample_point = relationship("SamplePoint", back_populates="meters")
+    seal_history = relationship("SealHistory", back_populates="tag")
+
+class SealHistory(Base):
+    """Tracks seal installation and removal history for tags (M2)."""
+    __tablename__ = "seal_history"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    tag_id = Column(Integer, ForeignKey("instrument_tags.id"))
+    
+    seal_number = Column(String, index=True)
+    seal_type = Column(String) # "Wire", "Plastic", "Lead"
+    seal_location = Column(String) # "Terminal Block", "Transmitter Body", etc.
+    
+    installation_date = Column(Date)
+    removal_date = Column(Date, nullable=True)
+    
+    installed_by = Column(String)
+    removed_by = Column(String, nullable=True)
+    removal_reason = Column(String, nullable=True) # "Calibration", "Maintenance", "Damage"
+    
+    is_active = Column(Integer, default=1)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    tag = relationship("InstrumentTag", back_populates="seal_history")
 
 class EquipmentTagInstallation(Base):
     """Tracks the history of which Equipment was installed on which Tag."""
@@ -218,6 +243,26 @@ class CalibrationTask(Base):
     equipment = relationship("Equipment", back_populates="calibration_tasks")
     results = relationship("CalibrationResult", back_populates="task", uselist=False)
 
+    # M2: Metrological Confirmation Fields
+    calibration_type = Column(String, nullable=True)  # "in-situ" or "ex-situ"
+    temporary_completion_date = Column(Date, nullable=True)
+    definitive_completion_date = Column(Date, nullable=True)
+    is_temporary = Column(Integer, default=0) # 1 if waiting for definitive documentation
+
+    # Seal information
+    seal_number = Column(String, nullable=True)
+    seal_installation_date = Column(Date, nullable=True)
+    seal_location = Column(String, nullable=True)
+    
+    # Spare management integration
+    spare_procurement_ids = Column(Text, nullable=True) # JSON array
+
+    # Certificate tracking
+    certificate_number = Column(String, nullable=True, index=True)
+    certificate_issued_date = Column(Date, nullable=True)
+    certificate_ca_status = Column(String, nullable=True) # "pending", "approved", "rejected"
+    certificate_ca_notes = Column(Text, nullable=True)
+
 class CalibrationResult(Base):
     __tablename__ = "calibration_results"
 
@@ -234,6 +279,14 @@ class CalibrationResult(Base):
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     
+    # M2: Certificate CA & Storage
+    ca_validated_at = Column(DateTime, nullable=True)
+    ca_validated_by = Column(String, nullable=True)
+    ca_validation_rules = Column(Text, nullable=True) # JSON
+    ca_issues = Column(Text, nullable=True) # JSON array
+    certificate_pdf_path = Column(String, nullable=True)
+    certificate_xml_path = Column(String, nullable=True)
+
     # Relationships
     task = relationship("CalibrationTask", back_populates="results")
 
