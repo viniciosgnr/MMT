@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
-import { ChevronLeft, ChevronRight, Database, LogOut } from "lucide-react"
+import { ChevronLeft, ChevronRight, Database, LogOut, Ship } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
@@ -47,7 +47,7 @@ export function Sidebar() {
         isCollapsed && "items-center px-2"
       )}>
         <div className="flex items-center gap-3">
-          <Database className="h-5 w-5 text-[#FF6B35]" />
+          <Ship className="h-5 w-5 text-[#FF6B35]" />
           {!isCollapsed && <h2 className="font-bold tracking-tight text-lg">FPSO Tree</h2>}
         </div>
         {!isCollapsed && <p className="text-[10px] text-white/60 font-medium uppercase tracking-widest">Hierarchy Browser</p>}
