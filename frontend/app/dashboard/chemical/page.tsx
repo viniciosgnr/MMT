@@ -149,12 +149,12 @@ export default function ChemicalAnalysisDashboard() {
       {/* Metrics Row */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
-          { title: "Total Active", value: metrics.activeSamples, icon: Layers, color: "text-blue-500" },
-          { title: "SLA Overdue", value: metrics.overdue, icon: Clock, color: "text-red-500" },
-          { title: "Under Validation", value: metrics.pendingValidation, icon: Search, color: "text-amber-500" },
-          { title: "Pending FC Update", value: metrics.pendingFC, icon: ArrowRight, color: "text-violet-500" },
+          { title: "Total Active", value: metrics.activeSamples, icon: Layers, color: "text-blue-500", borderColor: "border-l-blue-500" },
+          { title: "SLA Overdue", value: metrics.overdue, icon: Clock, color: "text-red-500", borderColor: "border-l-red-500" },
+          { title: "Under Validation", value: metrics.pendingValidation, icon: Search, color: "text-amber-500", borderColor: "border-l-amber-500" },
+          { title: "Pending FC Update", value: metrics.pendingFC, icon: ArrowRight, color: "text-violet-500", borderColor: "border-l-violet-500" },
         ].map((m, i) => (
-          <Card key={i} className="hover:shadow-md transition-shadow cursor-pointer border-l-4 border-l-primary/20">
+          <Card key={i} className={`hover:shadow-md transition-shadow cursor-pointer border-l-4 ${m.borderColor}`}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">{m.title}</CardTitle>
               <m.icon className={`h-4 w-4 ${m.color}`} />

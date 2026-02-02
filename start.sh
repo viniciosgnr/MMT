@@ -11,7 +11,7 @@ echo "Starting MMT Application..."
 echo "Building and launching containers..."
 
 # Build and start in detached mode
-docker-compose up -d --build
+docker compose up -d --build
 
 echo ""
 echo "============================================="
@@ -20,4 +20,4 @@ echo "============================================="
 echo "Frontend: http://localhost:3000"
 echo "Backend:  http://localhost:8000/docs"
 echo "============================================="
-echo "To stop the application, run: docker-compose down"
+echo "To stop the application, run: docker compose down"
