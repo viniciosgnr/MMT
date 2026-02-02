@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: mmt-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - SUPABASE_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY} # Using Anon key for simplicity in MVP, should use Service Role for backend tasks if needed
+      # Add other explicit backend env vars here if needed
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: mmt-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api # Client-side calls might need IP if accessing from other machines
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+    depends_on:
+      - backend
+    restart: unless-stopped
