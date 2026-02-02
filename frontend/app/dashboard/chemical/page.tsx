@@ -40,6 +40,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { apiFetch } from "@/lib/api"
+import { createClient } from "@/utils/supabase/client"
 
 export default function ChemicalAnalysisDashboard() {
   const router = useRouter()
@@ -49,8 +50,26 @@ export default function ChemicalAnalysisDashboard() {
   const [searchQuery, setSearchQuery] = useState("")
   const [fpsoFilter, setFpsoFilter] = useState("all")
 
+
+
   useEffect(() => {
     loadData()
+
+    // Realtime Subscription
+    const supabase = createClient()
+    const channel = supabase
+      .channel('chemical-dashboard')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'samples' }, (payload) => {
+        console.log('Realtime update:', payload)
+        // For simplicity, reload all data to ensure consistency with relations
+        loadData()
+        toast.info("Dashboard updated via Realtime")
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [fpsoFilter])
 
   const loadData = async () => {

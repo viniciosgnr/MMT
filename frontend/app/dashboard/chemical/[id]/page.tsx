@@ -27,6 +27,7 @@ import {
   Plus
 } from "lucide-react"
 import { apiFetch } from "@/lib/api"
+import { createClient } from "@/utils/supabase/client"
 import { toast } from "sonner"
 import {
   Dialog,
@@ -69,6 +70,7 @@ export default function SampleDetailPage() {
   const [statusComments, setStatusComments] = useState("")
   const [eventDate, setEventDate] = useState(new Date().toISOString().split('T')[0])
   const [evidenceUrl, setEvidenceUrl] = useState("")
+  const [evidenceFile, setEvidenceFile] = useState<File | null>(null)
 
   useEffect(() => {
     if (id) loadSample()
@@ -93,7 +95,33 @@ export default function SampleDetailPage() {
 
   const handleUpdateStatus = async () => {
     try {
-      // Strict Validation Check (Spec 6.5.1)
+      let finalUrl = evidenceUrl
+
+      // Upload evidence file if selected
+      if (evidenceFile) {
+        const toastId = toast.loading("Uploading evidence...")
+        const supabase = createClient()
+        const fileName = `${sample.id}_${Date.now()}_${evidenceFile.name.replace(/[^a-zA-Z0-9.]/g, '_')}`
+
+        const { data, error } = await supabase.storage
+          .from('evidence')
+          .upload(fileName, evidenceFile)
+
+        if (error) {
+          toast.dismiss(toastId)
+          toast.error(`Upload failed: ${error.message}`)
+          return
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('evidence')
+          .getPublicUrl(fileName)
+
+        finalUrl = publicUrl
+        toast.dismiss(toastId)
+        toast.success("Evidence uploaded")
+      }
+
       // Strict Validation Check (Spec 6.5.1)
       if (nextStatus === "Report approved/reproved" && (!validationResult || validationResult.overall_status === "Reproved")) {
         if (!statusComments || statusComments.length < 3) {
@@ -109,7 +137,7 @@ export default function SampleDetailPage() {
           comments: statusComments,
           user: "Current User",
           event_date: eventDate,
-          url: evidenceUrl,
+          url: finalUrl,
           validation_status: validationResult?.overall_status
         })
       })
@@ -465,9 +493,29 @@ export default function SampleDetailPage() {
                 <Label>Event Date</Label>
                 <Input type="date" value={eventDate} onChange={e => setEventDate(e.target.value)} />
               </div>
-              <div className="space-y-2">
-                <Label>Evidence Link (URL)</Label>
-                <Input placeholder="e.g., SharePoint link" value={evidenceUrl} onChange={e => setEvidenceUrl(e.target.value)} />
+              <div className="space-y-2 col-span-2">
+                <Label>Evidence (File or URL)</Label>
+                <div className="flex gap-2 items-center">
+                  <Input
+                    type="file"
+                    className="cursor-pointer file:text-primary file:font-semibold"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null
+                      setEvidenceFile(file)
+                      if (file) setEvidenceUrl("") // Clear URL if file selected
+                    }}
+                  />
+                  <div className="text-xs font-bold text-muted-foreground px-2">OR</div>
+                  <Input
+                    placeholder="Paste SharePoint / External URL"
+                    value={evidenceUrl}
+                    onChange={e => {
+                      setEvidenceUrl(e.target.value)
+                      setEvidenceFile(null) // Clear file if URL typed
+                    }}
+                    disabled={!!evidenceFile}
+                  />
+                </div>
               </div>
             </div>
             <div className="space-y-2">

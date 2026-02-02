@@ -18,6 +18,7 @@ import { format } from "date-fns"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { apiFetch, API_URL } from "@/lib/api"
+import { createClient } from "@/utils/supabase/client"
 
 export default function HistoricalReportPage() {
   const [reports, setReports] = useState<any[]>([])
@@ -79,32 +80,56 @@ export default function HistoricalReportPage() {
 
     try {
       setUploading(true)
-      const formData = new FormData()
-      selectedFiles.forEach(file => formData.append("files", file))
+      const supabase = createClient()
+      const uploadedFilesMetadata = []
 
-      formData.append("report_type_id", uploadForm.report_type_id)
-      formData.append("title_prefix", uploadForm.title_prefix)
-      formData.append("report_date", uploadForm.report_date)
-      if (uploadForm.fpso_name !== "Generic") formData.append("fpso_name", uploadForm.fpso_name)
-      if (uploadForm.metering_system) formData.append("metering_system", uploadForm.metering_system)
-      if (uploadForm.serial_number) formData.append("serial_number", uploadForm.serial_number)
+      // 1. Upload files to Supabase Storage
+      for (const file of selectedFiles) {
+        const fileExt = file.name.split('.').pop()
+        const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`
+        const filePath = `${fileName}`
+
+        const { data, error } = await supabase.storage
+          .from('reports')
+          .upload(filePath, file)
+
+        if (error) {
+          console.error('Upload error:', error)
+          toast.error(`Failed to upload ${file.name}`)
+          continue
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('reports')
+          .getPublicUrl(filePath)
+
+        uploadedFilesMetadata.push({
+          filename: file.name,
+          file_url: publicUrl,
+          file_size: file.size
+        })
+      }
+
+      if (uploadedFilesMetadata.length === 0) {
+        setUploading(false)
+        return
+      }
+
+      // 2. Send metadata to backend
+      const payload = {
+        report_type_id: parseInt(uploadForm.report_type_id),
+        title_prefix: uploadForm.title_prefix,
+        report_date: uploadForm.report_date,
+        fpso_name: uploadForm.fpso_name !== "Generic" ? uploadForm.fpso_name : null,
+        metering_system: uploadForm.metering_system || null,
+        serial_number: uploadForm.serial_number || null,
+        files: uploadedFilesMetadata
+      }
 
       const res = await apiFetch("/reports/upload", {
         method: "POST",
-        body: formData,
-        // Content-Type header is explicitly NOT set here to let browser set boundary for FormData
-        // apiFetch might assume JSON, so we might need to override headers.
-        // apiFetch sets Content-Type to application/json by default.
-        // We need to delete it.
-        headers: {} // This is tricky. apiFetch sets JSON.
+        body: JSON.stringify(payload)
       })
-      // Wait, apiFetch implementation:
-      // const headers = { 'Content-Type': 'application/json', ...options.headers }
-      // This will break FormData.
-      // I need to modify apiFetch to handle FormData or use a workaround.
-      // For now I will assume I can pass 'Content-Type': undefined? No.
-      // I need to modify apiFetch.
-
 
       if (res.ok) {
         toast.success("Reports uploaded successfully")
@@ -112,9 +137,10 @@ export default function HistoricalReportPage() {
         setUploadForm(prev => ({ ...prev, title_prefix: "", metering_system: "", serial_number: "" }))
         fetchData()
       } else {
-        toast.error("Upload failed")
+        toast.error("Database registration failed")
       }
     } catch (error) {
+      console.error(error)
       toast.error("Error during upload")
     } finally {
       setUploading(false)
@@ -316,7 +342,7 @@ export default function HistoricalReportPage() {
                       </TableCell>
                       <TableCell className="text-right pr-6">
                         <Button variant="ghost" size="sm" className="h-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" asChild>
-                          <a href={`${API_URL}${report.file_url}`} target="_blank" rel="noreferrer">
+                          <a href={report.file_url.startsWith('http') ? report.file_url : `${API_URL}${report.file_url}`} target="_blank" rel="noreferrer">
                             <FileText className="h-4 w-4 mr-1" /> View
                           </a>
                         </Button>
