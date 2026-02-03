@@ -36,7 +36,7 @@ import { apiFetch } from "@/lib/api"
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
 
 interface CardDetailsProps {
-  cardId: number
+  cardId: number | null
   open: boolean
   onOpenChange: (open: boolean) => void
   onUpdated: () => void

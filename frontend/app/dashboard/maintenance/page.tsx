@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import { NewCardDialog } from "./new-card-dialog"
+import { MaintenanceListView } from "./list-view"
 import { cn } from "@/lib/utils"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
@@ -144,9 +145,10 @@ export default function MaintenancePage() {
             onAddNew={handleAddNew}
           />
         ) : (
-          <div className="p-8 text-center text-slate-500">
-            List view coming soon...
-          </div>
+          <MaintenanceListView
+            search={search}
+            fpsoFilter={fpsoFilter}
+          />
         )}
       </div>
     </div>
