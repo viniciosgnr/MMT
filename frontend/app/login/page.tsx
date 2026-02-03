@@ -76,7 +76,7 @@ export default function LoginPage() {
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/30 to-transparent" />
 
         <div className="absolute bottom-12 left-12 text-white p-4">
-          <h2 className="text-4xl font-bold tracking-tight mb-2">Metrology Management Tool</h2>
+          <h2 className="text-4xl font-bold tracking-tight mb-2">Metering Management Tool</h2>
           <p className="text-slate-200 text-lg opacity-90 max-w-md">
             Advanced management for offshore metering systems.
           </p>
