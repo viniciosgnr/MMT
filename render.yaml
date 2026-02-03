@@ -1,15 +1,15 @@
 services:
   - type: web
     name: mmt-backend
-    env: python
-    region: ohio # US usually has best free tier availability
+    env: docker
+    region: ohio
     plan: free
-    rootCommand: cd backend
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    repo: https://github.com/viniciosgnr/MMT
+    branch: master
+    rootDir: backend # Context for Docker build
     envVars:
       - key: DATABASE_URL
-        sync: false # User must input this in dashboard
+        sync: false
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_KEY
