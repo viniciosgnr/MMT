@@ -73,13 +73,19 @@ export default function LoginPage() {
           className="object-cover opacity-80"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/30 to-transparent" />
+        {/* Darker gradient for better text contrast */}
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent" />
 
-        <div className="absolute bottom-12 left-12 text-white p-4">
-          <h2 className="text-4xl font-bold tracking-tight mb-2">Metering Management Tool</h2>
-          <p className="text-slate-200 text-lg opacity-90 max-w-md">
-            Advanced management for offshore metering systems.
-          </p>
+        <div className="absolute bottom-12 left-12 p-4 max-w-lg">
+          {/* Vertical accent line for professional look */}
+          <div className="border-l-4 border-orange-500 pl-6 py-2">
+            <h2 className="text-5xl font-extrabold tracking-tight mb-4 text-white drop-shadow-lg leading-tight">
+              Metering <span className="text-orange-500">Management</span> Tool
+            </h2>
+            <p className="text-slate-100 text-xl font-medium drop-shadow-md leading-relaxed opacity-90">
+              Advanced management for offshore metering systems.
+            </p>
+          </div>
         </div>
       </div>
 
