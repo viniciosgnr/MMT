@@ -71,16 +71,19 @@ export function MaintenanceListView({ search, fpsoFilter }: ListViewProps) {
   }
 
   const getFPSOColor = (fpsoName: string) => {
-    if (!fpsoName) return "bg-slate-50 text-slate-600 border-slate-200"
+    if (!fpsoName) return "bg-slate-100 text-slate-700 border-slate-200"
 
+    // User requested uniform text color ("cor da fonte a mesma") with distinct backgrounds
     const name = fpsoName.toUpperCase()
-    if (name.includes("PARATY")) return "bg-indigo-50 text-indigo-700 border-indigo-200"
-    if (name.includes("ILHABELA")) return "bg-violet-50 text-violet-700 border-violet-200"
-    if (name.includes("MARICÁ") || name.includes("MARICA")) return "bg-purple-50 text-purple-700 border-purple-200"
-    if (name.includes("SAQUAREMA")) return "bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200"
-    if (name.includes("SEPETIBA")) return "bg-pink-50 text-pink-700 border-pink-200"
+    const baseClass = "text-slate-700 border-slate-200"
 
-    return "bg-slate-50 text-slate-600 border-slate-200"
+    if (name.includes("PARATY")) return `bg-blue-100 ${baseClass}`
+    if (name.includes("ILHABELA")) return `bg-teal-100 ${baseClass}` // Distinct teal
+    if (name.includes("MARICÁ") || name.includes("MARICA")) return `bg-purple-100 ${baseClass}`
+    if (name.includes("SAQUAREMA")) return `bg-pink-100 ${baseClass}`
+    if (name.includes("SEPETIBA")) return `bg-orange-100 ${baseClass}` // Distinct orange
+
+    return `bg-slate-100 ${baseClass}`
   }
 
   if (loading) {
