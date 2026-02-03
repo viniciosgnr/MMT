@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: mmt-backend
+    env: python
+    region: ohio # US usually has best free tier availability
+    plan: free
+    rootCommand: cd backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        sync: false # User must input this in dashboard
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
