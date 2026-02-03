@@ -67,7 +67,7 @@ type Alert = {
   linked_event_type?: string
   linked_event_id?: number
   run_recheck: number
-  run_recheck: number
+
 }
 
 import { AuditPanel } from "./audit-panel"
