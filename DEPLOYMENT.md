@@ -64,22 +64,21 @@ Para uma solução profissional onde o código roda na nuvem e não na sua máqu
 ### Passo 1: GitHub
 1.  Garanta que seu projeto está em um repositório no GitHub (Público ou Privado).
 
-### Passo 2: Backend (Render.com)
-O Render possui um "Free Tier" excelente para serviços Python.
+### Passo 2: Backend (Render.com + Docker)
+Para evitar erros de dependência, usaremos o **Docker** (já configurado no repositório).
+
 1.  Crie uma conta em [render.com](https://render.com).
 2.  Clique em **New +** -> **Web Service**.
 3.  Conecte seu repositório do GitHub.
-4.  Configure:
-    *   **Root Directory:** `backend`
-    *   **Runtime:** Python 3
-    *   **Build Command:** `pip install -r requirements.txt`
-    *   **Start Command:** `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-5.  **Environment Variables** (Adicione as chaves do seu `.env`):
-    *   `DATABASE_URL`: (Sua string de conexão do Supabase - pegue em Project Settings > Database > Connection String > URI mode)
-    *   `SUPABASE_URL`: (A mesma do front)
-    *   `SUPABASE_KEY`: (A anon key)
+4.  O Render deve detectar o arquivo `render.yaml` automaticamente.
+    *   Se não detectar, escolha **Runtime: Docker**.
+5.  **Environment Variables** (Copie do seu `.env`):
+    *   `DATABASE_URL`: (Sua string de conexão COMPLETA do Supabase, incluindo a senha)
+    *   `SUPABASE_URL`: (https://tpgeroygxpmbhmrewbpd.supabase.co)
+    *   `SUPABASE_KEY`: (Sua Anon Key)
 6.  Clique em **Create Web Service**.
-7.  Aguarde o deploy. O Render vai gerar uma URL (ex: `https://mmt-backend.onrender.com`). **Copie essa URL.**
+7.  Aguarde o deploy (pode levar uns 5-10min na primeira vez pois baixará a imagem Docker).
+8.  Copie a URL gerada (ex: `https://mmt-backend.onrender.com`).
 
 ### Passo 3: Frontend (Vercel)
 A "casa" do Next.js.
