@@ -32,6 +32,10 @@ class Equipment(EquipmentBase):
     created_at: datetime
     certificates: List["EquipmentCertificate"] = []
     installations: List["EquipmentTagInstallationOut"] = []
+    
+    # M5 Sync Integration (Computed)
+    last_synced_at: Optional[datetime] = None
+    sync_status: Optional[str] = "unknown" # synced, warning, error, unknown
 
     class Config:
         from_attributes = True

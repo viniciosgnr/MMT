@@ -1,18 +1,17 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { KanbanBoard } from "./kanban-board"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { useState, Suspense } from "react"
+import { useSearchParams } from "next/navigation"
 import {
   Plus,
   Search,
   Filter,
   LayoutGrid,
   List as ListIcon,
-  MoreHorizontal,
   ChevronDown
 } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,13 +19,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
-import { NewCardDialog } from "./new-card-dialog"
-import { MaintenanceListView } from "./list-view"
 import { cn } from "@/lib/utils"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
+import { KanbanBoard } from "./kanban-board"
+import { MaintenanceListView } from "./list-view"
+import { NewCardDialog } from "./new-card-dialog"
 
-export default function MaintenancePage() {
+function MaintenanceContent() {
+  const searchParams = useSearchParams()
+  const cardParam = searchParams.get('card')
+  const initialCardId = cardParam ? parseInt(cardParam) : null
+
   const [view, setView] = useState<"kanban" | "list">("kanban")
   const [search, setSearch] = useState("")
   const [fpsoFilter, setFpsoFilter] = useState<string | null>(null)
@@ -42,7 +45,6 @@ export default function MaintenancePage() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] bg-slate-50/50 dark:bg-slate-950/50">
-      {/* Upper Header / Toolbar */}
       {/* Upper Header / Toolbar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-6 border-b bg-white dark:bg-slate-900 shadow-sm z-10 gap-4">
         <div className="flex items-center gap-3">
@@ -83,7 +85,7 @@ export default function MaintenancePage() {
                 <DropdownMenuItem onClick={() => setFpsoFilter(null)}>All FPSOs</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setFpsoFilter("FPSO SEPETIBA")}>FPSO SEPETIBA</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setFpsoFilter("FPSO SAQUAREMA")}>FPSO SAQUAREMA</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFpsoFilter("FPSO MARICÁ")}>FPSO MARICÁ</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setFpsoFilter("FPSO MARICA")}>FPSO MARICÁ</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setFpsoFilter("FPSO PARATY")}>FPSO PARATY</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setFpsoFilter("FPSO ILHABELA")}>FPSO ILHABELA</DropdownMenuItem>
               </DropdownMenuContent>
@@ -143,6 +145,7 @@ export default function MaintenancePage() {
             search={search}
             fpsoFilter={fpsoFilter}
             onAddNew={handleAddNew}
+            initialCardId={initialCardId}
           />
         ) : (
           <MaintenanceListView
@@ -152,5 +155,13 @@ export default function MaintenancePage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function MaintenancePage() {
+  return (
+    <Suspense fallback={<div className="p-8">Loading tasks...</div>}>
+      <MaintenanceContent />
+    </Suspense>
   )
 }

@@ -60,6 +60,13 @@ def read_equipment(equipment_id: int, db: Session = Depends(database.get_db)):
     db_equipment = db.query(models.Equipment).filter(models.Equipment.id == equipment_id).first()
     if not db_equipment:
         raise HTTPException(status_code=404, detail="Equipment not found")
+    
+    # Mock Sync Status (Logic: ID % 3 to show variety)
+    # Real logic implementation pending in M5 Integration Service
+    states = ["synced", "warning", "error"]
+    db_equipment.sync_status = states[equipment_id % 3]
+    db_equipment.last_synced_at = datetime.now() if db_equipment.sync_status == "synced" else None
+
     return db_equipment
 
 # --- Installation & History ---

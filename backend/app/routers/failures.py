@@ -33,6 +33,17 @@ def get_failures(
     
     return query.offset(skip).limit(limit).all()
 
+@router.get("/{failure_id}", response_model=FailureNotificationSchema)
+def get_failure(
+    failure_id: int,
+    db: Session = Depends(get_db)
+):
+    """Get a specific failure notification by ID"""
+    failure = db.query(FailureNotification).filter(FailureNotification.id == failure_id).first()
+    if not failure:
+        raise HTTPException(status_code=404, detail="Failure notification not found")
+    return failure
+
 @router.post("", response_model=FailureNotificationSchema)
 def create_failure(
     failure: FailureNotificationCreate,

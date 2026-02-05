@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -26,6 +27,7 @@ import { apiFetch } from "@/lib/api"
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
 
 export default function FailureNotificationPage() {
+  const router = useRouter()
   const [failures, setFailures] = useState<any[]>([])
   const [emailLists, setEmailLists] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -53,7 +55,11 @@ export default function FailureNotificationPage() {
   const fetchFailures = async () => {
     try {
       const res = await apiFetch("/failures")
-      if (res.ok) setFailures(await res.json())
+      if (res.ok) {
+        const data = await res.json()
+        console.log("Fetched Failures:", data)
+        setFailures(data)
+      }
     } catch (e) { toast.error("Failed to load failures") }
     finally { setLoading(false) }
   }
@@ -162,13 +168,16 @@ export default function FailureNotificationPage() {
                       </TableCell>
                       <TableCell>{f.anp_classification}</TableCell>
                       <TableCell className="text-right space-x-2">
+                        <Button size="icon" variant="ghost" title="View Details" onClick={() => router.push(`/dashboard/failure-notification/edit/${f.id}`)}>
+                          <FileText className="h-4 w-4 text-slate-500" />
+                        </Button>
                         {f.status === 'Draft' && (
                           <Button size="sm" variant="outline" className="text-green-600 border-green-200 hover:bg-green-50" onClick={() => handleApprove(f.id)}>
                             <ShieldCheck className="h-4 w-4 mr-1" /> Approve
                           </Button>
                         )}
                         <Button size="icon" variant="ghost" title="Export PDF" onClick={() => exportReport(f.id, 'PDF')}>
-                          <FileText className="h-4 w-4 text-red-500" />
+                          <Download className="h-4 w-4 text-red-500" />
                         </Button>
                         <Button size="icon" variant="ghost" title="Export Excel" onClick={() => exportReport(f.id, 'Excel')}>
                           <FileSpreadsheet className="h-4 w-4 text-green-600" />

@@ -39,6 +39,7 @@ export async function apiFetch(endpoint: string, options: FetchOptions = {}) {
   }
 
   const response = await fetch(url, {
+    cache: 'no-store',
     ...options,
     headers,
   })

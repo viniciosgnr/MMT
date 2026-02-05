@@ -38,14 +38,23 @@ interface KanbanBoardProps {
   search: string
   fpsoFilter: string | null
   onAddNew?: (columnId: number) => void
+  initialCardId?: number | null
 }
 
-export function KanbanBoard({ search, fpsoFilter, onAddNew }: KanbanBoardProps) {
+export function KanbanBoard({ search, fpsoFilter, onAddNew, initialCardId }: KanbanBoardProps) {
   const [columns, setColumns] = useState<any[]>([])
   const [cards, setCards] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedCardId, setSelectedCardId] = useState<number | null>(null)
   const [detailsOpen, setDetailsOpen] = useState(false)
+
+  // Handle deep linking
+  useEffect(() => {
+    if (initialCardId) {
+      setSelectedCardId(initialCardId)
+      setDetailsOpen(true)
+    }
+  }, [initialCardId])
 
   const fetchData = async () => {
     try {

@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  backend:
+    volumes:
+      - ./backend:/app:delegated
+    environment:
+      - WATCHFILES_FORCE_POLLING=true # Often needed for Python hot reload in Docker
+
+  frontend:
+    build:
+      context: ./frontend
+      # If your Dockerfile has a 'dev' stage, uncomment below:
+      target: deps
+    volumes:
+      - ./frontend:/app:delegated
+      - /app/.next
+      - /app/node_modules
+    command: npm run dev # Run dev server instead of production build
+    environment:
+      - WATCHPACK_POLLING=true # Ensure Next.js sees changes inside container

@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Activity, Wrench, AlertTriangle, FileText, Calendar } from "lucide-react"
+import { SyncStatusBadge } from "@/components/sync-status-badge"
 
 export default function EquipmentDetailsPage() {
   const params = useParams()
@@ -74,12 +75,13 @@ export default function EquipmentDetailsPage() {
           <h1 className="text-2xl font-bold tracking-tight text-[#003D5C]">
             {equipment.serial_number}
           </h1>
-          <p className="text-muted-foreground flex items-center gap-2">
+          <div className="text-muted-foreground flex items-center gap-2">
             {equipment.model} • {equipment.manufacturer}
             <Badge variant={equipment.status === "Active" ? "default" : "secondary"}>
               {equipment.status}
             </Badge>
-          </p>
+            <SyncStatusBadge status={equipment.sync_status || "unknown"} lastSyncedAt={equipment.last_synced_at} />
+          </div>
         </div>
       </div>
 
@@ -135,6 +137,7 @@ export default function EquipmentDetailsPage() {
               </div>
             </TabsContent>
 
+
             {/* M3 Content */}
             <TabsContent value="chemical" className="space-y-4 mt-4">
               <div className="bg-blue-50 p-4 rounded-md text-sm text-blue-700 mb-2">
@@ -151,6 +154,7 @@ export default function EquipmentDetailsPage() {
                       <div className="flex gap-2 items-center">
                         <Badge variant="outline">{s.status}</Badge>
                         {s.validation_status && <Badge className={s.validation_status === "Approved" ? "bg-green-500" : "bg-red-500"}>{s.validation_status}</Badge>}
+                        <Button size="sm" variant="ghost" onClick={() => router.push(`/dashboard/chemical/${s.id}`)}>View</Button>
                       </div>
                     </Card>
                   ))}
@@ -169,6 +173,7 @@ export default function EquipmentDetailsPage() {
                       </div>
                       <div className="flex gap-2 items-center">
                         <Badge variant="secondary">{c.column?.name || "Kanban"}</Badge>
+                        <Button size="sm" variant="ghost" onClick={() => router.push(`/dashboard/maintenance?card=${c.id}`)}>View</Button>
                       </div>
                     </Card>
                   ))}
@@ -180,12 +185,15 @@ export default function EquipmentDetailsPage() {
               <div className="grid gap-2">
                 {failures.length === 0 ? <div className="text-muted-foreground p-4">No failure notifications found.</div> :
                   failures.map((f) => (
-                    <Card key={f.id} className="p-4 border-red-100 bg-red-50/50 flex justify-between items-center">
+                    <Card key={f.id} className="p-4 border-red-100 bg-red-50/50 flex justify-between items-center hover:bg-red-100/50 transition-colors cursor-pointer" onClick={() => router.push(`/dashboard/failure-notification/edit/${f.id}`)}>
                       <div>
                         <p className="font-semibold text-red-700">{f.description?.substring(0, 50)}...</p>
                         <p className="text-sm text-red-500">{f.failure_date}</p>
                       </div>
-                      <Badge variant="destructive">{f.status}</Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="destructive">{f.status}</Badge>
+                        <Button size="sm" variant="ghost" className="text-red-700 hover:text-red-900 hover:bg-red-200">View</Button>
+                      </div>
                     </Card>
                   ))}
               </div>

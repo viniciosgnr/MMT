@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
+import { UncertaintyVisualizerPanel } from "./uncertainty-visualizer"
 import {
   Card,
   CardContent,
@@ -533,7 +534,14 @@ export default function MonitoringPage() {
         </TabsContent>
 
         <TabsContent value="fc-verification" className="mt-6">
-          <FCVerificationPanel />
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
+            <div className="col-span-4">
+              <FCVerificationPanel />
+            </div>
+            <div className="col-span-3">
+              <UncertaintyVisualizerPanel />
+            </div>
+          </div>
         </TabsContent>
 
       </Tabs>
