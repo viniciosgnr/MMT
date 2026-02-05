@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime
 from ..database import get_db
-from ..models import FailureNotification, ANPStatus, FPSOFailureEmailList
+from ..models import FailureNotification, ANPStatus, FPSOFailureEmailList, Equipment, EquipmentStatus
 from ..schemas.phase3 import (
     FailureNotificationCreate,
     FailureNotificationUpdate,
@@ -20,6 +20,7 @@ def get_failures(
     skip: int = 0,
     limit: int = 100,
     anp_status: Optional[str] = None,
+    equipment_id: Optional[int] = None,
     db: Session = Depends(get_db)
 ):
     """Get all failure notifications with optional ANP status filter"""
@@ -27,6 +28,8 @@ def get_failures(
     
     if anp_status:
         query = query.filter(FailureNotification.anp_status == anp_status)
+    if equipment_id:
+        query = query.filter(FailureNotification.equipment_id == equipment_id)
     
     return query.offset(skip).limit(limit).all()
 
@@ -36,6 +39,16 @@ def create_failure(
     db: Session = Depends(get_db)
 ):
     """Create a new failure notification in Draft mode"""
+    
+    # M1 Integration: Validate Equipment
+    equipment = db.query(Equipment).filter(Equipment.id == failure.equipment_id).first()
+    if not equipment:
+        raise HTTPException(status_code=404, detail="Equipment not found")
+        
+    # Optional: Warn if equipment is already decommissioned?
+    if equipment.status == EquipmentStatus.DECOMMISSIONED.value:
+         raise HTTPException(status_code=400, detail="Cannot register failure for Decommissioned equipment")
+    
     db_failure = FailureNotification(**failure.model_dump(), status="Draft")
     db.add(db_failure)
     db.commit()

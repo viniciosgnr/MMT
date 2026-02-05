@@ -69,29 +69,32 @@ def create_card(card: schemas.MaintenanceCardCreate, db: Session = Depends(datab
 
 @router.get("/cards", response_model=List[schemas.MaintenanceCard])
 def read_cards(
+    column_id: Optional[int] = None,
     status: Optional[str] = None,
     fpso: Optional[str] = None,
     equipment_id: Optional[int] = None,
     tag_id: Optional[int] = None,
     responsible: Optional[str] = None,
     search: Optional[str] = None,
-    due_filter: Optional[str] = None, # "overdue", "next_week", "tomorrow"
+    due_filter: Optional[str] = None, 
     db: Session = Depends(database.get_db)
 ):
     query = db.query(models.MaintenanceCard)
     
+    if column_id:
+        query = query.filter(models.MaintenanceCard.column_id == column_id)
     if status:
         query = query.filter(models.MaintenanceCard.status == status)
     if fpso:
         query = query.filter(models.MaintenanceCard.fpso == fpso)
     if responsible:
         query = query.filter(models.MaintenanceCard.responsible.ilike(f"%{responsible}%"))
-    
+        
     if equipment_id:
         query = query.filter(models.MaintenanceCard.linked_equipments.any(models.Equipment.id == equipment_id))
     if tag_id:
         query = query.filter(models.MaintenanceCard.linked_tags.any(models.InstrumentTag.id == tag_id))
-        
+
     if search:
         search_filter = or_(
             models.MaintenanceCard.title.ilike(f"%{search}%"),

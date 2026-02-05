@@ -11,8 +11,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { toast } from "sonner"
-import { Calendar, CheckCircle2, Clock, FileCheck, Stamp, Upload, AlertCircle, ArrowLeft } from "lucide-react"
-import { apiFetch, planCalibration, executeCalibration, uploadCertificate, validateCertificate, getTagSealHistory } from "@/lib/api"
+import { Calendar, CheckCircle2, Clock, FileCheck, Stamp, Upload, AlertCircle, ArrowLeft, XCircle } from "lucide-react"
+import { apiFetch, planCalibration, executeCalibration, uploadCertificate, validateCertificate, getTagSealHistory, failCalibrationTask } from "@/lib/api"
 
 export default function CalibrationTaskDetail() {
   const params = useParams()
@@ -105,6 +105,22 @@ export default function CalibrationTaskDetail() {
     } catch (error) {
       console.error("Error executing calibration:", error)
       toast.error("Failed to execute calibration")
+    }
+  }
+
+  async function handleFail() {
+    try {
+      // Reason prompts could be added, for now hardcoded or simple prompt
+      const reason = prompt("Enter failure reason:", "Reading outside tolerance")
+      if (!reason) return
+
+      const res = await failCalibrationTask(taskId, reason)
+      toast.error(`Task Failed. Notification #${res.notification_id} created.`)
+      setExecuteDialogOpen(false)
+      fetchTaskDetails()
+    } catch (error) {
+      console.error("Error failing task:", error)
+      toast.error("Failed to register failure")
     }
   }
 
@@ -324,6 +340,7 @@ export default function CalibrationTaskDetail() {
               </Dialog>
             )}
 
+
             {task.status === "Scheduled" && (
               <Dialog open={executeDialogOpen} onOpenChange={setExecuteDialogOpen}>
                 <DialogTrigger asChild>
@@ -333,11 +350,13 @@ export default function CalibrationTaskDetail() {
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-2xl">
+                  {/* ... Header ... */}
                   <DialogHeader>
                     <DialogTitle>Execute Calibration</DialogTitle>
                     <DialogDescription>Record calibration execution details</DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-4">
+                    {/* ... Fields (Kept same implicitly by not changing them) ... */}
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="exec-date">Execution Date</Label>
@@ -419,7 +438,11 @@ export default function CalibrationTaskDetail() {
                       </div>
                     </div>
                   </div>
-                  <DialogFooter>
+                  <DialogFooter className="flex justify-between sm:justify-between">
+                    <Button variant="destructive" onClick={handleFail}>
+                      <XCircle className="mr-2 h-4 w-4" />
+                      Reject / Fail
+                    </Button>
                     <Button onClick={handleExecute}>Confirm Execution</Button>
                   </DialogFooter>
                 </DialogContent>

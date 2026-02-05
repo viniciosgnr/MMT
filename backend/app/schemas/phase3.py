@@ -6,17 +6,17 @@ from typing import Optional
 
 class FailureNotificationBase(BaseModel):
     equipment_id: Optional[int] = None
-    tag: str
-    fpso_name: str
-    failure_date: datetime
+    tag: Optional[str] = None
+    fpso_name: Optional[str] = None
+    failure_date: Optional[datetime] = None
     restoration_date: Optional[datetime] = None
-    description: str
-    impact: str
+    description: Optional[str] = None
+    impact: Optional[str] = None
     estimated_volume_impact: float = 0.0
     volume_unit: str = "m3"
     cause: Optional[str] = None
-    corrective_action: str
-    responsible: str
+    corrective_action: Optional[str] = None
+    responsible: Optional[str] = None
     anp_notification_number: Optional[str] = None
     anp_classification: Optional[str] = None
     anp_deadline: Optional[datetime] = None

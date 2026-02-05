@@ -29,7 +29,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner"
 import { apiFetch } from "@/lib/api"
 
+import { useRouter } from "next/navigation"
+
 export default function EquipmentInventory() {
+  const router = useRouter()
   const [equipments, setEquipments] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
@@ -252,7 +255,11 @@ export default function EquipmentInventory() {
               </TableRow>
             ) : filtered.map((eq) => (
               <TableRow key={eq.id} className="hover:bg-slate-50/50">
-                <TableCell className="font-mono font-bold text-[#003D5C]">{eq.serial_number}</TableCell>
+                <TableCell className="font-mono font-bold text-[#003D5C]">
+                  <Button variant="link" className="p-0 h-auto font-bold text-[#003D5C] hover:text-[#FF6B35]" onClick={() => router.push(`/dashboard/equipment/${eq.id}`)}>
+                    {eq.serial_number}
+                  </Button>
+                </TableCell>
                 <TableCell>{eq.manufacturer || "N/A"}</TableCell>
                 <TableCell>{eq.model}</TableCell>
                 <TableCell>{eq.equipment_type}</TableCell>

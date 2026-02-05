@@ -5,6 +5,7 @@ export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000
 
 type FetchOptions = RequestInit & {
   headers?: Record<string, string>
+  params?: Record<string, string | number | boolean>
 }
 
 export async function apiFetch(endpoint: string, options: FetchOptions = {}) {
@@ -23,7 +24,21 @@ export async function apiFetch(endpoint: string, options: FetchOptions = {}) {
     headers['Content-Type'] = 'application/json'
   }
 
-  const response = await fetch(`${API_URL}${endpoint}`, {
+  let url = `${API_URL}${endpoint}`
+  if (options.params) {
+    const searchParams = new URLSearchParams()
+    Object.entries(options.params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        searchParams.append(key, String(value))
+      }
+    })
+    const queryString = searchParams.toString()
+    if (queryString) {
+      url += (url.includes('?') ? '&' : '?') + queryString
+    }
+  }
+
+  const response = await fetch(url, {
     ...options,
     headers,
   })
@@ -69,5 +84,13 @@ export async function validateCertificate(taskId: number) {
 
 export async function getTagSealHistory(tagId: number) {
   const res = await apiFetch(`/calibration/tags/${tagId}/seals`)
+  return res.json()
+}
+
+export async function failCalibrationTask(taskId: number, reason: string) {
+  const res = await apiFetch(`/calibration/tasks/${taskId}/fail`, {
+    method: 'POST',
+    params: { reason } // using query param as seen in router
+  })
   return res.json()
 }

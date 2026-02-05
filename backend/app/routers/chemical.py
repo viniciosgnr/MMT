@@ -87,13 +87,36 @@ def create_sample(sample: schemas.SampleCreate, db: Session = Depends(database.g
 def list_samples(
     fpso_name: Optional[str] = None,
     status: Optional[str] = None,
+    equipment_id: Optional[int] = None,
     db: Session = Depends(database.get_db)
 ):
     query = db.query(models.Sample).join(models.SamplePoint)
+    
     if fpso_name:
         query = query.filter(models.SamplePoint.fpso_name == fpso_name)
     if status:
         query = query.filter(models.Sample.status == status)
+        
+    if equipment_id:
+        # M1 -> M3 Integration: Find samples relevant to the equipment's current location (Tag)
+        # 1. Get active installation
+        active_install = db.query(models.EquipmentTagInstallation).filter(
+            models.EquipmentTagInstallation.equipment_id == equipment_id,
+            models.EquipmentTagInstallation.is_active == 1
+        ).first()
+        
+        if active_install:
+            # 2. Get Tag and its Sample Point
+            tag = db.query(models.InstrumentTag).filter(models.InstrumentTag.id == active_install.tag_id).first()
+            if tag and tag.sample_point_id:
+                query = query.filter(models.Sample.sample_point_id == tag.sample_point_id)
+            else:
+                # Installed but Tag has no sample point -> No samples
+                return []
+        else:
+            # Not installed -> No associated process samples
+            return []
+            
     return query.all()
 
 @router.get("/samples/{sample_id}", response_model=schemas.Sample)

@@ -60,7 +60,7 @@ class SampleStatusHistory(SampleStatusHistoryBase):
 class SampleBase(BaseModel):
     sample_id: str
     type: str # Gas, Oil, Water
-    responsible: str
+    responsible: Optional[str] = None
     sample_point_id: int
     notes: Optional[str] = None
 

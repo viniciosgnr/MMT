@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from ..database import get_db
 from ..models import SyncStatus, SyncStatusEnum, SyncSource, SyncJob, OperationalData
+from ..services.integrations import IntegrationService
 from ..schemas.phase3 import (
     SyncStatus as SyncStatusSchema, 
     SyncSource as SyncSourceSchema, 
@@ -71,6 +72,14 @@ def ingest_data(payload: DataIngestionPayload, db: Session = Depends(get_db)):
     sync_status.records_synced += len(payload.data)
 
     db.commit()
+    
+    # M5 -> M1/M2 Integration: Process Side Effects
+    try:
+        IntegrationService.process_sync_job_impact(db, job.id)
+    except Exception as e:
+        print(f"Integration Error: {e}")
+        # Don't fail the ingestion request just because side-effects failed
+    
     return {"message": "Data ingested successfully", "job_id": job.id}
 
 # --- Manual File Upload (USB Workflow) ---
@@ -120,6 +129,13 @@ async def upload_sync_file(
     job.end_time = datetime.utcnow()
     
     db.commit()
+    
+    # M5 -> M1/M2 Integration: Process Side Effects
+    try:
+        IntegrationService.process_sync_job_impact(db, job.id)
+    except Exception as e:
+        print(f"Integration Error: {e}")
+    
     return {"message": "File processed successfully", "records": count}
 
 # --- Monitoring ---

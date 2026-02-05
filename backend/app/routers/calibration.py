@@ -4,6 +4,7 @@ from typing import List, Optional
 from datetime import date, datetime
 import json
 from .. import models, database
+from ..services.integrations import IntegrationService
 from ..schemas import calibration as schemas
 from ..dependencies import get_current_user
 
@@ -56,6 +57,7 @@ def create_task(task: schemas.CalibrationTaskCreate, db: Session = Depends(datab
 @router.get("/tasks", response_model=List[schemas.CalibrationTask])
 def list_tasks(
     campaign_id: Optional[int] = None,
+    equipment_id: Optional[int] = None,
     status: Optional[str] = None,
     skip: int = 0,
     limit: int = 100,
@@ -64,6 +66,8 @@ def list_tasks(
     query = db.query(models.CalibrationTask)
     if campaign_id:
         query = query.filter(models.CalibrationTask.campaign_id == campaign_id)
+    if equipment_id:
+        query = query.filter(models.CalibrationTask.equipment_id == equipment_id)
     if status:
         query = query.filter(models.CalibrationTask.status == status)
     tasks = query.offset(skip).limit(limit).all()
@@ -296,6 +300,33 @@ def validate_certificate(
         "validation_results": validation_results,
         "issues": issues,
         "status": "approved" if not issues else "pending"
+    }
+
+@router.post("/tasks/{task_id}/fail")
+def fail_task(
+    task_id: int,
+    reason: str,
+    db: Session = Depends(database.get_db),
+    current_user = Depends(get_current_user)
+):
+    """
+    Explicitly fail a calibration task (M2 -> M9 Integration).
+    Triggers creation of a Failure Notification.
+    """
+    task = db.query(models.CalibrationTask).filter(models.CalibrationTask.id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+        
+    # Mark task as failed/rejected? Or just keep it pending but raise notification?
+    # Spec implies we might want to flag the equipment.
+    
+    notification_id = IntegrationService.trigger_failure_from_calibration(
+        db, task_id, reason, current_user.username if hasattr(current_user, 'username') else "System"
+    )
+    
+    return {
+        "message": "Task flagged as failed. Notification created.",
+        "notification_id": notification_id
     }
 
 # Result Endpoints (existing)

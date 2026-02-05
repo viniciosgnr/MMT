@@ -31,6 +31,7 @@ class Equipment(EquipmentBase):
     id: int
     created_at: datetime
     certificates: List["EquipmentCertificate"] = []
+    installations: List["EquipmentTagInstallationOut"] = []
 
     class Config:
         from_attributes = True
@@ -53,17 +54,25 @@ class InstrumentTag(InstrumentTagBase):
     class Config:
         from_attributes = True
 
+class InstrumentTagOut(InstrumentTagBase):
+    id: int
+    created_at: datetime
+    # OMIT installations to avoid recursion
+    
+    class Config:
+        from_attributes = True
+
 class EquipmentTagInstallationBase(BaseModel):
     equipment_id: int
     tag_id: int
-    installed_by: str
+    installed_by: Optional[str] = None
     installation_report_path: Optional[str] = None
     checklist_data: Optional[str] = None
 
 class EquipmentTagInstallationCreate(EquipmentTagInstallationBase):
     installation_date: Optional[datetime] = None
     checklist_data: Optional[str] = None # Added for explicit input
-
+    installed_by: str # Required on creation
 
 class EquipmentTagInstallation(EquipmentTagInstallationBase):
     id: int
@@ -71,6 +80,17 @@ class EquipmentTagInstallation(EquipmentTagInstallationBase):
     removal_date: Optional[datetime] = None
     is_active: int
     equipment: Optional["Equipment"] = None
+
+    class Config:
+        from_attributes = True
+
+class EquipmentTagInstallationOut(EquipmentTagInstallationBase):
+    id: int
+    installation_date: datetime
+    removal_date: Optional[datetime] = None
+    is_active: int
+    # OMIT equipment to avoid recursion
+    tag: Optional["InstrumentTagOut"] = None # Include Tag info for context? Yes
 
     class Config:
         from_attributes = True
