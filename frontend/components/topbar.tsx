@@ -141,16 +141,22 @@ export function Topbar() {
       <div className="flex items-center gap-6">
         {/* Global FPSO Selector */}
         <div className="w-[200px]">
-          <Select defaultValue="sepetiba">
+          <Select defaultValue="all">
             <SelectTrigger className="h-9 border-white/20 bg-white/10 text-white hover:bg-white/20 transition-colors">
               <SelectValue placeholder="Select FPSO" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="sepetiba">FPSO SEPETIBA</SelectItem>
-              <SelectItem value="saquarema">FPSO SAQUAREMA</SelectItem>
-              <SelectItem value="marica">FPSO MARICÁ</SelectItem>
-              <SelectItem value="paraty">FPSO PARATY</SelectItem>
-              <SelectItem value="ilhabela">FPSO ILHABELA</SelectItem>
+              <SelectItem value="all">All FPSOs</SelectItem>
+              <SelectItem value="CDS - Cidade de Saquarema">CDS - Saquarema</SelectItem>
+              <SelectItem value="CDM - Cidade de Maricá">CDM - Maricá</SelectItem>
+              <SelectItem value="CDI - Cidade de Ilhabela">CDI - Ilhabela</SelectItem>
+              <SelectItem value="CDP - Cidade de Paraty">CDP - Paraty</SelectItem>
+              <SelectItem value="ESS - Espírito Santo">ESS - Espírito Santo</SelectItem>
+              <SelectItem value="CPX - Capixaba">CPX - Capixaba</SelectItem>
+              <SelectItem value="CDA - Cidade de Anchieta">CDA - Anchieta</SelectItem>
+              <SelectItem value="ADG - Alexandre de Gusmão">ADG - Alexandre de Gusmão</SelectItem>
+              <SelectItem value="ATD - Almirante Tamandaré">ATD - Almirante Tamandaré</SelectItem>
+              <SelectItem value="SEP - Sepetiba">SEP - Sepetiba</SelectItem>
             </SelectContent>
           </Select>
         </div>

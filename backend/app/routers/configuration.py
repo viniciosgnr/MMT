@@ -67,7 +67,19 @@ def get_attributes(entity_type: Optional[str] = None, db: Session = Depends(data
 
 @router.post("/attributes", response_model=schemas.AttributeDefinition)
 def create_attribute_definition(attr: schemas.AttributeDefinitionCreate, db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
-    db_attr = models.AttributeDefinition(**attr.model_dump())
+    # Prepare data for DB
+    data = attr.model_dump()
+    
+    # Serialize validation_rules to JSON string if present
+    if attr.validation_rules:
+        import json
+        # Check if it's a Pydantic model
+        if hasattr(attr.validation_rules, "model_dump"):
+            data["validation_rules"] = json.dumps(attr.validation_rules.model_dump())
+        else:
+            data["validation_rules"] = json.dumps(attr.validation_rules)
+            
+    db_attr = models.AttributeDefinition(**data)
     db.add(db_attr)
     db.commit()
     db.refresh(db_attr)
@@ -84,34 +96,12 @@ def set_attribute_value(val: schemas.AttributeValueCreate, db: Session = Depends
     if not definition:
         raise HTTPException(status_code=404, detail="Attribute definition not found")
 
-    # 2. Dynamic Validation
-    import json
-    if definition.validation_rules:
-        try:
-            rules = json.loads(definition.validation_rules)
-            
-            # Numerical Validation
-            if definition.type == "Numerical":
-                try:
-                    num_val = float(val.value)
-                    if "min" in rules and num_val < rules["min"]:
-                        raise HTTPException(status_code=400, detail=f"Value {num_val} is below minimum {rules['min']}")
-                    if "max" in rules and num_val > rules["max"]:
-                        raise HTTPException(status_code=400, detail=f"Value {num_val} is above maximum {rules['max']}")
-                except ValueError:
-                    raise HTTPException(status_code=400, detail="Value must be numerical")
-            
-            # Text Validation (Regex/Length)
-            if definition.type == "Text":
-                if "min_length" in rules and len(val.value) < rules["min_length"]:
-                    raise HTTPException(status_code=400, detail=f"Text too short (min {rules['min_length']})")
-                if "regex" in rules:
-                    import re
-                    if not re.match(rules["regex"], val.value):
-                        raise HTTPException(status_code=400, detail="Value does not match required format")
-
-        except json.JSONDecodeError:
-            pass # Ignore malformed rules for now or log them
+    # 2. Dynamic Validation via Service
+    from ..services.validation_service import ValidationService
+    try:
+        ValidationService.validate_attribute_value(definition, val.value)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
     # 3. Save Value
     db_val = db.query(models.AttributeValue).filter(

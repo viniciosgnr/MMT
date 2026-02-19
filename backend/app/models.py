@@ -299,7 +299,6 @@ class SamplePoint(Base):
     tag_number = Column(String, unique=True, index=True) # e.g., 62-SP-1101
     description = Column(String)
     fpso_name = Column(String)
-    fluid_type = Column(String) # Gas, Oil, Water
     is_operational = Column(Integer, default=1) # Operational vs others (affects SLA)
     sampling_interval_days = Column(Integer, default=30)
     validation_method_implemented = Column(Integer, default=0) # Boolean
@@ -335,17 +334,27 @@ class Sample(Base):
     sample_id = Column(String, unique=True, index=True) # Barcode or unique string
     
     # Process Details
-    type = Column(String)  # Gas, Oil, Water
+    type = Column(String)  # Fiscal, Gas Lift, Poço CG, Poço PVT
     status = Column(String, default=SampleStatus.PLANNED.value)
     responsible = Column(String)
+    osm_id = Column(String, nullable=True)  # Identificação OSM
+    laudo_number = Column(String, nullable=True)  # Laudo Nº
+    mitigated = Column(Integer, default=0)  # 0=Não, 1=Sim
     
-    # Logistics Dates (for SLA Tracking)
-    planned_date = Column(Date, nullable=True)
-    sampling_date = Column(Date, nullable=True)
-    disembark_date = Column(Date, nullable=True)
-    delivery_date = Column(Date, nullable=True)
-    report_issue_date = Column(Date, nullable=True)
-    fc_update_date = Column(DateTime, nullable=True)
+    # SLA Dates — Expected (Previsto) auto-calculated: 10-10-5-5 days
+    planned_date = Column(Date, nullable=True)  # Coleta Prevista
+    disembark_expected_date = Column(Date, nullable=True)  # Desembarque Previsto (+10d from sampling)
+    lab_expected_date = Column(Date, nullable=True)  # Laboratório Previsto (+10d from disembark)
+    report_expected_date = Column(Date, nullable=True)  # Laudo Previsto (+5d from lab)
+    fc_expected_date = Column(Date, nullable=True)  # CV Previsto (+5d from report)
+    
+    # SLA Dates — Actual (Realizado)
+    sampling_date = Column(Date, nullable=True)  # Coleta Realizado
+    disembark_date = Column(Date, nullable=True)  # Desembarque Realizado
+    delivery_date = Column(Date, nullable=True)  # Laboratório Realizado
+    report_issue_date = Column(Date, nullable=True)  # Laudo Realizado
+    fc_update_date = Column(DateTime, nullable=True)  # CV Realizado
+    due_date = Column(Date, nullable=True)  # Deadline for the current step
     
     # Results & Validation
     lab_report_url = Column(String, nullable=True)
@@ -381,9 +390,17 @@ class SampleResult(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     sample_id = Column(Integer, ForeignKey("samples.id"))
-    parameter = Column(String)  # e.g., "Density", "Sulfur Content"
+    parameter = Column(String)  # e.g., "density", "rs", "fe", "o2", "density_abs_op", "density_abs_std"
     value = Column(Float)
     unit = Column(String)
+    
+    # Validation fields (populated by validation engine)
+    validation_status = Column(String, nullable=True)   # "pass", "fail", "warning", "insufficient_data"
+    validation_detail = Column(String, nullable=True)    # e.g. "Within 2σ range [872.3 – 876.8]"
+    history_mean = Column(Float, nullable=True)          # Mean of last 10 samples
+    history_std = Column(Float, nullable=True)           # Std deviation of last 10
+    source_pdf = Column(String, nullable=True)           # Original PDF filename
+    
     approved_by = Column(String, nullable=True)
     approved_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)

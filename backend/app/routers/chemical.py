@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
+import os
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, desc
 from typing import List, Optional
 from datetime import datetime, date, timedelta
 from .. import models, database
@@ -54,6 +55,78 @@ def list_campaigns(fpso_name: Optional[str] = None, status: Optional[str] = None
         query = query.filter(models.SamplingCampaign.status == status)
     return query.all()
 
+# --- Dashboard Stats (M3 Redesign) ---
+
+# Step-to-card grouping
+STEP_GROUPS = {
+    "sampling": ["Planned", "Sampled"],
+    "disembark": ["Disembark preparation", "Disembark logistics"],
+    "logistics": ["Warehouse", "Logistics to vendor", "Delivered at vendor"],
+    "report": ["Report issued", "Report under validation", "Report approved/reproved"],
+    "fc_update": ["Flow computer updated"],
+}
+
+@router.get("/dashboard-stats")
+def get_dashboard_stats(fpso_name: Optional[str] = None, db: Session = Depends(database.get_db)):
+    """Returns grouped step counts with urgency classification for the 5 dashboard cards."""
+    today = date.today()
+    tomorrow = today + timedelta(days=1)
+    
+    query = db.query(models.Sample).outerjoin(models.SamplePoint)
+    if fpso_name:
+        query = query.filter(models.SamplePoint.fpso_name == fpso_name)
+    
+    # Exclude completed samples from active dashboard
+    active_samples = query.filter(
+        models.Sample.status != models.SampleStatus.FLOW_COMPUTER_UPDATED.value
+    ).all()
+    
+    # Also get completed for FC Update card
+    completed_samples = query.filter(
+        models.Sample.status == models.SampleStatus.FLOW_COMPUTER_UPDATED.value
+    ).all()
+    
+    all_samples = active_samples + completed_samples
+    
+    result = {}
+    for group_key, statuses in STEP_GROUPS.items():
+        group_samples = [s for s in all_samples if s.status in statuses]
+        
+        # Build sub-step breakdown
+        steps = []
+        for status_name in statuses:
+            step_samples = [s for s in group_samples if s.status == status_name]
+            overdue = sum(1 for s in step_samples if s.due_date and s.due_date < today)
+            due_today = sum(1 for s in step_samples if s.due_date and s.due_date == today)
+            due_tomorrow = sum(1 for s in step_samples if s.due_date and s.due_date == tomorrow)
+            others = len(step_samples) - overdue - due_today - due_tomorrow
+            
+            steps.append({
+                "name": status_name,
+                "total": len(step_samples),
+                "overdue": overdue,
+                "due_today": due_today,
+                "due_tomorrow": due_tomorrow,
+                "others": others,
+            })
+        
+        # Aggregate totals for the card
+        total_overdue = sum(s["overdue"] for s in steps)
+        total_due_today = sum(s["due_today"] for s in steps)
+        total_due_tomorrow = sum(s["due_tomorrow"] for s in steps)
+        total_others = sum(s["others"] for s in steps)
+        
+        result[group_key] = {
+            "total": sum(s["total"] for s in steps),
+            "overdue": total_overdue,
+            "due_today": total_due_today,
+            "due_tomorrow": total_due_tomorrow,
+            "others": total_others,
+            "steps": steps,
+        }
+    
+    return result
+
 # --- Samples & Lifecycle (M3 Core) ---
 
 @router.post("/samples", response_model=schemas.Sample)
@@ -66,7 +139,8 @@ def create_sample(sample: schemas.SampleCreate, db: Session = Depends(database.g
     db_sample = models.Sample(
         **sample.model_dump(),
         status=models.SampleStatus.PLANNED,
-        type=sp.fluid_type
+        type=sp.fluid_type,
+        due_date=(sample.planned_date or date.today()) + timedelta(days=7)
     )
     db.add(db_sample)
     db.commit()
@@ -90,7 +164,7 @@ def list_samples(
     equipment_id: Optional[int] = None,
     db: Session = Depends(database.get_db)
 ):
-    query = db.query(models.Sample).join(models.SamplePoint)
+    query = db.query(models.Sample).outerjoin(models.SamplePoint)
     
     if fpso_name:
         query = query.filter(models.SamplePoint.fpso_name == fpso_name)
@@ -147,7 +221,7 @@ def check_sampling_slas(db: Session = Depends(database.get_db)):
         if not existing:
             alert = Alert(
                 tag_number=s.sample_id,
-                fpso_name=s.sample_point.fpso_name,
+                fpso_name=s.sample_point.fpso_name if s.sample_point else "Unknown",
                 severity=AlertSeverity.HIGH.value,
                 type="Lab Report Overdue",
                 description=f"Sample {s.sample_id} was taken on {s.sampling_date} but lab report is missing (>15 days).",
@@ -168,7 +242,7 @@ def check_sampling_slas(db: Session = Depends(database.get_db)):
         if not existing:
             alert = Alert(
                 tag_number=s.sample_id,
-                fpso_name=s.sample_point.fpso_name,
+                fpso_name=s.sample_point.fpso_name if s.sample_point else "Unknown",
                 severity=AlertSeverity.MEDIUM.value,
                 type="Validation Pending",
                 description=f"Lab report for {s.sample_id} was issued on {s.report_issue_date} but remains unvalidated (>3 days).",
@@ -198,12 +272,13 @@ def update_sample_status(sample_id: int, update: schemas.SampleStatusUpdate, db:
     
     # Auto-update dates based on status
     if update.status == models.SampleStatus.SAMPLED:
-        sample.sampling_date = update.event_date or date.today()
-        # M3.1: Close IFS WO and open new one
-        print(f"DEBUG: Closing IFS WO for {sample.sample_id}. Opening next in {sample.sample_point.sampling_interval_days} days.")
-        # Forecast next sample
-        next_planned = date.today() + timedelta(days=sample.sample_point.sampling_interval_days)
-        # In a real app, we'd create a new 'Planned' Sample here or a WO record
+        sampling_dt = update.event_date or date.today()
+        sample.sampling_date = sampling_dt
+        # Auto-calculate expected dates: 10-10-5-5 pattern
+        sample.disembark_expected_date = sampling_dt + timedelta(days=10)
+        sample.lab_expected_date = sampling_dt + timedelta(days=20)  # +10+10
+        sample.report_expected_date = sampling_dt + timedelta(days=25)  # +10+10+5
+        sample.fc_expected_date = sampling_dt + timedelta(days=30)  # +10+10+5+5
         
     elif update.status == models.SampleStatus.DISEMBARK_LOGISTICS:
         sample.disembark_date = update.event_date or date.today()
@@ -224,7 +299,46 @@ def update_sample_status(sample_id: int, update: schemas.SampleStatusUpdate, db:
         if update.url:
             sample.fc_evidence_url = update.url
 
+    # Handle additional tracking fields from update
+    if update.osm_id is not None:
+        sample.osm_id = update.osm_id
+    if update.laudo_number is not None:
+        sample.laudo_number = update.laudo_number
+    if update.mitigated is not None:
+        sample.mitigated = update.mitigated
+
     sample.status = update.status
+    
+    # Set due_date based on macro-phase SLA deadlines (10-10-5-5)
+    # Each step inherits the expected date of its macro-phase:
+    #   Planned              → planned_date
+    #   Sampled..Disembark   → disembark_expected_date  (+10d)
+    #   Warehouse..Delivered → lab_expected_date         (+20d)
+    #   Report..Approved     → report_expected_date      (+25d)
+    #   FC Updated           → fc_expected_date          (+30d)
+    PHASE_DUE = {
+        "Planned": "planned_date",
+        "Sampled": "disembark_expected_date",
+        "Disembark preparation": "disembark_expected_date",
+        "Disembark logistics": "disembark_expected_date",
+        "Warehouse": "lab_expected_date",
+        "Logistics to vendor": "lab_expected_date",
+        "Delivered at vendor": "lab_expected_date",
+        "Report issued": "report_expected_date",
+        "Report under validation": "report_expected_date",
+        "Report approved/reproved": "report_expected_date",
+        "Flow computer updated": "fc_expected_date",
+    }
+    
+    if update.due_date:
+        sample.due_date = update.due_date
+    else:
+        phase_field = PHASE_DUE.get(update.status)
+        if phase_field:
+            sample.due_date = getattr(sample, phase_field, None)
+        else:
+            sample.due_date = None
+    
     db.commit()
     db.refresh(sample)
     return sample
@@ -290,3 +404,134 @@ def add_sample_result(sample_id: int, result: schemas.SampleResultBase, db: Sess
     db.commit()
     db.refresh(db_result)
     return db_result
+
+
+# --- Report Validation (PDF Extraction + 2σ Analysis) ---
+
+@router.post("/samples/{sample_id}/validate-report", response_model=schemas.ValidationResponse)
+async def validate_report_endpoint(
+    sample_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(database.get_db),
+    current_user = Depends(get_current_user),
+):
+    """Upload a lab report PDF, extract values, store them, and run validation."""
+    from ..services.pdf_parser import parse_pdf_bytes
+    from ..services.validation_engine import validate_report
+
+    sample = db.query(models.Sample).filter(models.Sample.id == sample_id).first()
+    if not sample:
+        raise HTTPException(status_code=404, detail="Sample not found")
+
+    # Read and parse PDF
+    pdf_bytes = await file.read()
+    try:
+        extracted = parse_pdf_bytes(pdf_bytes, filename=file.filename or "")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    # Run validation against historical data
+    validation = validate_report(extracted, sample, db)
+
+    # Store extracted values as SampleResult rows
+    # First, remove any previous results from this sample (re-validation)
+    db.query(models.SampleResult).filter(models.SampleResult.sample_id == sample_id).delete()
+
+    for check in validation.checks:
+        db_result = models.SampleResult(
+            sample_id=sample_id,
+            parameter=check.parameter,
+            value=check.value,
+            unit=check.unit,
+            validation_status=check.status,
+            validation_detail=check.detail,
+            history_mean=check.history_mean,
+            history_std=check.history_std,
+            source_pdf=file.filename,
+        )
+        db.add(db_result)
+
+    # Update the sample's validation_status based on overall result
+    sample.validation_status = validation.overall_status
+    # Save the PDF to disk so it can be viewed later
+    uploads_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "uploads", "reports")
+    os.makedirs(uploads_dir, exist_ok=True)
+    # Use a unique filename to avoid collisions
+    from datetime import datetime as _dt
+    safe_name = f"{sample_id}_{int(_dt.now().timestamp())}_{file.filename}"
+    pdf_path = os.path.join(uploads_dir, safe_name)
+    with open(pdf_path, "wb") as f:
+        f.write(pdf_bytes)
+    sample.lab_report_url = f"/uploads/reports/{safe_name}"
+
+    db.commit()
+
+    return schemas.ValidationResponse(
+        report_type=validation.report_type,
+        overall_status=validation.overall_status,
+        boletim=validation.boletim,
+        tag_point=validation.tag_point,
+        checks=[
+            schemas.ValidationCheck(
+                parameter=c.parameter,
+                value=c.value,
+                unit=c.unit,
+                status=c.status,
+                detail=c.detail,
+                history_mean=c.history_mean,
+                history_std=c.history_std,
+                lower_bound=c.lower_bound,
+                upper_bound=c.upper_bound,
+                history_values=c.history_values,
+                history_dates=c.history_dates,
+            )
+            for c in validation.checks
+        ],
+        passed_count=validation.passed_count,
+        failed_count=validation.failed_count,
+    )
+
+
+@router.get("/samples/{sample_id}/lab-results", response_model=List[schemas.SampleResult])
+def get_lab_results(
+    sample_id: int,
+    db: Session = Depends(database.get_db),
+):
+    """Get stored lab results (extracted PDF values) for a sample."""
+    results = (
+        db.query(models.SampleResult)
+        .filter(models.SampleResult.sample_id == sample_id)
+        .order_by(models.SampleResult.id)
+        .all()
+    )
+    return results
+
+
+@router.get("/sample-points/{point_id}/parameter-history", response_model=List[schemas.ParameterHistoryItem])
+def get_parameter_history(
+    point_id: int,
+    parameter: str = Query(..., description="Parameter name: density, rs, fe, o2, density_abs_op, density_abs_std"),
+    limit: int = Query(10, ge=1, le=50),
+    db: Session = Depends(database.get_db),
+):
+    """Get last N values of a parameter for a sample point (for history chart)."""
+    results = (
+        db.query(models.SampleResult, models.Sample)
+        .join(models.Sample, models.SampleResult.sample_id == models.Sample.id)
+        .filter(
+            models.Sample.sample_point_id == point_id,
+            models.SampleResult.parameter == parameter,
+        )
+        .order_by(desc(models.SampleResult.created_at))
+        .limit(limit)
+        .all()
+    )
+
+    return [
+        schemas.ParameterHistoryItem(
+            value=sr.value,
+            date=s.sampling_date.isoformat() if s.sampling_date else str(sr.created_at),
+            sample_id=s.sample_id or "",
+        )
+        for sr, s in results
+    ]

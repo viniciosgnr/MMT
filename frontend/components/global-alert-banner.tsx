@@ -39,8 +39,8 @@ export function GlobalAlertBanner() {
         setCriticalFailures(critical)
         if (critical.length > 0) setIsVisible(true)
       }
-    } catch (error) {
-      console.error("Failed to fetch alerts", error)
+    } catch {
+      // Silently ignore — banner is optional
     }
   }
 

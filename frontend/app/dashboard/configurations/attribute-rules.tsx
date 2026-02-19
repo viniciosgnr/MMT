@@ -246,7 +246,11 @@ export function AttributeRules() {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1">
                           <ShieldCheck className="h-3 w-3 text-green-600" />
-                          <span className="text-xs">{attr.validation_rules || "No rules"}</span>
+                          <span className="text-xs">
+                            {typeof attr.validation_rules === 'object'
+                              ? JSON.stringify(attr.validation_rules)
+                              : (attr.validation_rules || "No rules")}
+                          </span>
                         </div>
                       </td>
                       <td className="px-4 py-3 text-right">

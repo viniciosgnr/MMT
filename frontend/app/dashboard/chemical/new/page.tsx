@@ -36,6 +36,7 @@ export default function NewSamplePage() {
   const [formData, setFormData] = useState({
     sample_id: `SAM-${new Date().getFullYear()}-${Math.floor(Math.random() * 900) + 100}`,
     sample_point_id: "",
+    type: "",
     planned_date: new Date().toISOString().split('T')[0],
     responsible: "",
     notes: ""
@@ -48,7 +49,7 @@ export default function NewSamplePage() {
   const loadPoints = async () => {
     try {
       setIsLoadingPoints(true)
-      const res = await apiFetch("/chemical/points")
+      const res = await apiFetch("/chemical/sample-points")
       if (res.ok) {
         setSamplePoints(await res.json())
       } else {
@@ -64,7 +65,7 @@ export default function NewSamplePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      if (!formData.sample_point_id || !formData.sample_id || !formData.responsible) {
+      if (!formData.sample_point_id || !formData.sample_id || !formData.responsible || !formData.type) {
         toast.error("Please fill in all required fields")
         return
       }
@@ -77,7 +78,6 @@ export default function NewSamplePage() {
         body: JSON.stringify({
           ...formData,
           sample_point_id: parseInt(formData.sample_point_id),
-          type: selectedPoint?.fluid_type || "Gas"
         })
       })
 
@@ -137,7 +137,7 @@ export default function NewSamplePage() {
                   <SelectContent>
                     {samplePoints.map(p => (
                       <SelectItem key={p.id} value={p.id.toString()}>
-                        {p.tag_number} - {p.description} ({p.fluid_type})
+                        {p.tag_number} — {p.description} ({p.fpso_name?.split(' - ')[0]})
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -146,6 +146,20 @@ export default function NewSamplePage() {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="type">Collection Type *</Label>
+                <Select value={formData.type} onValueChange={v => setFormData({ ...formData, type: v })}>
+                  <SelectTrigger id="type" className="w-full">
+                    <SelectValue placeholder="Select collection type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Fiscal">Fiscal</SelectItem>
+                    <SelectItem value="Gas Lift">Gas Lift</SelectItem>
+                    <SelectItem value="Poço CG">Poço CG (Cromatografia)</SelectItem>
+                    <SelectItem value="Poço PVT">Poço PVT</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="planned_date">Target Sampling Date</Label>
                 <div className="relative">
