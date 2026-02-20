@@ -309,13 +309,15 @@ def update_sample_status(sample_id: int, update: schemas.SampleStatusUpdate, db:
 
     sample.status = update.status
     
-    # Set due_date based on macro-phase SLA deadlines (10-10-5-5)
-    # Each step inherits the expected date of its macro-phase:
-    #   Planned              → planned_date
-    #   Sampled..Disembark   → disembark_expected_date  (+10d)
-    #   Warehouse..Delivered → lab_expected_date         (+20d)
-    #   Report..Approved     → report_expected_date      (+25d)
-    #   FC Updated           → fc_expected_date          (+30d)
+    # Set due_date = expected date of the NEXT milestone (10-10-5-5 pattern)
+    # The due_date answers: "by when does this sample need to reach the next phase?"
+    #   Planned              → planned_date           (when sampling should happen)
+    #   Sampled..Logistics   → disembark_expected_date (+10d, when disembark must complete)
+    #   Warehouse..Logistics → lab_expected_date       (+20d, when lab delivery must happen)
+    #   Delivered at vendor  → report_expected_date    (+25d, delivery done, waiting for report)
+    #   Report issued..Valid → report_expected_date    (+25d, report phase in progress)
+    #   Report approved      → fc_expected_date        (+30d, report done, waiting for FC)
+    #   FC Updated           → fc_expected_date        (+30d, final deadline)
     PHASE_DUE = {
         "Planned": "planned_date",
         "Sampled": "disembark_expected_date",
@@ -323,10 +325,10 @@ def update_sample_status(sample_id: int, update: schemas.SampleStatusUpdate, db:
         "Disembark logistics": "disembark_expected_date",
         "Warehouse": "lab_expected_date",
         "Logistics to vendor": "lab_expected_date",
-        "Delivered at vendor": "lab_expected_date",
+        "Delivered at vendor": "report_expected_date",
         "Report issued": "report_expected_date",
         "Report under validation": "report_expected_date",
-        "Report approved/reproved": "report_expected_date",
+        "Report approved/reproved": "fc_expected_date",
         "Flow computer updated": "fc_expected_date",
     }
     
