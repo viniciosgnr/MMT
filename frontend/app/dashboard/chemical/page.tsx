@@ -173,8 +173,13 @@ function getDueDiffDays(dueDateStr: string | null): number | null {
   if (!dueDateStr) return null
   const today = new Date()
   today.setHours(0, 0, 0, 0)
-  const due = new Date(dueDateStr + "T00:00:00")
+  const due = new Date(dueDateStr.split("T")[0] + "T00:00:00")
   return Math.floor((due.getTime() - today.getTime()) / (1000 * 3600 * 24))
+}
+
+function displayDate(dateStr: string | null): string {
+  if (!dateStr) return "—"
+  return new Date(dateStr.split("T")[0] + "T12:00:00").toLocaleDateString()
 }
 
 function getRowUrgencyClass(dueDateStr: string | null, status: string): string {
@@ -224,6 +229,7 @@ export default function ChemicalAnalysisDashboard() {
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [fpsoFilter, setFpsoFilter] = useState("all")
+  const [categoryFilter, setCategoryFilter] = useState<string>("all")
   const [activeGroup, setActiveGroup] = useState<string | null>(null)
 
   // Quick-advance popover state
@@ -305,6 +311,7 @@ export default function ChemicalAnalysisDashboard() {
 
   const filteredSamples = samples
     .filter(s => {
+      if (categoryFilter !== "all" && s.category !== categoryFilter) return false
       if (activeGroup && !activeStatuses.includes(s.status)) return false
       if (!searchQuery) return true
       const q = searchQuery.toLowerCase()
@@ -362,8 +369,24 @@ export default function ChemicalAnalysisDashboard() {
         </div>
       </div>
 
-      {/* ── FPSO Filter ── */}
-      <div className="flex items-center gap-4">
+      {/* ── FPSO Filter + Category Toggle ── */}
+      <div className="flex items-center gap-4 flex-wrap">
+        {/* Category toggle */}
+        <div className="flex items-center border rounded-lg overflow-hidden">
+          {["all", "Coleta", "Operacional"].map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setCategoryFilter(cat)}
+              className={`px-3 py-1.5 text-xs font-medium transition-colors ${categoryFilter === cat
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted/30 text-muted-foreground hover:bg-muted/50"
+                }`}
+            >
+              {cat === "all" ? "All" : cat === "Coleta" ? "Collections" : "Operational"}
+            </button>
+          ))}
+        </div>
+
         <Select value={fpsoFilter} onValueChange={setFpsoFilter}>
           <SelectTrigger className="w-[200px]">
             <Filter className="w-4 h-4 mr-2" />
@@ -555,7 +578,7 @@ export default function ChemicalAnalysisDashboard() {
                       {/* Sampling Date */}
                       <TableCell className="text-sm">
                         {sample.sampling_date
-                          ? new Date(sample.sampling_date).toLocaleDateString()
+                          ? displayDate(sample.sampling_date)
                           : <span className="text-muted-foreground italic">—</span>}
                       </TableCell>
 
@@ -584,7 +607,7 @@ export default function ChemicalAnalysisDashboard() {
                                 ? "text-amber-600 font-bold"
                                 : "text-sm"
                           }>
-                            {new Date(sample.due_date).toLocaleDateString()}
+                            {displayDate(sample.due_date)}
                           </span>
                         ) : (
                           <span className="text-muted-foreground">—</span>

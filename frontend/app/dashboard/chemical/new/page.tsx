@@ -134,7 +134,7 @@ export default function NewSamplePage() {
                   <SelectTrigger id="sample_point" className="w-full">
                     <SelectValue placeholder={isLoadingPoints ? "Loading points..." : "Select point"} />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-[300px] overflow-y-auto">
                     {samplePoints.map(p => (
                       <SelectItem key={p.id} value={p.id.toString()}>
                         {p.tag_number} — {p.description} ({p.fpso_name?.split(' - ')[0]})
@@ -157,6 +157,9 @@ export default function NewSamplePage() {
                     <SelectItem value="Gas Lift">Gas Lift</SelectItem>
                     <SelectItem value="Poço CG">Poço CG (Cromatografia)</SelectItem>
                     <SelectItem value="Poço PVT">Poço PVT</SelectItem>
+                    <SelectItem value="Operacional">Operacional</SelectItem>
+                    <SelectItem value="Óleo - Densidade">Óleo - Densidade</SelectItem>
+                    <SelectItem value="Óleo - Enxofre">Óleo - Enxofre</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

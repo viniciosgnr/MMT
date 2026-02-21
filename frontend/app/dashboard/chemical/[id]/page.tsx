@@ -40,6 +40,9 @@ import {
   AlertTriangle,
   Calendar,
   TrendingUp,
+  Pencil,
+  Check,
+  X,
 } from "lucide-react"
 import { apiFetch } from "@/lib/api"
 import { createClient } from "@/utils/supabase/client"
@@ -89,8 +92,13 @@ function getDueDiffDays(dueDateStr: string | null): number | null {
   if (!dueDateStr) return null
   const today = new Date()
   today.setHours(0, 0, 0, 0)
-  const due = new Date(dueDateStr + "T00:00:00")
+  const due = new Date(dueDateStr.split("T")[0] + "T00:00:00")
   return Math.floor((due.getTime() - today.getTime()) / (1000 * 3600 * 24))
+}
+
+function displayDate(dateStr: string | null): string {
+  if (!dateStr) return "—"
+  return new Date(dateStr.split("T")[0] + "T12:00:00").toLocaleDateString()
 }
 
 export default function SampleDetailPage() {
@@ -297,6 +305,10 @@ export default function SampleDetailPage() {
     return STATUS_LINE.indexOf(sample?.status || "Planned")
   }
 
+  // Due date override state
+  const [isEditingDueDate, setIsEditingDueDate] = useState(false)
+  const [editDueDate, setEditDueDate] = useState(sample?.due_date || "")
+
   if (isLoading || !sample) {
     return (
       <div className="flex h-[80vh] items-center justify-center">
@@ -405,14 +417,61 @@ export default function SampleDetailPage() {
                 </div>
                 <div className="p-3 rounded-lg bg-muted/50 border">
                   <Label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Due Date</Label>
-                  <div className={`font-bold mt-1 flex items-center gap-2 ${dueDiff === null || sample.status === "Flow computer updated" ? "text-foreground"
-                    : dueDiff < 0 ? "text-red-600"
-                      : dueDiff === 0 ? "text-amber-600"
-                        : "text-foreground"
-                    }`}>
-                    <Calendar className="w-4 h-4" />
-                    {sample.due_date ? new Date(sample.due_date).toLocaleDateString() : "Not set"}
-                  </div>
+                  {isEditingDueDate ? (
+                    <div className="flex items-center gap-2 mt-1">
+                      <Input
+                        type="date"
+                        value={editDueDate}
+                        onChange={(e) => setEditDueDate(e.target.value)}
+                        className="h-8 text-sm w-[150px]"
+                      />
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 w-7 p-0 text-green-600 hover:text-green-700"
+                        onClick={async () => {
+                          try {
+                            const res = await apiFetch(`/chemical/samples/${sample.id}/due-date`, {
+                              method: 'PATCH',
+                              body: JSON.stringify({ due_date: editDueDate || null }),
+                            })
+                            if (res.ok) {
+                              const updated = await res.json()
+                              setSample(updated)
+                              toast.success('Due date updated')
+                            }
+                          } catch { toast.error('Failed to update') }
+                          setIsEditingDueDate(false)
+                        }}
+                      >
+                        <Check className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 w-7 p-0 text-muted-foreground"
+                        onClick={() => { setIsEditingDueDate(false); setEditDueDate(sample.due_date || "") }}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className={`font-bold mt-1 flex items-center gap-2 ${dueDiff === null || sample.status === "Flow computer updated" ? "text-foreground"
+                      : dueDiff < 0 ? "text-red-600"
+                        : dueDiff === 0 ? "text-amber-600"
+                          : "text-foreground"
+                      }`}>
+                      <Calendar className="w-4 h-4" />
+                      {sample.due_date ? displayDate(sample.due_date) : "Not set"}
+                      <button
+                        onClick={() => { setEditDueDate(sample.due_date || ""); setIsEditingDueDate(true) }}
+                        className="ml-1 text-muted-foreground hover:text-primary transition-colors"
+                        title="Override due date"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <div className="p-3 rounded-lg bg-muted/50 border">
                   <Label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">SLA Status</Label>
@@ -535,10 +594,10 @@ export default function SampleDetailPage() {
                               <span className="mr-1.5">{row.icon}</span>{row.phase}
                             </TableCell>
                             <TableCell className="text-sm text-muted-foreground">
-                              {row.expected ? new Date(row.expected + "T00:00:00").toLocaleDateString() : "—"}
+                              {row.expected ? displayDate(row.expected) : "—"}
                             </TableCell>
                             <TableCell className="text-sm">
-                              {row.actual ? new Date(row.actual + "T00:00:00").toLocaleDateString() : <span className="text-muted-foreground italic">Pending</span>}
+                              {row.actual ? displayDate(row.actual) : <span className="text-muted-foreground italic">Pending</span>}
                             </TableCell>
                             <TableCell className={`text-xs ${slaClass}`}>{slaStatus}</TableCell>
                           </TableRow>

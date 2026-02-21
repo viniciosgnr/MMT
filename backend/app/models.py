@@ -334,7 +334,8 @@ class Sample(Base):
     sample_id = Column(String, unique=True, index=True) # Barcode or unique string
     
     # Process Details
-    type = Column(String)  # Fiscal, Gas Lift, Poço CG, Poço PVT
+    type = Column(String)  # Fiscal, Gas Lift, Poço CG, Poço PVT, Operacional, Óleo - Densidade, Óleo - Enxofre
+    category = Column(String, default="Coleta")  # "Coleta" or "Operacional"
     status = Column(String, default=SampleStatus.PLANNED.value)
     responsible = Column(String)
     osm_id = Column(String, nullable=True)  # Identificação OSM

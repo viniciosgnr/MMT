@@ -136,10 +136,12 @@ def create_sample(sample: schemas.SampleCreate, db: Session = Depends(database.g
     if not sp:
         raise HTTPException(status_code=404, detail="Sample point not found")
         
+    category = "Operacional" if sample.type in ["Operacional", "Óleo - Densidade", "Óleo - Enxofre"] else "Coleta"
+    
     db_sample = models.Sample(
         **sample.model_dump(),
         status=models.SampleStatus.PLANNED,
-        type=sp.fluid_type,
+        category=category,
         due_date=(sample.planned_date or date.today()) + timedelta(days=7)
     )
     db.add(db_sample)
@@ -254,6 +256,27 @@ def check_sampling_slas(db: Session = Depends(database.get_db)):
             
     db.commit()
     return {"message": "SLA check completed", "alerts_created": alerts_created}
+
+
+@router.patch("/samples/{sample_id}/due-date", response_model=schemas.Sample)
+def override_due_date(
+    sample_id: int,
+    payload: dict,
+    db: Session = Depends(database.get_db),
+    current_user = Depends(get_current_user),
+):
+    """Manually override a sample's due_date ('Forçar Data Prevista')."""
+    sample = db.query(models.Sample).filter(models.Sample.id == sample_id).first()
+    if not sample:
+        raise HTTPException(status_code=404, detail="Sample not found")
+    new_date = payload.get("due_date")
+    if new_date:
+        sample.due_date = date.fromisoformat(new_date)
+    else:
+        sample.due_date = None
+    db.commit()
+    db.refresh(sample)
+    return sample
 
 @router.post("/samples/{sample_id}/update-status", response_model=schemas.Sample)
 def update_sample_status(sample_id: int, update: schemas.SampleStatusUpdate, db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
