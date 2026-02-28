@@ -1,19 +1,38 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 import os
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, desc
 from typing import List, Optional
 from datetime import datetime, date, timedelta
 from .. import models, database
 from ..schemas import chemical as schemas
 from ..dependencies import get_current_user
+from ..services.sla_matrix import get_sla_config
 
 router = APIRouter(
     prefix="/api/chemical",
     tags=["chemical"],
 )
 
-# --- Sample Points (M3 Configuration) ---
+# --- Sample Points & Meters (M3 Configuration) ---
+
+from pydantic import BaseModel
+class MeterWithSamplePoints(BaseModel):
+    id: int
+    tag_number: str
+    description: Optional[str] = None
+    classification: Optional[str] = None
+    sample_points: List[schemas.SamplePoint] = []
+    
+    class Config:
+        from_attributes = True
+
+@router.get("/meters", response_model=List[MeterWithSamplePoints])
+def list_meters(fpso_name: Optional[str] = None, db: Session = Depends(database.get_db)):
+    query = db.query(models.InstrumentTag).options(joinedload(models.InstrumentTag.sample_points))
+    # Note: InstrumentTag fpso_name filtering could be complex if it depends on install,
+    # but for now we just return all tags that act as metering points for M3
+    return query.all()
 
 @router.post("/sample-points", response_model=schemas.SamplePoint)
 def create_sample_point(sp: schemas.SamplePointCreate, db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
@@ -32,7 +51,11 @@ def list_sample_points(fpso_name: Optional[str] = None, db: Session = Depends(da
 
 @router.post("/sample-points/{sp_id}/link-meters")
 def link_meters(sp_id: int, tag_ids: List[int], db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
-    db.query(models.InstrumentTag).filter(models.InstrumentTag.id.in_(tag_ids)).update({"sample_point_id": sp_id})
+    sp = db.query(models.SamplePoint).filter(models.SamplePoint.id == sp_id).first()
+    if not sp:
+        raise HTTPException(status_code=404, detail="Sample point not found")
+    meters = db.query(models.InstrumentTag).filter(models.InstrumentTag.id.in_(tag_ids)).all()
+    sp.meters.extend([m for m in meters if m not in sp.meters])
     db.commit()
     return {"message": f"{len(tag_ids)} meters linked to sample point"}
 
@@ -59,11 +82,11 @@ def list_campaigns(fpso_name: Optional[str] = None, status: Optional[str] = None
 
 # Step-to-card grouping
 STEP_GROUPS = {
-    "sampling": ["Planned", "Sampled"],
+    "sampling": ["Plan", "Sample"],
     "disembark": ["Disembark preparation", "Disembark logistics"],
-    "logistics": ["Warehouse", "Logistics to vendor", "Delivered at vendor"],
-    "report": ["Report issued", "Report under validation", "Report approved/reproved"],
-    "fc_update": ["Flow computer updated"],
+    "logistics": ["Warehouse", "Logistics to vendor", "Deliver at vendor"],
+    "report": ["Report issue", "Report under validation", "Report approve/reprove"],
+    "fc_update": ["Flow computer update"],
 }
 
 @router.get("/dashboard-stats")
@@ -78,12 +101,12 @@ def get_dashboard_stats(fpso_name: Optional[str] = None, db: Session = Depends(d
     
     # Exclude completed samples from active dashboard
     active_samples = query.filter(
-        models.Sample.status != models.SampleStatus.FLOW_COMPUTER_UPDATED.value
+        models.Sample.status != models.SampleStatus.FLOW_COMPUTER_UPDATE.value
     ).all()
     
     # Also get completed for FC Update card
     completed_samples = query.filter(
-        models.Sample.status == models.SampleStatus.FLOW_COMPUTER_UPDATED.value
+        models.Sample.status == models.SampleStatus.FLOW_COMPUTER_UPDATE.value
     ).all()
     
     all_samples = active_samples + completed_samples
@@ -139,22 +162,29 @@ def create_sample(sample: schemas.SampleCreate, db: Session = Depends(database.g
     category = "Operacional" if sample.type in ["Operacional", "Óleo - Densidade", "Óleo - Enxofre"] else "Coleta"
     
     db_sample = models.Sample(
-        **sample.model_dump(),
-        status=models.SampleStatus.PLANNED,
+        **sample.model_dump(exclude={"category"}),
+        status=models.SampleStatus.SAMPLE,
         category=category,
-        due_date=(sample.planned_date or date.today()) + timedelta(days=7)
+        due_date=sample.planned_date
     )
     db.add(db_sample)
     db.commit()
     db.refresh(db_sample)
     
-    # Log initial status
-    history = models.SampleStatusHistory(
+    # Log "Plan" step as completed (analysis starts at step 2 "Sample")
+    plan_history = models.SampleStatusHistory(
         sample_id=db_sample.id,
-        status=models.SampleStatus.PLANNED,
-        comments="Sample planned automatically or manually."
+        status=models.SampleStatus.PLAN,
+        comments="Analysis planned — awaiting sample collection."
     )
-    db.add(history)
+    db.add(plan_history)
+    
+    sample_history = models.SampleStatusHistory(
+        sample_id=db_sample.id,
+        status=models.SampleStatus.SAMPLE,
+        comments="Sample step started — awaiting collection."
+    )
+    db.add(sample_history)
     db.commit()
     
     return db_sample
@@ -166,7 +196,11 @@ def list_samples(
     equipment_id: Optional[int] = None,
     db: Session = Depends(database.get_db)
 ):
-    query = db.query(models.Sample).outerjoin(models.SamplePoint)
+    query = db.query(models.Sample).outerjoin(models.SamplePoint).options(
+        joinedload(models.Sample.sample_point),
+        joinedload(models.Sample.meter),
+        joinedload(models.Sample.well)
+    )
     
     if fpso_name:
         query = query.filter(models.SamplePoint.fpso_name == fpso_name)
@@ -184,8 +218,9 @@ def list_samples(
         if active_install:
             # 2. Get Tag and its Sample Point
             tag = db.query(models.InstrumentTag).filter(models.InstrumentTag.id == active_install.tag_id).first()
-            if tag and tag.sample_point_id:
-                query = query.filter(models.Sample.sample_point_id == tag.sample_point_id)
+            if tag and tag.sample_points:
+                sp_ids = [sp.id for sp in tag.sample_points]
+                query = query.filter(models.Sample.sample_point_id.in_(sp_ids))
             else:
                 # Installed but Tag has no sample point -> No samples
                 return []
@@ -213,7 +248,7 @@ def check_sampling_slas(db: Session = Depends(database.get_db)):
     
     # 1. Check Samples that are 'Sampled' but missing report for > 15 days
     overdue_reports = db.query(models.Sample).filter(
-        models.Sample.status == SampleStatus.SAMPLED.value,
+        models.Sample.status == SampleStatus.SAMPLE.value,
         models.Sample.sampling_date <= today - timedelta(days=15)
     ).all()
     
@@ -235,7 +270,7 @@ def check_sampling_slas(db: Session = Depends(database.get_db)):
             
     # 2. Check Reports Issued but not Approved for > 3 days
     pending_validation = db.query(models.Sample).filter(
-        models.Sample.status == SampleStatus.REPORT_ISSUED.value,
+        models.Sample.status == SampleStatus.REPORT_ISSUE.value,
         models.Sample.report_issue_date <= today - timedelta(days=3)
     ).all()
     
@@ -280,7 +315,8 @@ def override_due_date(
 
 @router.post("/samples/{sample_id}/update-status", response_model=schemas.Sample)
 def update_sample_status(sample_id: int, update: schemas.SampleStatusUpdate, db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
-    sample = db.query(models.Sample).filter(models.Sample.id == sample_id).first()
+    # Use joinedload to eagerly load the meter so we can access meter.classification
+    sample = db.query(models.Sample).options(joinedload(models.Sample.meter)).filter(models.Sample.id == sample_id).first()
     if not sample:
         raise HTTPException(status_code=404, detail="Sample not found")
     
@@ -293,31 +329,133 @@ def update_sample_status(sample_id: int, update: schemas.SampleStatusUpdate, db:
     )
     db.add(history)
     
+    # Helper for auto-scheduling
+    def schedule_next_periodic_sample(s: models.Sample, cfg: dict):
+        base_date = s.sampling_date or date.today()
+        p_date = base_date + timedelta(days=cfg["interval_days"])
+        prefix = s.sample_id.split('-')[0] if '-' in s.sample_id else 'CDI'
+        new_id = f"{prefix}-{p_date.strftime('%Y%m')}-PER-{s.id}-{int(datetime.utcnow().timestamp())}"
+        new_sample = models.Sample(
+            sample_id=new_id,
+            type=s.type,
+            category=s.category,
+            status=models.SampleStatus.SAMPLE.value,
+            responsible=s.responsible,
+            sample_point_id=s.sample_point_id,
+            meter_id=s.meter_id,
+            well_id=s.well_id,
+            validation_party=s.validation_party,
+            is_active=1,
+            local=s.local,
+            planned_date=p_date,
+            due_date=p_date,
+            created_at=datetime.utcnow()
+        )
+        db.add(new_sample)
+        # Log Plan as completed for auto-scheduled sample
+        db.flush()
+        plan_h = models.SampleStatusHistory(
+            sample_id=new_sample.id,
+            status=models.SampleStatus.PLAN.value,
+            comments="Auto-scheduled periodic analysis — Plan completed."
+        )
+        sample_h = models.SampleStatusHistory(
+            sample_id=new_sample.id,
+            status=models.SampleStatus.SAMPLE.value,
+            comments="Awaiting next sample collection."
+        )
+        db.add(plan_h)
+        db.add(sample_h)
+
+    meter_class = sample.meter.classification if sample.meter else "Fiscal"
+    sla_config = get_sla_config(meter_class, sample.type, sample.local)
+    
     # Auto-update dates based on status
-    if update.status == models.SampleStatus.SAMPLED:
+    # SLA calculations happen when moving FROM "Sample" TO "Disembark preparation"
+    # This means the collection has been performed
+    if update.status == models.SampleStatus.DISEMBARK_PREP:
+        if update.local:
+            sample.local = update.local
+            sla_config = get_sla_config(meter_class, sample.type, sample.local)
+        
         sampling_dt = update.event_date or date.today()
         sample.sampling_date = sampling_dt
-        # Auto-calculate expected dates: 10-10-5-5 pattern
-        sample.disembark_expected_date = sampling_dt + timedelta(days=10)
-        sample.lab_expected_date = sampling_dt + timedelta(days=20)  # +10+10
-        sample.report_expected_date = sampling_dt + timedelta(days=25)  # +10+10+5
-        sample.fc_expected_date = sampling_dt + timedelta(days=30)  # +10+10+5+5
         
+        # Schedule the next periodic sample when collection is performed
+        # Guard: only schedule if no periodic child already exists for this sample
+        existing_periodic = db.query(models.Sample).filter(
+            models.Sample.sample_id.like(f"%-PER-{sample.id}-%")
+        ).first()
+        if not existing_periodic:
+            schedule_next_periodic_sample(sample, sla_config)
+        
+        if sla_config["disembark_days"]:
+            sample.disembark_expected_date = sampling_dt + timedelta(days=sla_config["disembark_days"])
+        if sla_config["lab_days"]:
+            sample.lab_expected_date = sampling_dt + timedelta(days=sla_config["lab_days"])
+        if sla_config["report_days"]:
+            sample.report_expected_date = sampling_dt + timedelta(days=sla_config["report_days"])
+            
     elif update.status == models.SampleStatus.DISEMBARK_LOGISTICS:
         sample.disembark_date = update.event_date or date.today()
-    elif update.status == models.SampleStatus.DELIVERED_AT_VENDOR:
+    elif update.status == models.SampleStatus.DELIVER_AT_VENDOR:
         sample.delivery_date = update.event_date or date.today()
-    elif update.status == models.SampleStatus.REPORT_ISSUED:
+    elif update.status == models.SampleStatus.REPORT_ISSUE:
         sample.report_issue_date = update.event_date or date.today()
         if update.url:
             sample.lab_report_url = update.url
             
-    elif update.status == models.SampleStatus.REPORT_APPROVED_REPROVED:
+        # Calculate FC expected date based on report emission
+        if sla_config["fc_days"]:
+            if sla_config["fc_is_business_days"]:
+                days_to_add = sla_config["fc_days"]
+                curr_date = sample.report_issue_date
+                while days_to_add > 0:
+                    curr_date += timedelta(days=1)
+                    if curr_date.weekday() < 5:
+                        days_to_add -= 1
+                sample.fc_expected_date = curr_date
+            else:
+                sample.fc_expected_date = sample.report_issue_date + timedelta(days=sla_config["fc_days"])
+                
+    elif update.status == models.SampleStatus.REPORT_APPROVE_REPROVE:
         sample.validation_status = update.validation_status
         if update.url:
             sample.validation_report_url = update.url
             
-    elif update.status == models.SampleStatus.FLOW_COMPUTER_UPDATED:
+        if update.validation_status == "Reprovado":
+            # Schedule emergency sample 3 business days after emission
+            base_date = sample.report_issue_date or date.today()
+            
+            # Calculate 3 business days
+            days_to_add = 3
+            emergency_date = base_date
+            while days_to_add > 0:
+                emergency_date += timedelta(days=1)
+                if emergency_date.weekday() < 5:  # 0-4 are Monday-Friday
+                    days_to_add -= 1
+                    
+            prefix = sample.sample_id.split('-')[0] if '-' in sample.sample_id else 'CDI'
+            new_id = f"{prefix}-{datetime.now().strftime('%Y%m')}-EMG-{sample.id}-{int(datetime.utcnow().timestamp())}"
+            new_sample = models.Sample(
+                sample_id=new_id,
+                type=sample.type,
+                category=sample.category,
+                status=models.SampleStatus.SAMPLE.value,
+                responsible=sample.responsible,
+                sample_point_id=sample.sample_point_id,
+                meter_id=sample.meter_id,
+                well_id=sample.well_id,
+                validation_party=sample.validation_party,
+                is_active=1,
+                local=sample.local,
+                planned_date=emergency_date,
+                due_date=emergency_date,
+                created_at=datetime.utcnow()
+            )
+            db.add(new_sample)
+            
+    elif update.status == models.SampleStatus.FLOW_COMPUTER_UPDATE:
         sample.fc_update_date = datetime.utcnow()
         if update.url:
             sample.fc_evidence_url = update.url
@@ -332,37 +470,27 @@ def update_sample_status(sample_id: int, update: schemas.SampleStatusUpdate, db:
 
     sample.status = update.status
     
-    # Set due_date = expected date of the NEXT milestone (10-10-5-5 pattern)
-    # The due_date answers: "by when does this sample need to reach the next phase?"
-    #   Planned              → planned_date           (when sampling should happen)
-    #   Sampled..Logistics   → disembark_expected_date (+10d, when disembark must complete)
-    #   Warehouse..Logistics → lab_expected_date       (+20d, when lab delivery must happen)
-    #   Delivered at vendor  → report_expected_date    (+25d, delivery done, waiting for report)
-    #   Report issued..Valid → report_expected_date    (+25d, report phase in progress)
-    #   Report approved      → fc_expected_date        (+30d, report done, waiting for FC)
-    #   FC Updated           → fc_expected_date        (+30d, final deadline)
+    # Calculate NEXT due_date dynamically based on skipped steps
     PHASE_DUE = {
-        "Planned": "planned_date",
-        "Sampled": "disembark_expected_date",
+        "Plan": "planned_date",
+        "Sample": "planned_date",
         "Disembark preparation": "disembark_expected_date",
         "Disembark logistics": "disembark_expected_date",
         "Warehouse": "lab_expected_date",
         "Logistics to vendor": "lab_expected_date",
-        "Delivered at vendor": "report_expected_date",
-        "Report issued": "report_expected_date",
+        "Deliver at vendor": "report_expected_date",
+        "Report issue": "report_expected_date",
         "Report under validation": "report_expected_date",
-        "Report approved/reproved": "fc_expected_date",
-        "Flow computer updated": "fc_expected_date",
+        "Report approve/reprove": "fc_expected_date",
+        "Flow computer update": "fc_expected_date",
     }
     
-    if update.due_date:
-        sample.due_date = update.due_date
+    # Always compute due_date from SLA matrix — no manual override
+    phase_field = PHASE_DUE.get(update.status)
+    if phase_field:
+        sample.due_date = getattr(sample, phase_field, None)
     else:
-        phase_field = PHASE_DUE.get(update.status)
-        if phase_field:
-            sample.due_date = getattr(sample, phase_field, None)
-        else:
-            sample.due_date = None
+        sample.due_date = None
     
     db.commit()
     db.refresh(sample)
@@ -384,7 +512,7 @@ def perform_sbm_validation(sample_id: int, db: Session = Depends(database.get_db
         history = db.query(models.SampleResult.value).join(models.Sample).filter(
             models.Sample.sample_point_id == sample.sample_point_id,
             models.SampleResult.parameter == res.parameter,
-            models.Sample.status == models.SampleStatus.FLOW_COMPUTER_UPDATED,
+            models.Sample.status == models.SampleStatus.FLOW_COMPUTER_UPDATE,
             models.Sample.id != sample.id
         ).order_by(models.Sample.sampling_date.desc()).limit(10).all()
         

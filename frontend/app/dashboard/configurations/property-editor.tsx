@@ -23,9 +23,10 @@ interface AttributeValue {
 interface PropertyEditorProps {
   nodeId: number | null
   nodeTag: string | null
+  selectedNode?: any
 }
 
-export function PropertyEditor({ nodeId, nodeTag }: PropertyEditorProps) {
+export function PropertyEditor({ nodeId, nodeTag, selectedNode }: PropertyEditorProps) {
   const [definitions, setDefinitions] = useState<AttributeDefinition[]>([])
   const [values, setValues] = useState<Record<number, string>>({})
   const [loading, setLoading] = useState(false)
@@ -98,6 +99,10 @@ export function PropertyEditor({ nodeId, nodeTag }: PropertyEditorProps) {
     )
   }
 
+  const validAttributes = selectedNode?.attributes
+    ? Object.entries(selectedNode.attributes).filter(([k]) => k !== "analysis_types")
+    : [];
+
   return (
     <Card className="h-full">
       <CardHeader>
@@ -105,6 +110,22 @@ export function PropertyEditor({ nodeId, nodeTag }: PropertyEditorProps) {
         <CardDescription>Configure specific attributes for this node.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {validAttributes.length > 0 && (
+          <div className="space-y-3 p-4 bg-slate-50 rounded-lg border border-slate-200">
+            <h4 className="text-sm font-semibold text-slate-800">Asset Specifications</h4>
+            <div className="grid grid-cols-2 gap-4 text-sm mt-2">
+              {validAttributes.map(([key, val]) => (
+                <div key={key} className="flex flex-col">
+                  <span className="text-slate-500 text-[10px] tracking-wider uppercase font-bold">{key.replace('_', ' ')}</span>
+                  <span className="font-medium text-slate-900 mt-0.5">
+                    {Array.isArray(val) ? val.join(", ") : String(val)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {loading ? (
           <div className="flex justify-center py-10">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />

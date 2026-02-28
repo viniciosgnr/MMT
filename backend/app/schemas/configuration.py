@@ -7,6 +7,7 @@ class HierarchyNodeBase(BaseModel):
     description: str
     level_type: str
     parent_id: Optional[int] = None
+    attributes: Optional[dict] = None
 
 class HierarchyNodeCreate(HierarchyNodeBase):
     pass
@@ -98,9 +99,24 @@ class WellBase(BaseModel):
     tag: str
     description: Optional[str] = None
     fpso: str
+    anp_code: Optional[str] = None
+    sbm_code: Optional[str] = None
+    sample_point_gas: Optional[str] = None
+    sample_point_oil: Optional[str] = None
+    status: Optional[str] = "Active"
 
 class WellCreate(WellBase):
     pass
+
+class WellUpdate(BaseModel):
+    tag: Optional[str] = None
+    description: Optional[str] = None
+    fpso: Optional[str] = None
+    anp_code: Optional[str] = None
+    sbm_code: Optional[str] = None
+    sample_point_gas: Optional[str] = None
+    sample_point_oil: Optional[str] = None
+    status: Optional[str] = None
 
 class Well(WellBase):
     id: int

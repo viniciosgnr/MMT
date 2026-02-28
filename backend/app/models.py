@@ -29,17 +29,17 @@ class CalibrationTaskType(str, enum.Enum):
     INSPECTION = "Inspection"
 
 class SampleStatus(str, enum.Enum):
-    PLANNED = "Planned"
-    SAMPLED = "Sampled"
+    PLAN = "Plan"
+    SAMPLE = "Sample"
     DISEMBARK_PREP = "Disembark preparation"
     DISEMBARK_LOGISTICS = "Disembark logistics"
     WAREHOUSE = "Warehouse"
     LOGISTICS_TO_VENDOR = "Logistics to vendor"
-    DELIVERED_AT_VENDOR = "Delivered at vendor"
-    REPORT_ISSUED = "Report issued"
+    DELIVER_AT_VENDOR = "Deliver at vendor"
+    REPORT_ISSUE = "Report issue"
     REPORT_UNDER_VALIDATION = "Report under validation"
-    REPORT_APPROVED_REPROVED = "Report approved/reproved"
-    FLOW_COMPUTER_UPDATED = "Flow computer updated"
+    REPORT_APPROVE_REPROVE = "Report approve/reprove"
+    FLOW_COMPUTER_UPDATE = "Flow computer update"
 
 class MaintenanceStatus(str, enum.Enum):
     TO_SEND = "To Send"
@@ -119,6 +119,13 @@ class Equipment(Base):
     calibration_tasks = relationship("CalibrationTask", back_populates="equipment")
     maintenance_records = relationship("MaintenanceRecord", back_populates="equipment")
 
+meter_sample_link = Table(
+    "meter_sample_link",
+    Base.metadata,
+    Column("meter_id", Integer, ForeignKey("instrument_tags.id"), primary_key=True),
+    Column("sample_point_id", Integer, ForeignKey("sample_points.id"), primary_key=True)
+)
+
 class InstrumentTag(Base):
     """Represents a logical location/address on the process plant (P&ID Tag)."""
     __tablename__ = "instrument_tags"
@@ -128,6 +135,7 @@ class InstrumentTag(Base):
     description = Column(String)
     area = Column(String, nullable=True)
     service = Column(String, nullable=True)
+    classification = Column(String, nullable=True) # Fiscal, Custody Transfer, Operational, etc.
     
     # Hierarchy Link (M11)
     hierarchy_node_id = Column(Integer, ForeignKey("hierarchy_nodes.id"), nullable=True)
@@ -136,9 +144,8 @@ class InstrumentTag(Base):
 
     # Relationships
     installations = relationship("EquipmentTagInstallation", back_populates="tag")
-    # Link to Sample Point (M3)
-    sample_point_id = Column(Integer, ForeignKey("sample_points.id"), nullable=True)
-    sample_point = relationship("SamplePoint", back_populates="meters")
+    # Link to Sample Point (M3 - Many to Many)
+    sample_points = relationship("SamplePoint", secondary="meter_sample_link", back_populates="meters")
     seal_history = relationship("SealHistory", back_populates="tag")
 
 class SealHistory(Base):
@@ -302,11 +309,12 @@ class SamplePoint(Base):
     is_operational = Column(Integer, default=1) # Operational vs others (affects SLA)
     sampling_interval_days = Column(Integer, default=30)
     validation_method_implemented = Column(Integer, default=0) # Boolean
+    analysis_types = Column(Text, nullable=True) # JSON array of available analysis types
     
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relationships
-    meters = relationship("InstrumentTag", back_populates="sample_point")
+    meters = relationship("InstrumentTag", secondary="meter_sample_link", back_populates="sample_points")
     samples = relationship("Sample", back_populates="sample_point")
 
 class SamplingCampaign(Base):
@@ -331,16 +339,21 @@ class Sample(Base):
     id = Column(Integer, primary_key=True, index=True)
     campaign_id = Column(Integer, ForeignKey("sampling_campaigns.id"), nullable=True)
     sample_point_id = Column(Integer, ForeignKey("sample_points.id"))
+    meter_id = Column(Integer, ForeignKey("instrument_tags.id"), nullable=True)
+    well_id = Column(Integer, ForeignKey("wells.id"), nullable=True)
     sample_id = Column(String, unique=True, index=True) # Barcode or unique string
     
     # Process Details
     type = Column(String)  # Fiscal, Gas Lift, Poço CG, Poço PVT, Operacional, Óleo - Densidade, Óleo - Enxofre
     category = Column(String, default="Coleta")  # "Coleta" or "Operacional"
-    status = Column(String, default=SampleStatus.PLANNED.value)
+    status = Column(String, default=SampleStatus.SAMPLE.value)
     responsible = Column(String)
     osm_id = Column(String, nullable=True)  # Identificação OSM
     laudo_number = Column(String, nullable=True)  # Laudo Nº
     mitigated = Column(Integer, default=0)  # 0=Não, 1=Sim
+    validation_party = Column(String, default="Client") # Client or SBM offshore
+    is_active = Column(Integer, default=1) # 1=Active, 0=Inactive
+    local = Column(String, default="Onshore") # Onshore or Offshore
     
     # SLA Dates — Expected (Previsto) auto-calculated: 10-10-5-5 days
     planned_date = Column(Date, nullable=True)  # Coleta Prevista
@@ -369,6 +382,8 @@ class Sample(Base):
     # Relationships
     campaign = relationship("SamplingCampaign", back_populates="samples")
     sample_point = relationship("SamplePoint", back_populates="samples")
+    meter = relationship("InstrumentTag")
+    well = relationship("Well")
     results = relationship("SampleResult", back_populates="sample")
     history = relationship("SampleStatusHistory", back_populates="sample")
 
@@ -718,6 +733,14 @@ class Well(Base):
     tag = Column(String, index=True)
     description = Column(String, nullable=True)
     fpso = Column(String, index=True)
+    
+    # --- New Fields for M11 Configurations ---
+    anp_code = Column(String, index=True, nullable=True)
+    sbm_code = Column(String, index=True, nullable=True)
+    sample_point_gas = Column(String, nullable=True) 
+    sample_point_oil = Column(String, nullable=True)
+    status = Column(String, default="Active") # Active / Inactive
+    
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class Holiday(Base):

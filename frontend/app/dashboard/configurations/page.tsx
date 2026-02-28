@@ -18,15 +18,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { HierarchyTree } from "./hierarchy-tree"
 import { AttributeRules } from "./attribute-rules"
 import { SpecializedConfigs } from "./specialized-configs"
+import { WellsConfig } from "./wells-config"
 import { PropertyEditor } from "./property-editor"
 import { apiFetch } from "@/lib/api"
 import { toast } from "sonner"
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
+import { useSearchParams } from "next/navigation"
 
-export default function ConfigurationsPage() {
+function ConfigurationsContent() {
   const [params, setParams] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedNode, setSelectedNode] = useState<{ id: number; tag: string } | null>(null)
+  const [selectedNode, setSelectedNode] = useState<any | null>(null)
+
+  const searchParams = useSearchParams()
+  const nodeIdStr = searchParams.get("nodeId")
+  const initialNodeId = nodeIdStr ? parseInt(nodeIdStr, 10) : null
 
   const loadParams = async () => {
     try {
@@ -80,6 +86,7 @@ export default function ConfigurationsPage() {
         <TabsList className="bg-muted p-1">
           <TabsTrigger value="hierarchy">FPSO Hierarchy</TabsTrigger>
           <TabsTrigger value="attributes">Dynamic Attributes</TabsTrigger>
+          <TabsTrigger value="wells">Wells</TabsTrigger>
           <TabsTrigger value="specialized">Specialized</TabsTrigger>
           <TabsTrigger value="frequencies">Frequencies</TabsTrigger>
           <TabsTrigger value="general">System Identity</TabsTrigger>
@@ -91,11 +98,12 @@ export default function ConfigurationsPage() {
             <div className="md:col-span-2">
               <HierarchyTree
                 selectedId={selectedNode?.id}
-                onSelect={(id, tag) => setSelectedNode({ id, tag })}
+                initialNodeId={initialNodeId}
+                onSelect={(node) => setSelectedNode(node)}
               />
             </div>
             <div className="space-y-4">
-              <PropertyEditor nodeId={selectedNode?.id || null} nodeTag={selectedNode?.tag || null} />
+              <PropertyEditor nodeId={selectedNode?.id || null} nodeTag={selectedNode?.tag || null} selectedNode={selectedNode} />
 
               <Card>
                 <CardHeader>
@@ -115,6 +123,11 @@ export default function ConfigurationsPage() {
         {/* Dynamic Attributes */}
         <TabsContent value="attributes" className="mt-4">
           <AttributeRules />
+        </TabsContent>
+
+        {/* Wells */}
+        <TabsContent value="wells" className="mt-4">
+          <WellsConfig />
         </TabsContent>
 
         {/* Specialized Configurations */}
@@ -201,5 +214,13 @@ export default function ConfigurationsPage() {
         </TabsContent>
       </Tabs>
     </div>
+  )
+}
+
+export default function ConfigurationsPage() {
+  return (
+    <Suspense fallback={<div className="p-8">Loading configurations...</div>}>
+      <ConfigurationsContent />
+    </Suspense>
   )
 }

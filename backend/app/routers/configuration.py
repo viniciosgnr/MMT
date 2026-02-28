@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List, Optional
+from datetime import datetime
 from .. import models, database
 from ..schemas import configuration as schemas
 from ..dependencies import get_current_user
@@ -14,32 +15,94 @@ router = APIRouter(
 
 @router.get("/hierarchy/tree", response_model=List[schemas.HierarchyNodeWithChildren])
 def get_hierarchy_tree(db: Session = Depends(database.get_db)):
-    # Fetch all nodes
-    all_nodes = db.query(models.HierarchyNode).all()
+    import json
+    from datetime import datetime
     
-    # Build tree structure
-    node_map = {node.id: schemas.HierarchyNodeWithChildren.from_orm(node) for node in all_nodes}
-    tree = []
+    # Synthesize tree from empirical M3 data (FPSO -> Sample Point -> Metering Point)
     
-    for node_id, node_obj in node_map.items():
-        if node_obj.parent_id is None:
-            tree.append(node_obj)
-        else:
-            parent = node_map.get(node_obj.parent_id)
-            if parent:
-                if not hasattr(parent, 'children'):
-                    parent.children = []
-                parent.children.append(node_obj)
-                
-    return tree
+    # 1. Root Node
+    fpso = schemas.HierarchyNodeWithChildren(
+        id=1,
+        tag="FPSO CIDADE DE ILHABELA (CDI)",
+        description="Main Vessel",
+        level_type="FPSO",
+        parent_id=None,
+        created_at=datetime.utcnow(),
+        children=[]
+    )
+    
+    # 2. Get only Metering Points that were seeded from the CDI spreadsheet (they have a classification)
+    meters = db.query(models.InstrumentTag).filter(models.InstrumentTag.classification.isnot(None)).all()
+    
+    for m in meters:
+        meter_attrs = {"classification": m.classification}
+            
+        meter_node = schemas.HierarchyNodeWithChildren(
+            id=m.id + 20000, 
+            tag=m.tag_number,
+            description=m.description or "Metering Point",
+            level_type="Metering Point",
+            parent_id=fpso.id,
+            created_at=m.created_at or datetime.utcnow(),
+            attributes=meter_attrs,
+            children=[]
+        )
+        fpso.children.append(meter_node)
+        
+        # 3. Get associated Sample Points
+        for sp in m.sample_points:
+            attrs = {}
+                    
+            sp_node = schemas.HierarchyNodeWithChildren(
+                id=sp.id + 10000, 
+                tag=sp.tag_number,
+                description=sp.description or "Sample Point",
+                level_type="Sample Point",
+                parent_id=meter_node.id,
+                created_at=sp.created_at or datetime.utcnow(),
+                attributes=attrs,
+                children=[]
+            )
+            meter_node.children.append(sp_node)
+            
+    return [fpso]
 
 @router.post("/hierarchy/nodes", response_model=schemas.HierarchyNode)
 def create_hierarchy_node(node: schemas.HierarchyNodeCreate, db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
-    db_node = models.HierarchyNode(**node.model_dump())
-    db.add(db_node)
-    db.commit()
-    db.refresh(db_node)
-    return db_node
+    from datetime import datetime
+    
+    if node.level_type == "Metering Point":
+        classification = node.attributes.get("classification") if node.attributes else None
+        m = models.InstrumentTag(tag_number=node.tag, description=node.description, classification=classification)
+        db.add(m)
+        db.commit()
+        db.refresh(m)
+        return {"id": m.id + 20000, "tag": m.tag_number, "description": m.description, "level_type": "Metering Point", "created_at": m.created_at, "parent_id": node.parent_id, "attributes": {"classification": m.classification}}
+    
+    elif node.level_type == "Sample Point":
+        # The parent_id sent from frontend is the offset Metering Point ID (m.id + 20000)
+        real_meter_id = node.parent_id - 20000 if node.parent_id else None
+        
+        sp = models.SamplePoint(tag_number=node.tag, description=node.description, fpso_name="FPSO CIDADE DE ILHABELA (CDI)")
+        db.add(sp)
+        db.commit()
+        db.refresh(sp)
+        
+        if real_meter_id:
+            m = db.query(models.InstrumentTag).get(real_meter_id)
+            if m:
+                m.sample_points.append(sp)
+                db.commit()
+                
+        return {"id": sp.id + 10000, "tag": sp.tag_number, "description": sp.description, "level_type": "Sample Point", "created_at": sp.created_at, "parent_id": node.parent_id, "attributes": {}}
+        
+    else:
+        # Fallback for generic nodes
+        db_node = models.HierarchyNode(**node.model_dump())
+        db.add(db_node)
+        db.commit()
+        db.refresh(db_node)
+        return db_node
 
 @router.delete("/hierarchy/nodes/{node_id}")
 def delete_hierarchy_node(node_id: int, db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
@@ -125,7 +188,10 @@ def set_attribute_value(val: schemas.AttributeValueCreate, db: Session = Depends
 def get_wells(fpso: Optional[str] = None, db: Session = Depends(database.get_db)):
     query = db.query(models.Well)
     if fpso:
-        query = query.filter(models.Well.fpso == fpso)
+        # Extract FPSO short code (e.g., "CDI" from "CDI - Cidade de Ilhabela")
+        # to handle multiple naming conventions in the database
+        code = fpso.split(" - ")[0].strip() if " - " in fpso else fpso
+        query = query.filter(models.Well.fpso.ilike(f"%{code}%"))
     return query.all()
 
 @router.post("/wells", response_model=schemas.Well)
@@ -135,6 +201,29 @@ def create_well(well: schemas.WellCreate, db: Session = Depends(database.get_db)
     db.commit()
     db.refresh(db_well)
     return db_well
+
+@router.put("/wells/{well_id}", response_model=schemas.Well)
+def update_well(well_id: int, well: schemas.WellUpdate, db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
+    db_well = db.query(models.Well).filter(models.Well.id == well_id).first()
+    if not db_well:
+        raise HTTPException(status_code=404, detail="Well not found")
+        
+    update_data = well.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_well, key, value)
+        
+    db.commit()
+    db.refresh(db_well)
+    return db_well
+
+@router.delete("/wells/{well_id}")
+def delete_well(well_id: int, db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
+    db_well = db.query(models.Well).filter(models.Well.id == well_id).first()
+    if not db_well:
+        raise HTTPException(status_code=404, detail="Well not found")
+    db.delete(db_well)
+    db.commit()
+    return {"status": "success"}
 
 @router.get("/holidays", response_model=List[schemas.Holiday])
 def get_holidays(fpso: Optional[str] = None, db: Session = Depends(database.get_db)):

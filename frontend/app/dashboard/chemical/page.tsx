@@ -54,6 +54,11 @@ import { Label } from "@/components/ui/label"
 import { apiFetch } from "@/lib/api"
 import { createClient } from "@/utils/supabase/client"
 
+const stripFpsoSuffix = (tag: string | undefined): string => {
+  if (!tag) return ""
+  return tag.replace(/-(CDI|CDS|CDM|CDP|ESS|CPX|CDA|ADG|ATD|SEP)$/, "")
+}
+
 // ── Types ──────────────────────────────────────────────────
 interface StepStat {
   name: string
@@ -77,41 +82,41 @@ type DashboardStats = Record<string, GroupStat>
 
 // ── Card config ────────────────────────────────────────────
 const CARD_CONFIG = [
-  { key: "sampling", label: "Sampling", icon: Beaker, statuses: ["Planned", "Sampled"] },
+  { key: "sampling", label: "Sampling", icon: Beaker, statuses: ["Plan", "Sample"] },
   { key: "disembark", label: "Disembark", icon: Ship, statuses: ["Disembark preparation", "Disembark logistics"] },
-  { key: "logistics", label: "Logistics", icon: Truck, statuses: ["Warehouse", "Logistics to vendor", "Delivered at vendor"] },
-  { key: "report", label: "Report", icon: ClipboardList, statuses: ["Report issued", "Report under validation", "Report approved/reproved"] },
-  { key: "fc_update", label: "FC Update", icon: MonitorCheck, statuses: ["Flow computer updated"] },
+  { key: "logistics", label: "Logistics", icon: Truck, statuses: ["Warehouse", "Logistics to vendor", "Deliver at vendor"] },
+  { key: "report", label: "Report", icon: ClipboardList, statuses: ["Report issue", "Report under validation", "Report approve/reprove"] },
+  { key: "fc_update", label: "FC Update", icon: MonitorCheck, statuses: ["Flow computer update"] },
 ]
 
 // ── 11 steps in order ──────────────────────────────────────
 const STATUS_LINE = [
-  "Planned",
-  "Sampled",
+  "Plan",
+  "Sample",
   "Disembark preparation",
   "Disembark logistics",
   "Warehouse",
   "Logistics to vendor",
-  "Delivered at vendor",
-  "Report issued",
+  "Deliver at vendor",
+  "Report issue",
   "Report under validation",
-  "Report approved/reproved",
-  "Flow computer updated",
+  "Report approve/reprove",
+  "Flow computer update",
 ]
 
 // ── Next action description per status ─────────────────────
 const NEXT_ACTION: Record<string, string> = {
-  "Planned": "Perform sampling",
-  "Sampled": "Prepare disembark",
+  "Plan": "Collect sample",
+  "Sample": "Prepare disembark",
   "Disembark preparation": "Send for logistics",
   "Disembark logistics": "Receive at warehouse",
   "Warehouse": "Ship to vendor",
   "Logistics to vendor": "Confirm delivery",
-  "Delivered at vendor": "Issue lab report",
-  "Report issued": "Validate report",
+  "Deliver at vendor": "Issue lab report",
+  "Report issue": "Validate report",
   "Report under validation": "Approve / Reprove",
-  "Report approved/reproved": "Update flow computer",
-  "Flow computer updated": "— Complete —",
+  "Report approve/reprove": "Update flow computer",
+  "Flow computer update": "— Complete —",
 }
 
 // ── Get next status in sequence ────────────────────────────
@@ -150,22 +155,56 @@ function getCardStyle(stat: GroupStat | undefined) {
   }
 }
 
-// ── Status badge config ────────────────────────────────────
 const getStatusConfig = (status: string) => {
   const configs: Record<string, { color: string; icon: any }> = {
-    "Planned": { color: "bg-slate-500", icon: Clock },
-    "Sampled": { color: "bg-green-600", icon: Beaker },
-    "Disembark preparation": { color: "bg-blue-500", icon: Package },
-    "Disembark logistics": { color: "bg-blue-600", icon: Ship },
-    "Warehouse": { color: "bg-indigo-500", icon: Activity },
-    "Logistics to vendor": { color: "bg-indigo-600", icon: Truck },
-    "Delivered at vendor": { color: "bg-purple-500", icon: FlaskConical },
-    "Report issued": { color: "bg-amber-500", icon: FileCheck },
-    "Report under validation": { color: "bg-amber-600", icon: Search },
-    "Report approved/reproved": { color: "bg-emerald-600", icon: CheckCircle2 },
-    "Flow computer updated": { color: "bg-violet-600", icon: ArrowRight },
+    "Plan": { color: "bg-slate-100 text-slate-700 border-slate-200", icon: Clock },
+    "Sample": { color: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: Beaker },
+    "Disembark preparation": { color: "bg-cyan-50 text-cyan-700 border-cyan-200", icon: Package },
+    "Disembark logistics": { color: "bg-blue-50 text-blue-700 border-blue-200", icon: Ship },
+    "Warehouse": { color: "bg-indigo-50 text-indigo-700 border-indigo-200", icon: Activity },
+    "Logistics to vendor": { color: "bg-violet-50 text-violet-700 border-violet-200", icon: Truck },
+    "Deliver at vendor": { color: "bg-purple-50 text-purple-700 border-purple-200", icon: FlaskConical },
+    "Report issue": { color: "bg-amber-50 text-amber-700 border-amber-200", icon: FileCheck },
+    "Report under validation": { color: "bg-orange-50 text-orange-700 border-orange-200", icon: Search },
+    "Report approve/reprove": { color: "bg-green-50 text-green-700 border-green-200", icon: CheckCircle2 },
+    "Flow computer update": { color: "bg-teal-50 text-teal-700 border-teal-200", icon: ArrowRight },
   }
-  return configs[status] || { color: "bg-slate-400", icon: AlertCircle }
+  return configs[status] || { color: "bg-slate-100 text-slate-500 border-slate-200", icon: AlertCircle }
+}
+
+const getClassificationConfig = (classification: string | undefined | null) => {
+  if (!classification) return { label: "—", className: "text-slate-500" }
+
+  const lowerClass = classification.toLowerCase()
+  if (lowerClass.includes("fiscal")) {
+    return {
+      label: classification,
+      className: "bg-blue-50 text-blue-700 border border-blue-200"
+    }
+  }
+  if (lowerClass.includes("custody")) {
+    return {
+      label: classification,
+      className: "bg-fuchsia-50 text-fuchsia-700 border border-fuchsia-200"
+    }
+  }
+  if (lowerClass.includes("allocation") || lowerClass.includes("apropriation") || lowerClass.includes("appropriation")) {
+    return {
+      label: classification,
+      className: "bg-amber-50 text-amber-700 border border-amber-200"
+    }
+  }
+  if (lowerClass.includes("operational")) {
+    return {
+      label: classification,
+      className: "bg-cyan-50 text-cyan-700 border border-cyan-200"
+    }
+  }
+
+  return {
+    label: classification,
+    className: "bg-slate-100 text-slate-600 border border-slate-200"
+  }
 }
 
 // ── Urgency helpers ────────────────────────────────────────
@@ -357,16 +396,10 @@ export default function ChemicalAnalysisDashboard() {
             Operator action center — track all 11 steps from sampling to FC update.
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => router.push("/dashboard/chemical/points")}>
-            <Settings className="w-4 h-4 mr-2" />
-            Config Points
-          </Button>
-          <Button onClick={() => router.push("/dashboard/chemical/new")}>
-            <Plus className="w-4 h-4 mr-2" />
-            Plan Sample
-          </Button>
-        </div>
+        <Button onClick={() => router.push("/dashboard/chemical/new")}>
+          <Plus className="w-4 h-4 mr-2" />
+          Plan Analysis
+        </Button>
       </div>
 
       {/* ── FPSO Filter + Category Toggle ── */}
@@ -514,13 +547,23 @@ export default function ChemicalAnalysisDashboard() {
       {/* ══ MAIN LAYOUT: TABLE + SIDEBAR ══ */}
       <div>
         {/* ── Samples Table (3/4 width) ── */}
-        <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+        <div className="rounded-xl border bg-card shadow-sm overflow-hidden items-start flex flex-col">
+          <div className="bg-slate-50 border-b w-full px-5 py-3 flex items-center gap-2">
+            <Activity className="w-4 h-4 text-[#003D5C]" />
+            <h2 className="text-xs font-bold text-[#003D5C] tracking-wider uppercase">
+              All Periodic Analyses
+            </h2>
+          </div>
           <Table>
-            <TableHeader className="bg-muted/50">
-              <TableRow>
-                <TableHead className="w-[100px]">Sample ID</TableHead>
+            <TableHeader className="bg-muted/30">
+              <TableRow className="text-[11px] uppercase tracking-wider">
+                <TableHead>Metering Point</TableHead>
+                <TableHead>Classification</TableHead>
                 <TableHead>Sample Point</TableHead>
-                <TableHead>Collection Type</TableHead>
+                <TableHead>Well</TableHead>
+                <TableHead>Type of Analysis</TableHead>
+                <TableHead>Validation</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Sampling Date</TableHead>
                 <TableHead>Current Status</TableHead>
                 <TableHead>Action</TableHead>
@@ -532,7 +575,7 @@ export default function ChemicalAnalysisDashboard() {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-20">
+                  <TableCell colSpan={13} className="text-center py-20">
                     <div className="flex flex-col items-center gap-2">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                       <span className="text-muted-foreground font-medium">Synchronizing sampling data…</span>
@@ -541,7 +584,7 @@ export default function ChemicalAnalysisDashboard() {
                 </TableRow>
               ) : filteredSamples.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-20 text-muted-foreground font-medium">
+                  <TableCell colSpan={13} className="text-center py-20 text-muted-foreground font-medium">
                     No samples found matching your criteria.
                   </TableCell>
                 </TableRow>
@@ -557,22 +600,91 @@ export default function ChemicalAnalysisDashboard() {
                       className={`hover:bg-muted/30 transition-colors group cursor-pointer ${rowClass}`}
                       onClick={() => router.push(`/dashboard/chemical/${sample.id}`)}
                     >
-                      {/* Sample ID */}
-                      <TableCell className="font-bold text-primary">
-                        {sample.sample_id}
+                      {/* Metering Point */}
+                      <TableCell className="font-bold text-slate-700">
+                        {stripFpsoSuffix(sample.meter?.tag_number) || "—"}
+                      </TableCell>
+
+                      {/* Classification */}
+                      <TableCell>
+                        {sample.meter?.classification ? (() => {
+                          const conf = getClassificationConfig(sample.meter.classification)
+                          return (
+                            <span className={`text-[10px] font-medium tracking-wide uppercase px-2.5 py-1 rounded-md ${conf.className}`}>
+                              {conf.label}
+                            </span>
+                          )
+                        })() : "—"}
                       </TableCell>
 
                       {/* Sample Point */}
                       <TableCell>
-                        <div className="flex flex-col">
-                          <span className="font-semibold">{sample.sample_point?.tag_number}</span>
-                          <span className="text-[11px] text-muted-foreground">{sample.sample_point?.fpso_name}</span>
-                        </div>
+                        <span className="text-sm font-medium">{stripFpsoSuffix(sample.sample_point?.tag_number) || "—"}</span>
                       </TableCell>
 
-                      {/* Collection Type */}
+                      {/* Well (for test separator analyses) */}
                       <TableCell>
-                        <span className="text-sm">{sample.type || '—'}</span>
+                        {sample.well ? (
+                          <span className="text-sm font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
+                            {sample.well.tag}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">—</span>
+                        )}
+                      </TableCell>
+
+                      {/* Collection / Analysis Type */}
+                      <TableCell>
+                        <span className="text-sm font-medium text-slate-700">
+                          {(() => {
+                            if (!sample.type) return "—";
+
+                            // Map exactly first
+                            const exactMap: Record<string, string> = {
+                              "Massa Específica": "Specific Mass",
+                              "Densidade": "Density",
+                              "Viscosidade": "Viscosity",
+                              "Cromatografia": "Chromatography",
+                              "Specific Mass": "Specific Mass",
+                              "Density": "Density",
+                              "Viscosity": "Viscosity",
+                              "Chromatography": "Chromatography",
+                              "BSW": "BSW",
+                              "PVT": "PVT",
+                              "Enxofre": "Enxofre",
+                              "Sulfur": "Enxofre"
+                            };
+                            if (exactMap[sample.type]) return exactMap[sample.type];
+
+                            // Fallback to substring only if not exactly matched, but prefer more specific first
+                            const lowerType = sample.type.toLowerCase();
+                            if (lowerType.includes("massa específica") || lowerType.includes("massa especifica")) return "Specific Mass";
+                            if (lowerType.includes("densidade")) return "Density";
+                            if (lowerType.includes("viscosidade")) return "Viscosity";
+                            if (lowerType.includes("cromatografia")) return "Chromatography";
+                            if (lowerType.includes("enxofre") || lowerType.includes("sulfur")) return "Enxofre";
+
+                            return sample.type;
+                          })()}
+                        </span>
+                      </TableCell>
+
+                      {/* Validation */}
+                      <TableCell>
+                        <span className="text-[12px] font-medium text-slate-500">{sample.validation_party || 'Client'}</span>
+                      </TableCell>
+
+                      {/* Status */}
+                      <TableCell>
+                        {sample.is_active ? (
+                          <span className="text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/50 px-2.5 py-1 rounded-md flex items-center justify-center w-max gap-1.5 shadow-sm">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Active
+                          </span>
+                        ) : (
+                          <span className="text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200 px-2.5 py-1 rounded-md flex items-center justify-center w-max gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span> Inactive
+                          </span>
+                        )}
                       </TableCell>
 
                       {/* Sampling Date */}
@@ -584,7 +696,7 @@ export default function ChemicalAnalysisDashboard() {
 
                       {/* Current Status */}
                       <TableCell>
-                        <Badge className={`${statusConf.color} text-white border-none flex items-center gap-1.5 w-fit px-2.5 py-1 text-[11px]`}>
+                        <Badge variant="outline" className={`${statusConf.color} flex items-center gap-1.5 w-fit px-2.5 py-1 text-[11px] shadow-sm font-medium border`}>
                           <statusConf.icon className="w-3.5 h-3.5" />
                           {sample.status}
                         </Badge>

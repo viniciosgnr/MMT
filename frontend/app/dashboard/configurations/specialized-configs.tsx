@@ -6,20 +6,21 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Plus, Trash2, Calendar as CalendarIcon, MapPin, Droplets } from "lucide-react"
+import { Plus, Trash2, Calendar as CalendarIcon, MapPin } from "lucide-react"
 import { apiFetch } from "@/lib/api"
 import { toast } from "sonner"
 import { format } from "date-fns"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
 export function SpecializedConfigs() {
-  const [wells, setWells] = useState<any[]>([])
   const [holidays, setHolidays] = useState<any[]>([])
   const [stockLocations, setStockLocations] = useState<any[]>([])
 
   const [loading, setLoading] = useState(true)
 
   // Form states
-  const [newWellTag, setNewWellTag] = useState("")
   const [newHolidayDate, setNewHolidayDate] = useState("")
   const [newHolidayDesc, setNewHolidayDesc] = useState("")
   const [newStockName, setNewStockName] = useState("")
@@ -27,13 +28,11 @@ export function SpecializedConfigs() {
   const loadAll = async () => {
     setLoading(true)
     try {
-      const [wRes, hRes, sRes] = await Promise.all([
-        apiFetch("/config/wells"),
+      const [hRes, sRes] = await Promise.all([
         apiFetch("/config/holidays"),
-        apiFetch("/config/stock-locations")
+        apiFetch("/config/stock-locations"),
       ])
 
-      setWells(wRes.ok ? await wRes.json() : [])
       setHolidays(hRes.ok ? await hRes.json() : [])
       setStockLocations(sRes.ok ? await sRes.json() : [])
     } catch (error) {
@@ -46,23 +45,6 @@ export function SpecializedConfigs() {
   useEffect(() => {
     loadAll()
   }, [])
-
-  const handleCreateWell = async () => {
-    if (!newWellTag) return
-    try {
-      const res = await apiFetch("/config/wells", {
-        method: "POST",
-        body: JSON.stringify({ tag: newWellTag, description: "", fpso: "SEPETIBA" })
-      })
-      if (res.ok) {
-        toast.success("Well added")
-        setNewWellTag("")
-        loadAll()
-      } else {
-        throw new Error("Failed")
-      }
-    } catch (error) { toast.error("Failed to add well") }
-  }
 
   const handleCreateHoliday = async () => {
     if (!newHolidayDate || !newHolidayDesc) return
@@ -101,42 +83,12 @@ export function SpecializedConfigs() {
 
   return (
     <div className="space-y-6">
-      <Tabs defaultValue="wells" className="w-full">
+      <Tabs defaultValue="holidays" className="w-full">
         <TabsList className="bg-muted p-1">
-          <TabsTrigger value="wells" className="text-xs">Wells</TabsTrigger>
           <TabsTrigger value="holidays" className="text-xs">Holidays</TabsTrigger>
           <TabsTrigger value="stock" className="text-xs">Stock Locations</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="wells" className="mt-4 space-y-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <div>
-                <CardTitle className="text-sm">Wells</CardTitle>
-                <CardDescription className="text-xs">Define wells associated with this FPSO.</CardDescription>
-              </div>
-              <div className="flex gap-2">
-                <Input placeholder="Well Tag..." value={newWellTag} onChange={(e) => setNewWellTag(e.target.value)} className="h-8 text-xs w-40" />
-                <Button size="sm" onClick={handleCreateWell} className="h-8 px-3">
-                  <Plus className="h-4 w-4 mr-1" /> Add
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {wells.map(well => (
-                  <div key={well.id} className="flex items-center justify-between p-2 border rounded-md bg-muted/5 group">
-                    <div className="flex items-center gap-2">
-                      <Droplets className="h-3 w-3 text-blue-500" />
-                      <span className="text-sm font-medium">{well.tag}</span>
-                    </div>
-                    <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 text-destructive"><Trash2 className="h-3 w-3" /></Button>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
 
         <TabsContent value="holidays" className="mt-4 space-y-4">
           <Card>

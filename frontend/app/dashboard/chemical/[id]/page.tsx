@@ -59,33 +59,74 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 const STATUS_LINE = [
-  "Planned",
-  "Sampled",
+  "Plan",
+  "Sample",
   "Disembark preparation",
   "Disembark logistics",
   "Warehouse",
   "Logistics to vendor",
-  "Delivered at vendor",
-  "Report issued",
+  "Deliver at vendor",
+  "Report issue",
   "Report under validation",
-  "Report approved/reproved",
-  "Flow computer updated"
+  "Report approve/reprove",
+  "Flow computer update"
 ]
 
+const getStatusLine = (sample: any) => {
+  if (!sample) return STATUS_LINE
+  let steps = [...STATUS_LINE]
+
+  // Offshore testing skips disembark and laboratory
+  if (sample.local === "Offshore") {
+    steps = steps.filter(s => ![
+      "Disembark preparation",
+      "Disembark logistics",
+      "Warehouse",
+      "Logistics to vendor",
+      "Delivered at vendor"
+    ].includes(s))
+  }
+
+  const type = sample.type?.toLowerCase() || ""
+
+  // Enxofre and Viscosity skip FC and Validation
+  if (type.includes("enxofre") || type.includes("sulfur") || type.includes("viscosity") || type.includes("viscosidade")) {
+    steps = steps.filter(s => ![
+      "Report under validation",
+      "Report approve/reprove",
+      "Flow computer update"
+    ].includes(s))
+  }
+
+  // PVT skips FC
+  if (type.includes("pvt")) {
+    steps = steps.filter(s => s !== "Flow computer update")
+  }
+
+  return steps
+}
+
 const NEXT_ACTION: Record<string, string> = {
-  "Planned": "Perform sampling",
-  "Sampled": "Prepare disembark",
+  "Plan": "Collect sample",
+  "Sample": "Prepare disembark",
   "Disembark preparation": "Send for logistics",
   "Disembark logistics": "Receive at warehouse",
   "Warehouse": "Ship to vendor",
   "Logistics to vendor": "Confirm delivery",
-  "Delivered at vendor": "Issue lab report",
-  "Report issued": "Validate report",
+  "Deliver at vendor": "Issue lab report",
+  "Report issue": "Validate report",
   "Report under validation": "Approve / Reprove",
-  "Report approved/reproved": "Update flow computer",
-  "Flow computer updated": "— Complete —",
+  "Report approve/reprove": "Update flow computer",
+  "Flow computer update": "— Complete —",
 }
 
 function getDueDiffDays(dueDateStr: string | null): number | null {
@@ -116,6 +157,7 @@ export default function SampleDetailPage() {
   const [dueDate, setDueDate] = useState("")
   const [evidenceUrl, setEvidenceUrl] = useState("")
   const [evidenceFile, setEvidenceFile] = useState<File | null>(null)
+  const [sampleLocal, setSampleLocal] = useState("Onshore")
 
   // Report Validation (PDF extraction)
   const [isUploadingReport, setIsUploadingReport] = useState(false)
@@ -192,7 +234,10 @@ export default function SampleDetailPage() {
         url: finalUrl,
         validation_status: reportValidation?.overall_status,
       }
-      if (dueDate) body.due_date = dueDate
+      if (nextStatus === "Disembark preparation") {
+        body.local = sampleLocal
+      }
+
 
       const res = await apiFetch(`/chemical/samples/${sample.id}/update-status`, {
         method: "POST",
@@ -302,7 +347,9 @@ export default function SampleDetailPage() {
   }, [historyParam])
 
   const getCurrentStepIndex = () => {
-    return STATUS_LINE.indexOf(sample?.status || "Planned")
+    const currentLine = getStatusLine(sample)
+    const idx = currentLine.indexOf(sample?.status || "Plan")
+    return idx === -1 ? 0 : idx // fallback if status not found
   }
 
   // Due date override state
@@ -340,18 +387,18 @@ export default function SampleDetailPage() {
         <div className="flex gap-2">
           {getCurrentStepIndex() > 0 && (
             <Button variant="outline" size="sm" onClick={() => {
-              setNextStatus(STATUS_LINE[getCurrentStepIndex() - 1])
+              setNextStatus(getStatusLine(sample)[getCurrentStepIndex() - 1])
               setIsStatusDialogOpen(true)
             }}>
               <Undo2 className="w-4 h-4 mr-2" /> Step Back
             </Button>
           )}
-          {getCurrentStepIndex() < STATUS_LINE.length - 1 && (
+          {getCurrentStepIndex() < getStatusLine(sample).length - 1 && (
             <Button size="sm" onClick={() => {
-              setNextStatus(STATUS_LINE[getCurrentStepIndex() + 1])
+              setNextStatus(getStatusLine(sample)[getCurrentStepIndex() + 1])
               setIsStatusDialogOpen(true)
             }}>
-              Next Step: {STATUS_LINE[getCurrentStepIndex() + 1]}
+              Next Step: {getStatusLine(sample)[getCurrentStepIndex() + 1]}
               <ChevronRight className="w-4 h-4 ml-2" />
             </Button>
           )}
@@ -365,10 +412,10 @@ export default function SampleDetailPage() {
             <div className="absolute top-5 left-0 w-full h-0.5 bg-muted z-0"></div>
             <div
               className="absolute top-5 left-0 h-0.5 bg-primary transition-all duration-700 z-0"
-              style={{ width: `${(getCurrentStepIndex() / (STATUS_LINE.length - 1)) * 100}%` }}
+              style={{ width: `${(getCurrentStepIndex() / (getStatusLine(sample).length - 1)) * 100}%` }}
             ></div>
 
-            {STATUS_LINE.map((step, idx) => {
+            {getStatusLine(sample).map((step, idx) => {
               const isActive = idx === getCurrentStepIndex()
               const isCompleted = idx < getCurrentStepIndex()
               return (
@@ -401,7 +448,7 @@ export default function SampleDetailPage() {
             <CardHeader className="pb-3">
               <CardTitle className="text-lg">Sampling Process Details</CardTitle>
               <Badge variant="outline" className="w-fit">
-                Step {getCurrentStepIndex() + 1} of {STATUS_LINE.length}
+                Step {getCurrentStepIndex() + 1} of {getStatusLine(sample).length}
               </Badge>
             </CardHeader>
             <CardContent className="space-y-5">
@@ -553,7 +600,7 @@ export default function SampleDetailPage() {
                     </TableHeader>
                     <TableBody>
                       {[
-                        { phase: "Sampling", expected: sample.planned_date, actual: sample.sampling_date, icon: "🧪" },
+                        { phase: "Sample", expected: sample.planned_date, actual: sample.sampling_date, icon: "🧪" },
                         { phase: "Disembark", expected: sample.disembark_expected_date, actual: sample.disembark_date, icon: "🚢" },
                         { phase: "Laboratory", expected: sample.lab_expected_date, actual: sample.delivery_date, icon: "🔬" },
                         { phase: "Report", expected: sample.report_expected_date, actual: sample.report_issue_date, icon: "📋" },
@@ -609,7 +656,7 @@ export default function SampleDetailPage() {
               </div>
 
               {/* Validation Status — only show after report has been uploaded and validated */}
-              {['Report under validation', 'Report approved/reproved', 'Flow computer updated'].includes(sample.status) && sample.validation_status && labResults.length > 0 && (
+              {['Report under validation', 'Report approve/reprove', 'Flow computer update'].includes(sample.status) && sample.validation_status && labResults.length > 0 && (
                 <div className="p-3 rounded-lg border bg-muted/30">
                   <Label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Validation Status</Label>
                   <div className="mt-1">
@@ -1080,14 +1127,22 @@ export default function SampleDetailPage() {
                 <Label>Event Date</Label>
                 <Input type="date" value={eventDate} onChange={e => setEventDate(e.target.value)} />
               </div>
-              <div className="space-y-2">
-                <Label className="flex items-center gap-1.5">
-                  Due Date
-                  <span className="text-[10px] text-muted-foreground font-normal">(deadline for this step)</span>
-                </Label>
-                <Input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} />
-                <p className="text-[10px] text-muted-foreground">Leave empty to auto-calculate from SLA</p>
-              </div>
+
+              {nextStatus === "Disembark preparation" && (
+                <div className="space-y-2 col-span-2">
+                  <Label>Local Execution *</Label>
+                  <Select value={sampleLocal} onValueChange={setSampleLocal}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Local" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Onshore">Onshore</SelectItem>
+                      <SelectItem value="Offshore">Offshore</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[10px] text-muted-foreground">Determines which SLA rule to apply for this cycle.</p>
+                </div>
+              )}
               <div className="space-y-2 col-span-2">
                 <Label>Evidence (File or URL)</Label>
                 <div className="flex gap-2 items-center">
@@ -1135,17 +1190,17 @@ export default function SampleDetailPage() {
 
 function getStatusConfig(status: string) {
   const configs: Record<string, { color: string }> = {
-    "Planned": { color: "bg-slate-400" },
-    "Sampled": { color: "bg-green-600" },
+    "Plan": { color: "bg-slate-400" },
+    "Sample": { color: "bg-green-600" },
     "Disembark preparation": { color: "bg-blue-500" },
     "Disembark logistics": { color: "bg-blue-600" },
     "Warehouse": { color: "bg-indigo-500" },
     "Logistics to vendor": { color: "bg-indigo-600" },
-    "Delivered at vendor": { color: "bg-purple-500" },
-    "Report issued": { color: "bg-amber-500" },
+    "Deliver at vendor": { color: "bg-purple-500" },
+    "Report issue": { color: "bg-amber-500" },
     "Report under validation": { color: "bg-amber-600" },
-    "Report approved/reproved": { color: "bg-emerald-600" },
-    "Flow computer updated": { color: "bg-violet-600" },
+    "Report approve/reprove": { color: "bg-emerald-600" },
+    "Flow computer update": { color: "bg-violet-600" },
   }
   return configs[status] || { color: "bg-slate-400" }
 }

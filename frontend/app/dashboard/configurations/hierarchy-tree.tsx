@@ -15,32 +15,33 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface Node {
   id: number
   tag: string
   description: string
   level_type: string
+  attributes?: Record<string, any>
   children?: Node[]
 }
 
 const levelIcons: Record<string, any> = {
-  FPSO: Layers,
-  System: Package,
-  Variable: Cpu,
-  Device: Radio,
+  "FPSO": Layers,
+  "Sample Point": Package,
+  "Metering Point": Cpu,
 }
 
 const nextLevel: Record<string, string> = {
   "ROOT": "FPSO",
-  "FPSO": "System",
-  "System": "Variable",
-  "Variable": "Device",
+  "FPSO": "Metering Point",
+  "Metering Point": "Sample Point",
 }
 
 interface HierarchyTreeProps {
-  onSelect?: (nodeId: number, nodeTag: string) => void
+  onSelect?: (node: Node) => void
   selectedId?: number | null
+  initialNodeId?: number | null
 }
 
 const TreeNode = ({
@@ -53,13 +54,27 @@ const TreeNode = ({
   node: Node;
   level: number;
   onRefresh: () => void;
-  onSelect?: (id: number, tag: string) => void
+  onSelect?: (node: Node) => void
   selectedId?: number | null
 }) => {
   const [isOpen, setIsOpen] = useState(false)
+
+  useEffect(() => {
+    if (selectedId && node.children) {
+      const hasSelectedDescendant = (n: Node, id: number): boolean => {
+        if (!n.children) return false;
+        return n.children.some(c => c.id === id || hasSelectedDescendant(c, id));
+      };
+      if (hasSelectedDescendant(node, selectedId)) {
+        setIsOpen(true);
+      }
+    }
+  }, [selectedId, node]);
+
   const [isAdding, setIsAdding] = useState(false)
   const [newTag, setNewTag] = useState("")
   const [newDesc, setNewDesc] = useState("")
+  const [newClassification, setNewClassification] = useState("")
 
   const Icon = levelIcons[node.level_type] || Package
   const hasChildren = node.children && node.children.length > 0
@@ -74,7 +89,8 @@ const TreeNode = ({
           tag: newTag,
           description: newDesc,
           level_type: nextTarget,
-          parent_id: node.id
+          parent_id: node.id,
+          attributes: nextTarget === "Metering Point" && newClassification ? { classification: newClassification } : undefined
         })
       })
 
@@ -83,7 +99,9 @@ const TreeNode = ({
         setIsAdding(false)
         setNewTag("")
         setNewDesc("")
+        setNewClassification("")
         onRefresh()
+        window.dispatchEvent(new Event("hierarchy-updated"))
         setIsOpen(true)
       } else {
         throw new Error("Failed")
@@ -101,6 +119,7 @@ const TreeNode = ({
       if (res.ok) {
         toast.success("Node deleted successfully")
         onRefresh()
+        window.dispatchEvent(new Event("hierarchy-updated"))
       } else {
         throw new Error("Failed")
       }
@@ -113,13 +132,16 @@ const TreeNode = ({
     <div className="select-none">
       <div
         className={cn(
-          "flex items-center gap-2 px-2 py-1.5 hover:bg-muted/50 rounded-sm cursor-pointer group transition-colors",
+          "flex items-center gap-2 px-2 py-1.5 hover:bg-muted/50 rounded-sm group transition-colors",
+          node.level_type === "Sample Point" ? "cursor-default" : "cursor-pointer",
           level === 0 && "font-bold text-primary",
-          selectedId === node.id && "bg-primary/10 ring-1 ring-primary/30"
+          selectedId === node.id && node.level_type !== "Sample Point" && "bg-primary/10 ring-1 ring-primary/30"
         )}
         onClick={() => {
           setIsOpen(!isOpen)
-          onSelect?.(node.id, node.tag)
+          if (node.level_type !== "Sample Point") {
+            onSelect?.(node)
+          }
         }}
         style={{ paddingLeft: `${level * 20 + 8}px` }}
       >
@@ -130,8 +152,25 @@ const TreeNode = ({
         )}
         <Icon className={cn("h-4 w-4", level === 0 ? "text-primary" : "text-muted-foreground")} />
         <div className="flex flex-col">
-          <span className="text-sm">{node.tag}</span>
-          {node.description && <span className="text-[10px] text-muted-foreground leading-none">{node.description}</span>}
+          <div className="flex items-center gap-2">
+            <span className="text-sm">{node.tag}</span>
+            {node.attributes?.classification && (() => {
+              const clsMap: Record<string, string> = {
+                "Fiscal": "bg-blue-100 text-blue-700",
+                "Custody Transfer": "bg-indigo-100 text-indigo-700",
+                "Apropriation": "bg-purple-100 text-purple-700",
+                "Operational": "bg-slate-100 text-slate-600",
+              };
+              const cClass = clsMap[node.attributes.classification] || "bg-gray-100 text-gray-700";
+              return (
+                <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap ${cClass}`}>
+                  {node.attributes.classification}
+                </span>
+              )
+            })()}
+
+          </div>
+          {node.description && <span className="text-[10px] text-muted-foreground leading-none mt-1">{node.description}</span>}
         </div>
 
         <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100">
@@ -164,6 +203,22 @@ const TreeNode = ({
                     <Label htmlFor="description">Description</Label>
                     <Input id="description" placeholder="Optional details..." value={newDesc} onChange={(e) => setNewDesc(e.target.value)} />
                   </div>
+                  {nextTarget === "Metering Point" && (
+                    <div className="space-y-2">
+                      <Label>Classification</Label>
+                      <Select value={newClassification} onValueChange={setNewClassification}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select classification..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Fiscal">Fiscal</SelectItem>
+                          <SelectItem value="Custody Transfer">Custody Transfer</SelectItem>
+                          <SelectItem value="Apropriation">Apropriation</SelectItem>
+                          <SelectItem value="Operational">Operational</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setIsAdding(false)}>Cancel</Button>
@@ -194,7 +249,7 @@ const TreeNode = ({
   )
 }
 
-export function HierarchyTree({ onSelect, selectedId }: HierarchyTreeProps) {
+export function HierarchyTree({ onSelect, selectedId, initialNodeId }: HierarchyTreeProps) {
   const [data, setData] = useState<Node[]>([])
   const [loading, setLoading] = useState(true)
   const [isAddingRoot, setIsAddingRoot] = useState(false)
@@ -203,9 +258,10 @@ export function HierarchyTree({ onSelect, selectedId }: HierarchyTreeProps) {
   const loadTree = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await apiFetch("/config/hierarchy/tree")
+      const res = await apiFetch(`/config/hierarchy/tree?_t=${Date.now()}`)
       if (res.ok) {
-        setData(await res.json())
+        const treeData = await res.json()
+        setData(treeData)
       } else {
         throw new Error("Failed")
       }
@@ -220,6 +276,25 @@ export function HierarchyTree({ onSelect, selectedId }: HierarchyTreeProps) {
   useEffect(() => {
     loadTree()
   }, [loadTree])
+
+  useEffect(() => {
+    if (initialNodeId && initialNodeId !== selectedId && data.length > 0 && onSelect) {
+      const findNode = (nodes: Node[]): Node | null => {
+        for (const n of nodes) {
+          if (n.id === initialNodeId) return n;
+          if (n.children) {
+            const found = findNode(n.children);
+            if (found) return found;
+          }
+        }
+        return null;
+      }
+      const foundNode = findNode(data)
+      if (foundNode) {
+        onSelect(foundNode)
+      }
+    }
+  }, [initialNodeId, data]) // Exclude onSelect and selectedId to prevent infinite loops from non-memoized handlers
 
   const handleCreateRoot = async () => {
     try {

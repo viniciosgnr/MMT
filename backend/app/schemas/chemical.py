@@ -2,6 +2,32 @@ from pydantic import BaseModel
 from datetime import date, datetime
 from typing import Optional, List
 
+# Light Well schema to avoid circular imports
+class WellLight(BaseModel):
+    id: int
+    tag: str
+    description: Optional[str] = None
+    anp_code: Optional[str] = None
+    sbm_code: Optional[str] = None
+    sample_point_gas: Optional[str] = None
+    sample_point_oil: Optional[str] = None
+    status: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+import sys
+
+# Light Meter schema to avoid circular imports
+class MeterLight(BaseModel):
+    id: int
+    tag_number: str
+    description: Optional[str] = None
+    classification: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
 # Sample Point Schemas (New)
 class SamplePointBase(BaseModel):
     tag_number: str
@@ -62,8 +88,13 @@ class SampleBase(BaseModel):
     category: Optional[str] = "Coleta"  # "Coleta" or "Operacional"
     responsible: Optional[str] = None
     sample_point_id: Optional[int] = None
+    meter_id: Optional[int] = None
+    well_id: Optional[int] = None
     osm_id: Optional[str] = None  # Identificação OSM
     notes: Optional[str] = None
+    validation_party: str = "Client" # Client or SBM offshore
+    is_active: int = 1 # Active/Inactive
+    local: str = "Onshore" # Onshore/Offshore
 
 class SampleCreate(SampleBase):
     campaign_id: Optional[int] = None
@@ -78,12 +109,12 @@ class SampleStatusUpdate(BaseModel):
     # For validation/FC steps
     url: Optional[str] = None
     validation_status: Optional[str] = None
-    # User-defined deadline for the next step
-    due_date: Optional[date] = None
     # Additional tracking fields
     osm_id: Optional[str] = None
     laudo_number: Optional[str] = None
     mitigated: Optional[int] = None
+    # Local execution
+    local: Optional[str] = None
 
 class Sample(SampleBase):
     id: int
@@ -114,6 +145,8 @@ class Sample(SampleBase):
     
     created_at: Optional[datetime] = None
     sample_point: Optional[SamplePoint] = None
+    meter: Optional[MeterLight] = None
+    well: Optional[WellLight] = None
     history: List[SampleStatusHistory] = []
 
     class Config:

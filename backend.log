@@ -1,0 +1,16 @@
+INFO:     Started server process [26586]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+Database already contains data, skipping seed.
+INFO:     127.0.0.1:41846 - "GET /api/config/hierarchy/tree HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39272 - "GET /api/chemical/samples HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60510 - "GET /api/chemical/samples HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42318 - "GET /api/chemical/samples HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40778 - "GET /api/chemical/sample-points HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36774 - "GET /api/chemical/dashboard-stats?fpso_name=CDI%20-%20Cidade%20de%20Ilhabela HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [26586]
+Terminated

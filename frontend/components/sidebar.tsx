@@ -13,18 +13,56 @@ import { cn } from "@/lib/utils"
 import { ChevronLeft, ChevronRight, Database, LogOut, Ship } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import { createClient } from "@/utils/supabase/client"
+import { apiFetch } from "@/lib/api"
+
+interface Node {
+  id: number
+  tag: string
+  description?: string
+  level_type: string
+  attributes?: Record<string, any>
+  children?: Node[]
+}
+
+const fpsoColors: Record<string, string> = {
+  "FPSO MARICÁ": "bg-amber-500",
+  "FPSO SAQUAREMA": "bg-blue-500",
+  "FPSO SEPETIBA": "bg-emerald-500",
+}
 
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const [treeData, setTreeData] = useState<Node[]>([])
   const router = useRouter()
+  const pathname = usePathname()
   const supabase = createClient()
+
+  React.useEffect(() => {
+    async function load() {
+      try {
+        const res = await apiFetch(`/config/hierarchy/tree?_t=${Date.now()}`)
+        if (res.ok) setTreeData(await res.json())
+      } catch (err) {
+        console.error("Failed to load sidebar tree", err)
+      }
+    }
+    load()
+
+    window.addEventListener("hierarchy-updated", load)
+    return () => window.removeEventListener("hierarchy-updated", load)
+  }, [])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push("/login")
     router.refresh()
+  }
+
+  const handleNodeClick = (nodeId: number) => {
+    // Navigate to M11 module and select the exact node in the tree
+    router.push(`/dashboard/configurations?nodeId=${nodeId}`)
   }
 
   return (
@@ -63,92 +101,64 @@ export function Sidebar() {
             <div className="space-y-4">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2">Production Units</p>
               <Accordion type="single" collapsible className="w-full">
-                {/* FPSO MARICÁ */}
-                <AccordionItem value="fpso-marica" className="border-none">
-                  <AccordionTrigger className="py-2 px-3 hover:bg-slate-50 rounded-md hover:no-underline text-xs font-bold text-[#003D5C]">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-amber-500" />
-                      FPSO MARICÁ
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="pl-4 pb-0">
-                    <Accordion type="multiple" className="w-full">
-                      {/* Run 1 */}
-                      <AccordionItem value="run-1" className="border-none">
-                        <AccordionTrigger className="py-1.5 px-3 hover:bg-slate-50 rounded-sm hover:no-underline text-[10px] font-bold text-slate-700">
-                          Oil Rundown Run 1 – T62-FT-1103
-                        </AccordionTrigger>
-                        <AccordionContent className="pl-4 pb-2 space-y-3 mt-1 border-l border-slate-100 ml-2">
-                          {/* Pressure */}
-                          <div>
-                            <p className="text-[9px] font-bold text-[#FF6B35] uppercase tracking-tighter mb-1">Pressure</p>
-                            <div className="pl-2 space-y-1">
-                              <button className="text-[10px] text-slate-500 hover:text-[#003D5C] block w-full text-left py-0.5">T62-PT-1103</button>
-                            </div>
-                          </div>
-                          {/* Temperature */}
-                          <div>
-                            <p className="text-[9px] font-bold text-[#FF6B35] uppercase tracking-tighter mb-1">Temperature</p>
-                            <div className="pl-2 space-y-1">
-                              <button className="text-[10px] text-slate-500 hover:text-[#003D5C] block w-full text-left py-0.5">T62-TT-1103</button>
-                              <button className="text-[10px] text-slate-500 hover:text-[#003D5C] block w-full text-left py-0.5">T62-TE-1103</button>
-                            </div>
-                          </div>
-                          {/* Fluid Properties */}
-                          <div>
-                            <p className="text-[9px] font-bold text-[#FF6B35] uppercase tracking-tighter mb-1">Fluid Properties</p>
-                            <div className="pl-2 space-y-1">
-                              <button className="text-[10px] text-slate-500 hover:text-[#003D5C] block w-full text-left py-0.5">T62-AP-1111</button>
-                              <button className="text-[10px] text-slate-500 hover:text-[#003D5C] block w-full text-left py-0.5">T62-AP-1112</button>
-                              <button className="text-[10px] text-slate-500 hover:text-[#003D5C] block w-full text-left py-0.5">T62-AT-1112</button>
-                            </div>
-                          </div>
-                        </AccordionContent>
-                      </AccordionItem>
+                {treeData.map((fpso) => (
+                  <AccordionItem key={fpso.id} value={`fpso-${fpso.id}`} className="border-none">
+                    <AccordionTrigger
+                      className="py-2 px-3 hover:bg-slate-50 rounded-md hover:no-underline text-xs font-bold text-[#003D5C]"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className={cn("w-2 h-2 rounded-full", fpsoColors[fpso.tag] || "bg-slate-500")} />
+                        {fpso.tag}
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="pl-4 pb-0">
+                      {(!fpso.children || fpso.children.length === 0) ? (
+                        <div className="pl-6 py-2 text-[10px] text-slate-400 italic">Subsystems structure pending.</div>
+                      ) : (
+                        <Accordion type="multiple" className="w-full">
+                          {fpso.children.map(meter => {
+                            const samplePoints = meter.children || []
 
-                      {/* Run 2 */}
-                      <AccordionItem value="run-2" className="border-none">
-                        <AccordionTrigger className="py-1.5 px-3 hover:bg-slate-50 rounded-sm hover:no-underline text-[10px] font-bold text-slate-700">
-                          Oil Rundown Run 2 – T62-FT-1108
-                        </AccordionTrigger>
-                        <AccordionContent className="pl-4 pb-2 space-y-2 mt-1 border-l border-slate-100 ml-2">
-                          <div>
-                            <p className="text-[9px] font-bold text-[#FF6B35] uppercase tracking-tighter mb-1">Fluid Properties</p>
-                            <div className="pl-2 space-y-1">
-                              <button className="text-[10px] text-slate-500 hover:text-[#003D5C] block w-full text-left py-0.5">T62-AP-1111</button>
-                            </div>
-                          </div>
-                        </AccordionContent>
-                      </AccordionItem>
-                    </Accordion>
-                  </AccordionContent>
-                </AccordionItem>
+                            return (
+                              <AccordionItem key={meter.id} value={`meter-${meter.id}`} className="border-none">
+                                <AccordionTrigger
+                                  className="py-1.5 px-3 hover:bg-slate-50 rounded-sm hover:no-underline text-[10px] font-bold text-slate-700 text-left"
+                                >
+                                  {meter.description} {meter.tag ? `– ${meter.tag}` : ''}
+                                </AccordionTrigger>
+                                <AccordionContent className="pl-4 pb-2 space-y-3 mt-1 border-l border-slate-100 ml-2">
+                                  {/* Allow clicking on the Metering Point itself */}
+                                  <button
+                                    onClick={() => handleNodeClick(meter.id)}
+                                    className="text-[10px] font-semibold text-indigo-600 hover:text-indigo-800 block w-full text-left py-0.5"
+                                  >
+                                    Inspect Metering Point
+                                  </button>
 
-                {/* FPSO SAQUAREMA */}
-                <AccordionItem value="fpso-saquarema" className="border-none">
-                  <AccordionTrigger className="py-2 px-3 hover:bg-slate-50 rounded-md hover:no-underline text-xs font-bold text-[#003D5C]">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-blue-500" />
-                      FPSO SAQUAREMA
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="pl-6 py-2 text-[10px] text-slate-400 italic">
-                    Subsystems structure pending.
-                  </AccordionContent>
-                </AccordionItem>
-
-                {/* FPSO SEPETIBA */}
-                <AccordionItem value="fpso-sepetiba" className="border-none">
-                  <AccordionTrigger className="py-2 px-3 hover:bg-slate-50 rounded-md hover:no-underline text-xs font-bold text-[#003D5C]">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                      FPSO SEPETIBA
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="pl-6 py-2 text-[10px] text-slate-400 italic">
-                    Subsystems structure pending.
-                  </AccordionContent>
-                </AccordionItem>
+                                  {samplePoints.length > 0 && (
+                                    <div>
+                                      <p className="text-[9px] font-bold text-[#FF6B35] uppercase tracking-tighter mb-1 mt-2">FLUID PROPERTIES</p>
+                                      <div className="pl-2 space-y-1">
+                                        {samplePoints.map(sp => (
+                                          <div
+                                            key={sp.id}
+                                            className="text-[10px] text-slate-500 block w-full text-left py-0.5"
+                                          >
+                                            {sp.tag}
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </AccordionContent>
+                              </AccordionItem>
+                            )
+                          })}
+                        </Accordion>
+                      )}
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
               </Accordion>
             </div>
           )}
