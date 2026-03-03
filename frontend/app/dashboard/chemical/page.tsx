@@ -601,8 +601,17 @@ export default function ChemicalAnalysisDashboard() {
                       onClick={() => router.push(`/dashboard/chemical/${sample.id}`)}
                     >
                       {/* Metering Point */}
-                      <TableCell className="font-bold text-slate-700">
-                        {stripFpsoSuffix(sample.meter?.tag_number) || "—"}
+                      <TableCell>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="font-bold text-slate-700">
+                            {stripFpsoSuffix(sample.meter?.tag_number) || "—"}
+                          </span>
+                          {sample.sample_point?.fpso_name && (
+                            <span className="text-[9px] font-semibold tracking-wide uppercase text-sky-600 bg-sky-50 border border-sky-200 px-1.5 py-0.5 rounded w-fit">
+                              {sample.sample_point.fpso_name.split(" - ")[0]}
+                            </span>
+                          )}
+                        </div>
                       </TableCell>
 
                       {/* Classification */}

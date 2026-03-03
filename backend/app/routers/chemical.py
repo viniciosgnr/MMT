@@ -91,9 +91,21 @@ STEP_GROUPS = {
 
 @router.get("/dashboard-stats")
 def get_dashboard_stats(fpso_name: Optional[str] = None, db: Session = Depends(database.get_db)):
-    """Returns grouped step counts with urgency classification for the 5 dashboard cards."""
+    """Returns grouped step counts with urgency classification for the 5 dashboard cards.
+    Card urgency (overdue/today/tomorrow) is driven by a specific trigger step's expected
+    date field, checked against ALL samples in the card group — not just samples at that step."""
     today = date.today()
     tomorrow = today + timedelta(days=1)
+    
+    # Which expected date field drives each card's urgency color.
+    # All samples in the group are checked against this field.
+    CARD_TRIGGER_FIELD = {
+        "sampling": "planned_date",              # Sample trigger
+        "disembark": "disembark_expected_date",   # Disembark logistics trigger
+        "logistics": "lab_expected_date",          # Deliver at vendor trigger
+        "report": "report_expected_date",          # Report issue trigger
+        "fc_update": "fc_expected_date",           # Flow computer update trigger
+    }
     
     query = db.query(models.Sample).outerjoin(models.SamplePoint)
     if fpso_name:
@@ -114,8 +126,9 @@ def get_dashboard_stats(fpso_name: Optional[str] = None, db: Session = Depends(d
     result = {}
     for group_key, statuses in STEP_GROUPS.items():
         group_samples = [s for s in all_samples if s.status in statuses]
+        trigger_field = CARD_TRIGGER_FIELD.get(group_key)
         
-        # Build sub-step breakdown
+        # Build sub-step breakdown (uses due_date for per-step info)
         steps = []
         for status_name in statuses:
             step_samples = [s for s in group_samples if s.status == status_name]
@@ -133,18 +146,28 @@ def get_dashboard_stats(fpso_name: Optional[str] = None, db: Session = Depends(d
                 "others": others,
             })
         
-        # Aggregate totals for the card
-        total_overdue = sum(s["overdue"] for s in steps)
-        total_due_today = sum(s["due_today"] for s in steps)
-        total_due_tomorrow = sum(s["due_tomorrow"] for s in steps)
-        total_others = sum(s["others"] for s in steps)
+        # Card-level urgency = ALL group samples checked against the trigger field
+        card_overdue = 0
+        card_due_today = 0
+        card_due_tomorrow = 0
+        if trigger_field:
+            for s in group_samples:
+                trigger_date = getattr(s, trigger_field, None)
+                if trigger_date:
+                    if trigger_date < today:
+                        card_overdue += 1
+                    elif trigger_date == today:
+                        card_due_today += 1
+                    elif trigger_date == tomorrow:
+                        card_due_tomorrow += 1
+        card_others = len(group_samples) - card_overdue - card_due_today - card_due_tomorrow
         
         result[group_key] = {
-            "total": sum(s["total"] for s in steps),
-            "overdue": total_overdue,
-            "due_today": total_due_today,
-            "due_tomorrow": total_due_tomorrow,
-            "others": total_others,
+            "total": len(group_samples),
+            "overdue": card_overdue,
+            "due_today": card_due_today,
+            "due_tomorrow": card_due_tomorrow,
+            "others": card_others,
             "steps": steps,
         }
     

@@ -19,6 +19,7 @@ class EquipmentBase(BaseModel):
     model: str
     manufacturer: Optional[str] = None
     equipment_type: str
+    fpso_name: Optional[str] = None
     specifications: Optional[str] = None
     status: str = "Active"
     calibration_frequency_months: Optional[int] = None

@@ -49,6 +49,26 @@ export function InstallationWizard({ onSuccess }: { onSuccess: () => void }) {
   const [selectedTag, setSelectedTag] = useState("")
   const [checklist, setChecklist] = useState<Record<string, boolean>>({})
   const [installedBy, setInstalledBy] = useState("Technician Base")
+  const [manualTag, setManualTag] = useState("") // For Sample Point
+
+  // Derived state
+  const eq = equipments.find(e => e.id.toString() === selectedEq)
+  const targetTagNode = tags.find(t => t.id.toString() === selectedTag)
+
+  const generatedTag = (): string => {
+    if (!eq || !targetTagNode) return ""
+    // Tag generation logic
+    const bTag = targetTagNode.tag_number // e.g. T73-FT-5201
+    const tType = eq.equipment_type
+
+    if (tType === "Sample Point") return manualTag
+
+    // Auto-replace FT with proper code
+    if (tType === "Pressure Transmitter") return bTag.replace("-FT-", "-PT-")
+    if (tType === "Temperature Transmitter") return bTag.replace("-FT-", "-TT-")
+    if (tType === "Temperature Element") return bTag.replace("-FT-", "-TE-")
+    return bTag // Fallback
+  }
 
   useEffect(() => {
     if (open) {
@@ -66,9 +86,12 @@ export function InstallationWizard({ onSuccess }: { onSuccess: () => void }) {
         setEquipments(await eqRes.json())
       }
 
-      const tagRes = await apiFetch("/equipment/tags")
+      const tagRes = await apiFetch("/equipment/tags?limit=1000")
       if (tagRes.ok) {
-        setTags(await tagRes.json())
+        const allTags = await tagRes.json()
+        // Only allow installation onto Metering Points (-FT-)
+        const meteringPoints = allTags.filter((t: any) => t.tag_number.includes("-FT-"))
+        setTags(meteringPoints)
       }
     } catch (e) {
       console.error(e)
@@ -77,9 +100,15 @@ export function InstallationWizard({ onSuccess }: { onSuccess: () => void }) {
   }
 
   const handleNext = () => {
-    if (step === 1 && (!selectedEq || !selectedTag)) {
-      toast.error("Select Equipment and Tag")
-      return
+    if (step === 1) {
+      if (!selectedEq || !selectedTag) {
+        toast.error("Select Equipment and Target Location")
+        return
+      }
+      if (eq?.equipment_type === "Sample Point" && !manualTag.trim()) {
+        toast.error("Enter Sample Point Tag")
+        return
+      }
     }
     setStep(step + 1)
   }
@@ -94,15 +123,18 @@ export function InstallationWizard({ onSuccess }: { onSuccess: () => void }) {
 
     setLoading(true)
     try {
-      const res = await apiFetch("/equipment/install", {
+      const urlParams = new URLSearchParams()
+      urlParams.append("target_tag_name", generatedTag())
+      urlParams.append("target_description", `${eq?.equipment_type} installed at ${targetTagNode?.tag_number}`)
+
+      // If we could link the node ID to the Target Tag Location node... for now we pass generic info
+
+      const res = await apiFetch(`/equipment/install?${urlParams.toString()}`, {
         method: "POST",
         body: JSON.stringify({
           equipment_id: parseInt(selectedEq),
-          tag_id: parseInt(selectedTag),
+          tag_id: 0, // 0 triggers creation of new tag from target_tag_name
           installed_by: installedBy,
-          // Send checklist data as serialized JSON string
-          // In a real app, this would be validated by Schema
-          // We added `checklist_data` to schemas.py
           checklist_data: JSON.stringify(checklist)
         })
       })
@@ -148,7 +180,7 @@ export function InstallationWizard({ onSuccess }: { onSuccess: () => void }) {
                   <SelectTrigger className="font-bold text-[#003D5C]">
                     <SelectValue placeholder="Select Equipment..." />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-[300px]">
                     {equipments.map(eq => (
                       <SelectItem key={eq.id} value={eq.id.toString()}>
                         {eq.serial_number} - {eq.equipment_type} ({eq.model})
@@ -162,9 +194,9 @@ export function InstallationWizard({ onSuccess }: { onSuccess: () => void }) {
                 <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Target Tag (Location)</Label>
                 <Select value={selectedTag} onValueChange={setSelectedTag}>
                   <SelectTrigger className="font-bold text-[#FF6B35]">
-                    <SelectValue placeholder="Select Tag..." />
+                    <SelectValue placeholder="Select Target Location..." />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-[300px]">
                     {tags.map(tag => (
                       <SelectItem key={tag.id} value={tag.id.toString()}>
                         {tag.tag_number} - {tag.description}
@@ -173,6 +205,29 @@ export function InstallationWizard({ onSuccess }: { onSuccess: () => void }) {
                   </SelectContent>
                 </Select>
               </div>
+
+              {eq && targetTagNode && (
+                <div className="space-y-2 pt-2 border-t border-slate-100">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                    Generated Instrument Tag
+                  </Label>
+                  {eq.equipment_type === "Sample Point" ? (
+                    <Input
+                      placeholder="e.g. T73-AP-1111"
+                      value={manualTag}
+                      onChange={(e) => setManualTag(e.target.value)}
+                      className="font-bold text-emerald-600 border-emerald-200 focus-visible:ring-emerald-500"
+                    />
+                  ) : (
+                    <div className="bg-emerald-50 text-emerald-700 font-mono font-bold px-3 py-2 rounded-md border border-emerald-200">
+                      {generatedTag()}
+                    </div>
+                  )}
+                  <p className="text-[10px] text-muted-foreground">
+                    This tag will be created and bound to the equipment.
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
@@ -214,9 +269,9 @@ export function InstallationWizard({ onSuccess }: { onSuccess: () => void }) {
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-xs font-bold text-slate-500 uppercase">Tag:</span>
+                  <span className="text-xs font-bold text-slate-500 uppercase">Target Tag:</span>
                   <span className="text-xs font-black text-[#FF6B35]">
-                    {tags.find(t => t.id.toString() === selectedTag)?.tag_number}
+                    {generatedTag()}
                   </span>
                 </div>
                 <div className="flex justify-between">

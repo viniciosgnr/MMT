@@ -28,14 +28,19 @@ interface Node {
 
 const levelIcons: Record<string, any> = {
   "FPSO": Layers,
+  "Category": Layers,
+  "Device": Cpu,
   "Sample Point": Package,
   "Metering Point": Cpu,
 }
 
-const nextLevel: Record<string, string> = {
+const nextLevel: Record<string, string | null> = {
   "ROOT": "FPSO",
   "FPSO": "Metering Point",
-  "Metering Point": "Sample Point",
+  "Metering Point": null, // Categories auto-generated backend side
+  "Category": "Device", // Actually handled via specialized import form, but keep flow
+  "Device": null,
+  "Sample Point": null,
 }
 
 interface HierarchyTreeProps {
@@ -71,14 +76,48 @@ const TreeNode = ({
     }
   }, [selectedId, node]);
 
-  const [isAdding, setIsAdding] = useState(false)
   const [newTag, setNewTag] = useState("")
   const [newDesc, setNewDesc] = useState("")
   const [newClassification, setNewClassification] = useState("")
+  const [isAdding, setIsAdding] = useState(false)
+
+  // For Device Import
+  const [availableDevices, setAvailableDevices] = useState<{ id: number, tag_number: string, description: string }[]>([])
 
   const Icon = levelIcons[node.level_type] || Package
   const hasChildren = node.children && node.children.length > 0
   const nextTarget = nextLevel[node.level_type]
+
+  // Determine FPSO context (simplistic for this MVP)
+  const getFpsoContext = () => "FPSO CIDADE DE ILHABELA (CDI)"
+
+  // Determine equipment type filter based on category
+  const getEquipmentTypeForCategory = (cat: string) => {
+    if (cat === "Pressure") return "Pressure Transmitter"
+    if (cat === "Temperature") return "Temperature Transmitter,Temperature Element"
+    if (cat === "Fluid Properties") return "Sample Point"
+    return ""
+  }
+
+  useEffect(() => {
+    if (isAdding && nextTarget === "Device" || nextTarget === "Sample Point") {
+      // Fetch available devices from M1
+      const fpso = getFpsoContext()
+      const eqType = getEquipmentTypeForCategory(node.tag)
+
+      const fetchDevices = async () => {
+        try {
+          const res = await apiFetch(`/equipment/tags/available?fpso_name=${encodeURIComponent(fpso)}&equipment_type=${encodeURIComponent(eqType)}`)
+          if (res.ok) {
+            setAvailableDevices(await res.json())
+          }
+        } catch (e) {
+          console.error("Failed to load devices", e)
+        }
+      }
+      fetchDevices()
+    }
+  }, [isAdding, nextTarget, node.tag])
 
   const handleCreate = async () => {
     try {
@@ -139,7 +178,7 @@ const TreeNode = ({
         )}
         onClick={() => {
           setIsOpen(!isOpen)
-          if (node.level_type !== "Sample Point") {
+          if (node.level_type !== "Sample Point" && node.level_type !== "Device" && node.level_type !== "Category") {
             onSelect?.(node)
           }
         }}
@@ -150,10 +189,10 @@ const TreeNode = ({
         ) : (
           <div className="w-4" />
         )}
-        <Icon className={cn("h-4 w-4", level === 0 ? "text-primary" : "text-muted-foreground")} />
+        <Icon className={cn("h-4 w-4", level === 0 ? "text-[#FF6B35]" : "text-[#003D5C]/70")} />
         <div className="flex flex-col">
           <div className="flex items-center gap-2">
-            <span className="text-sm">{node.tag}</span>
+            <span className={cn("text-sm", level === 0 ? "text-[#FF6B35] font-bold" : "text-[#003D5C] font-semibold")}>{node.tag}</span>
             {node.attributes?.classification && (() => {
               const clsMap: Record<string, string> = {
                 "Fiscal": "bg-blue-100 text-blue-700",
@@ -163,14 +202,14 @@ const TreeNode = ({
               };
               const cClass = clsMap[node.attributes.classification] || "bg-gray-100 text-gray-700";
               return (
-                <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap ${cClass}`}>
+                <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold whitespace-nowrap ${cClass}`}>
                   {node.attributes.classification}
                 </span>
               )
             })()}
 
           </div>
-          {node.description && <span className="text-[10px] text-muted-foreground leading-none mt-1">{node.description}</span>}
+          {node.description && <span className={cn("text-[11px] font-medium leading-none mt-1", level === 0 ? "text-[#FF6B35]/70" : "text-slate-500")}>{node.description}</span>}
         </div>
 
         <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100">
@@ -195,14 +234,42 @@ const TreeNode = ({
                   <DialogDescription>Create a new {nextTarget} under {node.tag}.</DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="tag">Tag / Short Name</Label>
-                    <Input id="tag" placeholder="e.g. FPSO SEPETIBA" value={newTag} onChange={(e) => setNewTag(e.target.value)} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="description">Description</Label>
-                    <Input id="description" placeholder="Optional details..." value={newDesc} onChange={(e) => setNewDesc(e.target.value)} />
-                  </div>
+                  {(nextTarget === "Device" || nextTarget === "Sample Point") ? (
+                    <div className="space-y-2">
+                      <Label>Select Registered Instrument</Label>
+                      <Select value={newTag} onValueChange={(val) => {
+                        setNewTag(val)
+                        const d = availableDevices.find(dev => dev.tag_number === val)
+                        if (d) setNewDesc(d.description || "")
+                      }}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select instrument from Module 1..." />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[300px]">
+                          {availableDevices.length === 0 && (
+                            <SelectItem value="none" disabled>No available instruments found</SelectItem>
+                          )}
+                          {availableDevices.map(d => (
+                            <SelectItem key={d.id} value={d.tag_number}>{d.tag_number}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-[10px] text-muted-foreground pt-1">
+                        Only shows active instruments installed and verified in Module 1 for this FPSO and Category.
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="tag">Tag / Short Name</Label>
+                        <Input id="tag" placeholder="e.g. FPSO SEPETIBA" value={newTag} onChange={(e) => setNewTag(e.target.value)} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="description">Description</Label>
+                        <Input id="description" placeholder="Optional details..." value={newDesc} onChange={(e) => setNewDesc(e.target.value)} />
+                      </div>
+                    </>
+                  )}
                   {nextTarget === "Metering Point" && (
                     <div className="space-y-2">
                       <Label>Classification</Label>
@@ -387,16 +454,27 @@ export function HierarchyTree({ onSelect, selectedId, initialNodeId }: Hierarchy
         </div>
       </div>
       <div className="p-2 max-h-[600px] overflow-auto">
-        {data.map(node => (
-          <TreeNode
-            key={node.id}
-            node={node}
-            level={0}
-            onRefresh={loadTree}
-            onSelect={onSelect}
-            selectedId={selectedId}
-          />
-        ))}
+        {data
+          .filter(node => {
+            // Prevent standalone devices from appearing as roots
+            if (node.level_type !== "FPSO") {
+              const tagStr = node.tag || "";
+              if (tagStr.includes("-PT-") || tagStr.includes("-TT-") || tagStr.includes("-TE-") || tagStr.includes("-AP-")) {
+                return false;
+              }
+            }
+            return true;
+          })
+          .map(node => (
+            <TreeNode
+              key={node.id}
+              node={node}
+              level={0}
+              onRefresh={loadTree}
+              onSelect={onSelect}
+              selectedId={selectedId}
+            />
+          ))}
       </div>
     </div>
   )

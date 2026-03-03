@@ -103,7 +103,8 @@ class Equipment(Base):
     serial_number = Column(String, unique=True, index=True)
     model = Column(String)
     manufacturer = Column(String, nullable=True)
-    equipment_type = Column(String) # Pressure Transmitter, etc.
+    equipment_type = Column(String) # Pressure Transmitter, Temperature Transmitter, Temperature Element, Sample Point, Flow Meter, etc.
+    fpso_name = Column(String, nullable=True) # Which FPSO this equipment belongs to
     specifications = Column(Text, nullable=True) # JSON with technical specs
     status = Column(String, default=EquipmentStatus.ACTIVE.value)
     
@@ -687,6 +688,7 @@ class HistoricalReport(Base):
 class HierarchyLevel(str, enum.Enum):
     FPSO = "FPSO"
     SYSTEM = "System"
+    CATEGORY = "Category" # Intermediate group: Pressure, Temperature, Fluid Properties
     VARIABLE = "Variable"
     DEVICE = "Device"
 

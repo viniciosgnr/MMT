@@ -27,7 +27,7 @@ interface SyncSourceDialogProps {
   onCreated: () => void
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
+const API_URL = typeof window === 'undefined' ? (process.env.BACKEND_INTERNAL_URL || 'http://backend:8000/api') : (process.env.NEXT_PUBLIC_API_URL || '/api')
 
 export function SyncSourceDialog({ open, onOpenChange, onCreated }: SyncSourceDialogProps) {
   const [loading, setLoading] = useState(false)

@@ -46,7 +46,7 @@ export default function TagRegister() {
   async function fetchTags() {
     try {
       setLoading(true)
-      const res = await apiFetch("/equipment/tags")
+      const res = await apiFetch(`/equipment/tags?limit=1000&t=${new Date().getTime()}`)
       if (res.ok) {
         setTags(await res.json())
       } else {
@@ -126,8 +126,9 @@ export default function TagRegister() {
   }
 
   const filtered = tags.filter(tag =>
-    tag.tag_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    tag.description.toLowerCase().includes(searchTerm.toLowerCase())
+    (tag.tag_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      tag.description.toLowerCase().includes(searchTerm.toLowerCase())) &&
+    !tag.tag_number.includes("-FT-")
   )
 
   return (

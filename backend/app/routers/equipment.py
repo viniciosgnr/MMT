@@ -24,7 +24,7 @@ def create_equipment(equipment: schemas.EquipmentCreate, db: Session = Depends(d
 @router.get("/", response_model=List[schemas.Equipment])
 def read_equipments(
     skip: int = 0, 
-    limit: int = 100, 
+    limit: int = 1000, 
     serial_number: Optional[str] = None,
     equipment_type: Optional[str] = None,
     db: Session = Depends(database.get_db)
@@ -49,11 +49,34 @@ def create_tag(tag: schemas.InstrumentTagCreate, db: Session = Depends(database.
     return db_tag
 
 @router.get("/tags", response_model=List[schemas.InstrumentTag])
-def read_tags(skip: int = 0, limit: int = 100, tag_number: Optional[str] = None, db: Session = Depends(database.get_db)):
+def read_tags(skip: int = 0, limit: int = 10000, tag_number: Optional[str] = None, db: Session = Depends(database.get_db)):
     query = db.query(models.InstrumentTag)
     if tag_number:
         query = query.filter(models.InstrumentTag.tag_number.ilike(f"%{tag_number}%"))
     return query.offset(skip).limit(limit).all()
+
+@router.get("/tags/available", response_model=List[schemas.InstrumentTag])
+def read_available_tags(
+    fpso_name: Optional[str] = None,
+    equipment_type: Optional[str] = None,
+    db: Session = Depends(database.get_db)
+):
+    """Get tags that have an active equipment installation matching criteria."""
+    query = db.query(models.InstrumentTag).join(
+        models.EquipmentTagInstallation, models.InstrumentTag.id == models.EquipmentTagInstallation.tag_id
+    ).join(
+        models.Equipment, models.EquipmentTagInstallation.equipment_id == models.Equipment.id
+    ).filter(
+        models.EquipmentTagInstallation.is_active == 1
+    )
+    
+    if fpso_name:
+        query = query.filter(models.Equipment.fpso_name == fpso_name)
+    if equipment_type:
+        types = [t.strip() for t in equipment_type.split(",")]
+        query = query.filter(models.Equipment.equipment_type.in_(types))
+        
+    return query.all()
 
 @router.get("/{equipment_id}", response_model=schemas.Equipment)
 def read_equipment(equipment_id: int, db: Session = Depends(database.get_db)):
@@ -74,19 +97,44 @@ def read_equipment(equipment_id: int, db: Session = Depends(database.get_db)):
 @router.post("/install", response_model=schemas.EquipmentTagInstallation)
 def install_equipment(
     installation: schemas.EquipmentTagInstallationCreate, 
+    target_tag_name: Optional[str] = Query(None),
+    target_description: Optional[str] = Query(None),
+    hierarchy_node_id: Optional[int] = Query(None),
     db: Session = Depends(database.get_db),
     current_user = Depends(get_current_user)
 ):
-    # Verify equipment and tag exist
+    # Verify equipment exists
     eq = db.query(models.Equipment).filter(models.Equipment.id == installation.equipment_id).first()
-    tag = db.query(models.InstrumentTag).filter(models.InstrumentTag.id == installation.tag_id).first()
-    
-    if not eq or not tag:
-        raise HTTPException(status_code=404, detail="Equipment or Tag not found")
+    if not eq:
+        raise HTTPException(status_code=404, detail="Equipment not found")
+        
+    tag_id = installation.tag_id
+
+    # If tag_id is 0 but target_tag_name is provided, we create a new tag
+    if tag_id == 0 and target_tag_name:
+        # Check if tag already exists
+        existing_tag = db.query(models.InstrumentTag).filter(models.InstrumentTag.tag_number == target_tag_name).first()
+        if existing_tag:
+            tag_id = existing_tag.id
+        else:
+            new_tag = models.InstrumentTag(
+                tag_number=target_tag_name,
+                description=target_description or f"Auto-generated for {eq.serial_number}",
+                hierarchy_node_id=hierarchy_node_id
+            )
+            db.add(new_tag)
+            db.commit()
+            db.refresh(new_tag)
+            tag_id = new_tag.id
+            installation.tag_id = tag_id
+
+    tag = db.query(models.InstrumentTag).filter(models.InstrumentTag.id == tag_id).first()
+    if not tag:
+         raise HTTPException(status_code=404, detail="Target Tag not found")
         
     # Check if tag is already occupied
     active_install = db.query(models.EquipmentTagInstallation).filter(
-        models.EquipmentTagInstallation.tag_id == installation.tag_id,
+        models.EquipmentTagInstallation.tag_id == tag_id,
         models.EquipmentTagInstallation.is_active == 1
     ).first()
     

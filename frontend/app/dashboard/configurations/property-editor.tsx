@@ -4,8 +4,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
-import { Loader2, Save } from "lucide-react"
+import { Loader2, Save, Link2 } from "lucide-react"
 import { apiFetch } from "@/lib/api"
+import { Badge } from "@/components/ui/badge"
 
 interface AttributeDefinition {
   id: number
@@ -31,6 +32,10 @@ export function PropertyEditor({ nodeId, nodeTag, selectedNode }: PropertyEditor
   const [values, setValues] = useState<Record<number, string>>({})
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
+
+  // Real-time Module 1 Sync State
+  const [m1TagData, setM1TagData] = useState<any | null>(null)
+  const [m1Loading, setM1Loading] = useState(false)
 
   useEffect(() => {
     if (nodeId) {
@@ -65,6 +70,44 @@ export function PropertyEditor({ nodeId, nodeTag, selectedNode }: PropertyEditor
       setLoading(false)
     }
   }
+
+  const loadM1Data = async (tagName: string) => {
+    setM1Loading(true)
+    setM1TagData(null)
+    try {
+      // Bust cache to always get latest installations and increase limit
+      const res = await apiFetch(`/equipment/tags?limit=1000&tag_number=${tagName}&t=${new Date().getTime()}`)
+      if (res.ok) {
+        const data = await res.json()
+        // If an exact match is returned, save it
+        if (data && data.length > 0) {
+          const matchedTag = data.find((t: any) => t.tag_number === tagName)
+          if (matchedTag) {
+            setM1TagData(matchedTag)
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load M1 linked data:", e)
+    } finally {
+      setM1Loading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (nodeTag) {
+      // Only fetch M1 data if looking at an instrument (heuristic: tag matches PT/TT/TE/AP/FT)
+      if (nodeTag.match(/-(PT|TT|TE|AP|FT)-/) || nodeTag.match(/-(PT|TT|TE|AP|FT)$/)) {
+        loadM1Data(nodeTag)
+      } else {
+        setM1TagData(null)
+      }
+    } else {
+      setM1TagData(null)
+    }
+  }, [nodeTag])
+
+
 
   const handleSave = async (attrId: number) => {
     setSaving(true)
@@ -106,10 +149,80 @@ export function PropertyEditor({ nodeId, nodeTag, selectedNode }: PropertyEditor
   return (
     <Card className="h-full">
       <CardHeader>
-        <CardTitle>Properties: {nodeTag}</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          Properties: {nodeTag}
+          {m1TagData && (
+            <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+              <Link2 className="w-3 h-3 mr-1" />
+              M1 Active
+            </Badge>
+          )}
+        </CardTitle>
         <CardDescription>Configure specific attributes for this node.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+
+        {/* Module 1 Integrated Real-time Data Block */}
+        {m1Loading && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground p-4 bg-slate-50 rounded-lg">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Retrieving Module 1 status...
+          </div>
+        )}
+        {!m1Loading && m1TagData && (
+          <div className="space-y-3 p-4 bg-emerald-50/50 rounded-lg border border-emerald-100">
+            <div className="flex justify-between items-center mb-2 border-b border-emerald-100/50 pb-2">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-800">Linked Equipment (M1)</h4>
+              {m1TagData.installations?.find((i: any) => i.is_active) ? (
+                <Badge className="bg-emerald-500 text-white text-[10px]">Installed</Badge>
+              ) : (
+                <Badge variant="secondary" className="text-[10px]">Not Installed</Badge>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
+              <div className="flex flex-col">
+                <span className="text-emerald-600/70 text-[10px] uppercase font-bold tracking-wider">M1 Description</span>
+                <span className="font-medium text-emerald-950 truncate" title={m1TagData.description}>{m1TagData.description}</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-emerald-600/70 text-[10px] uppercase font-bold tracking-wider">Area / Service</span>
+                <span className="font-medium text-emerald-950">{m1TagData.area || 'N/A'}</span>
+              </div>
+
+              {(() => {
+                const active = m1TagData.installations?.find((i: any) => i.is_active);
+                if (active && active.equipment) {
+                  return (
+                    <>
+                      <div className="flex flex-col">
+                        <span className="text-emerald-600/70 text-[10px] uppercase font-bold tracking-wider">Serial Number</span>
+                        <span className="font-medium text-emerald-950 font-mono tracking-tight">{active.equipment.serial_number}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-emerald-600/70 text-[10px] uppercase font-bold tracking-wider">Manufacturer / Model</span>
+                        <span className="font-medium text-emerald-950 truncate" title={`${active.equipment.manufacturer} - ${active.equipment.model}`}>
+                          {active.equipment.manufacturer} <span className="text-emerald-800/60 font-normal">({active.equipment.model})</span>
+                        </span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-emerald-600/70 text-[10px] uppercase font-bold tracking-wider">Installation Date</span>
+                        <span className="font-medium text-emerald-950">{new Date(active.installation_date).toLocaleDateString()}</span>
+                      </div>
+                      {active.equipment.calibration_frequency_months && (
+                        <div className="flex flex-col">
+                          <span className="text-emerald-600/70 text-[10px] uppercase font-bold tracking-wider">M1 Cal. Freq.</span>
+                          <span className="font-medium text-emerald-950">{active.equipment.calibration_frequency_months} Months</span>
+                        </div>
+                      )}
+                    </>
+                  )
+                }
+                return null;
+              })()}
+            </div>
+          </div>
+        )}
         {validAttributes.length > 0 && (
           <div className="space-y-3 p-4 bg-slate-50 rounded-lg border border-slate-200">
             <h4 className="text-sm font-semibold text-slate-800">Asset Specifications</h4>

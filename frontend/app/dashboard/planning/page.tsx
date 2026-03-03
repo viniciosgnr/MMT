@@ -28,7 +28,7 @@ import { ACTIVITY_TYPES, TYPE_COLORS, TrafficLight } from "./planning-utils"
 import { ActivityActionDialog, NewStrategyDialog } from "./task-dialogs"
 import { apiFetch } from "@/lib/api"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
+const API_URL = typeof window === 'undefined' ? (process.env.BACKEND_INTERNAL_URL || 'http://backend:8000/api') : (process.env.NEXT_PUBLIC_API_URL || '/api')
 
 export default function PlanningPage() {
   const [view, setView] = useState("calendar")

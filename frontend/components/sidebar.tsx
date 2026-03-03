@@ -135,19 +135,29 @@ export function Sidebar() {
                                     Inspect Metering Point
                                   </button>
 
-                                  {samplePoints.length > 0 && (
-                                    <div>
-                                      <p className="text-[9px] font-bold text-[#FF6B35] uppercase tracking-tighter mb-1 mt-2">FLUID PROPERTIES</p>
-                                      <div className="pl-2 space-y-1">
-                                        {samplePoints.map(sp => (
-                                          <div
-                                            key={sp.id}
-                                            className="text-[10px] text-slate-500 block w-full text-left py-0.5"
-                                          >
-                                            {sp.tag}
+                                  {/* Render Categories and Devices dynamically */}
+                                  {meter.children && meter.children.length > 0 && (
+                                    <div className="mt-2 space-y-3">
+                                      {meter.children.map(cat => (
+                                        <div key={cat.id}>
+                                          <p className="text-[9px] font-bold text-[#FF6B35] uppercase tracking-tighter mb-1">{cat.tag}</p>
+                                          <div className="pl-2 space-y-1">
+                                            {cat.children && cat.children.length > 0 ? (
+                                              cat.children.map(dev => (
+                                                <button
+                                                  key={dev.id}
+                                                  onClick={() => handleNodeClick(dev.id)}
+                                                  className="text-[10px] text-slate-500 hover:text-indigo-600 font-medium block w-full text-left py-0.5 transition-colors"
+                                                >
+                                                  {dev.tag}
+                                                </button>
+                                              ))
+                                            ) : (
+                                              <div className="text-[9px] text-slate-400 italic py-0.5">No instruments</div>
+                                            )}
                                           </div>
-                                        ))}
-                                      </div>
+                                        </div>
+                                      ))}
                                     </div>
                                   )}
                                 </AccordionContent>

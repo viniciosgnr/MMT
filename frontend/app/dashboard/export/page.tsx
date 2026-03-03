@@ -36,7 +36,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
+const API_URL = typeof window === 'undefined' ? (process.env.BACKEND_INTERNAL_URL || 'http://backend:8000/api') : (process.env.NEXT_PUBLIC_API_URL || '/api')
 
 const FPSOS = ["SEPETIBA", "SAQUAREMA", "MARICÁ", "PARATY", "ILHABELA"]
 

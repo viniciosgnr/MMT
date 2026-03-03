@@ -39,11 +39,14 @@ export default function EquipmentInventory() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
+  const [fpsoList, setFpsoList] = useState<string[]>([])
+
   const [form, setForm] = useState({
     serial_number: "",
     model: "",
     manufacturer: "",
     equipment_type: "Pressure Transmitter",
+    fpso_name: "",
     calibration_frequency_months: 12,
     calculation_base: "Calibration Date",
     status: "Active"
@@ -51,7 +54,23 @@ export default function EquipmentInventory() {
 
   useEffect(() => {
     fetchEquipments()
+    fetchFpsoList()
   }, [])
+
+  async function fetchFpsoList() {
+    setFpsoList([
+      "CDS - Cidade de Saquarema",
+      "CDM - Cidade de Maricá",
+      "CDI - Cidade de Ilhabela",
+      "CDP - Cidade de Paraty",
+      "ESS - Espírito Santo",
+      "CPX - Capixaba",
+      "CDA - Cidade de Anchieta",
+      "ADG - Alexandre de Gusmão",
+      "ATD - Almirante Tamandaré",
+      "SEP - Sepetiba"
+    ])
+  }
 
   async function fetchEquipments() {
     try {
@@ -77,8 +96,8 @@ export default function EquipmentInventory() {
   }
 
   async function handleRegister() {
-    if (!form.serial_number || !form.model) {
-      toast.error("Please fill in the required fields.")
+    if (!form.serial_number || !form.model || !form.fpso_name) {
+      toast.error("Please fill in all required fields (Serial Number, Model, and FPSO).")
       return
     }
 
@@ -99,6 +118,7 @@ export default function EquipmentInventory() {
         model: "",
         manufacturer: "",
         equipment_type: "Pressure Transmitter",
+        fpso_name: "",
         calibration_frequency_months: 12,
         calculation_base: "Calibration Date",
         status: "Active"
@@ -180,14 +200,27 @@ export default function EquipmentInventory() {
                       <SelectTrigger id="type">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="max-h-[300px]">
                         <SelectItem value="Pressure Transmitter">Pressure Transmitter</SelectItem>
                         <SelectItem value="Temperature Transmitter">Temperature Transmitter</SelectItem>
-                        <SelectItem value="Flow Meter (USM)">Flow Meter (USM)</SelectItem>
-                        <SelectItem value="Flow Meter (Coriolis)">Flow Meter (Coriolis)</SelectItem>
+                        <SelectItem value="Temperature Element">Temperature Element</SelectItem>
+                        <SelectItem value="Sample Point">Sample Point</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="fpso">FPSO *</Label>
+                  <Select value={form.fpso_name} onValueChange={(v) => setForm({ ...form, fpso_name: v })}>
+                    <SelectTrigger id="fpso">
+                      <SelectValue placeholder="Select FPSO..." />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      {fpsoList.map(fpso => (
+                        <SelectItem key={fpso} value={fpso}>{fpso}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">

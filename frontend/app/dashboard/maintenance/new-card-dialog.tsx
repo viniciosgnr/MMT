@@ -22,7 +22,7 @@ import {
 import { toast } from "sonner"
 import { apiFetch } from "@/lib/api"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
+const API_URL = typeof window === 'undefined' ? (process.env.BACKEND_INTERNAL_URL || 'http://backend:8000/api') : (process.env.NEXT_PUBLIC_API_URL || '/api')
 
 interface NewCardDialogProps {
   open: boolean
