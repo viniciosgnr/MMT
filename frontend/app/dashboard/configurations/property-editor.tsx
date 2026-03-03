@@ -173,7 +173,9 @@ export function PropertyEditor({ nodeId, nodeTag, selectedNode }: PropertyEditor
           <div className="space-y-3 p-4 bg-emerald-50/50 rounded-lg border border-emerald-100">
             <div className="flex justify-between items-center mb-2 border-b border-emerald-100/50 pb-2">
               <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-800">Linked Equipment (M1)</h4>
-              {m1TagData.installations?.find((i: any) => i.is_active) ? (
+              {nodeTag?.includes("-FT-") ? (
+                <Badge variant="outline" className="bg-[#003D5C] text-white border-[#003D5C] text-[10px]">Metering Point</Badge>
+              ) : m1TagData.installations?.find((i: any) => i.is_active) ? (
                 <Badge className="bg-emerald-500 text-white text-[10px]">Installed</Badge>
               ) : (
                 <Badge variant="secondary" className="text-[10px]">Not Installed</Badge>
