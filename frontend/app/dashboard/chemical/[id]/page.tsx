@@ -92,7 +92,7 @@ const getStatusLine = (sample: any) => {
       "Disembark logistics",
       "Warehouse",
       "Logistics to vendor",
-      "Delivered at vendor"
+      "Deliver at vendor"
     ].includes(s))
   }
 
@@ -710,8 +710,7 @@ export default function SampleDetailPage() {
               rs: 'RS (Solubility Ratio)',
               fe: 'FE (Shrinkage Factor)',
               o2: 'O₂ (Oxygen)',
-              density_abs_std: 'Abs. Density (Std Condition)',
-              density_abs_op: 'Abs. Density (Op. Condition)',
+              relative_density_real: 'Relative Density (Real Gas)',
             }
 
             return (
@@ -870,8 +869,7 @@ export default function SampleDetailPage() {
               rs: 'RS',
               fe: 'FE',
               o2: 'O₂',
-              density_abs_std: 'Abs. Density (Std)',
-              density_abs_op: 'Abs. Density (Op)',
+              relative_density_real: 'Rel. Density (Real Gas)',
             }
 
             // Calculate mean and 2σ from history

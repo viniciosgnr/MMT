@@ -3,7 +3,7 @@ PDF Parser Service — Extracts lab report data from GT Química PDFs.
 
 Supports two report types:
   - PVT: Density (Massa específica), RS (RGO), FE
-  - CRO (Chromatography): O₂, Density Absolute (Std + Operating conditions)
+  - CRO (Chromatography): O₂, Densidade Relativa do Gás Real
 """
 
 import re
@@ -35,12 +35,10 @@ class CROResult:
     boletim: Optional[str] = None
     tag_point: Optional[str] = None
     sampling_date: Optional[str] = None
-    o2: Optional[float] = None                      # Oxigênio (%)
+    o2: Optional[float] = None                              # Oxigênio (%)
     o2_unit: str = "%"
-    density_abs_std: Optional[float] = None          # Densidade Absoluta - Condição Padrão (kg/m³)
-    density_abs_std_unit: str = "kg/m³"
-    density_abs_op: Optional[float] = None           # Densidade Absoluta - Condição Operação (kg/m³)
-    density_abs_op_unit: str = "kg/m³"
+    relative_density_real: Optional[float] = None            # Densidade Relativa do Gás Real (dimensionless)
+    relative_density_real_unit: str = "-"
     raw_text: str = ""
 
 
@@ -139,8 +137,7 @@ def extract_cro(text: str) -> CROResult:
     
     Extracts:
         - O₂ from the Contaminantes section
-        - Densidade Absoluta from Condição Padrão section
-        - Densidade Absoluta from Condição Operação section
+        - Densidade Relativa do Gás Real from Condição Padrão section
     """
     result = CROResult(raw_text=text)
     result.boletim = _extract_boletim(text)
@@ -152,34 +149,11 @@ def extract_cro(text: str) -> CROResult:
     if m:
         result.o2 = _parse_br_float(m.group(1))
 
-    # Split text into standard and operating condition sections
-    # "Propriedades do Gás (Condição Padrão)" ... "Propriedades do Gás (Condição Operação"
-    std_section = ""
-    op_section = ""
-    
-    std_match = re.search(r"Propriedades do Gás \(Condição Padrão\)", text)
-    op_match = re.search(r"Propriedades do Gás \(Condição Operação", text)
-    
-    if std_match and op_match:
-        std_section = text[std_match.start():op_match.start()]
-        # Operating section goes until Contaminantes or end
-        contam_match = re.search(r"Contaminantes", text[op_match.start():])
-        if contam_match:
-            op_section = text[op_match.start():op_match.start() + contam_match.start()]
-        else:
-            op_section = text[op_match.start():]
-    elif std_match:
-        std_section = text[std_match.start():]
-
-    # Densidade Absoluta — Condição Padrão
-    m = re.search(r"Densidade Absoluta\n\w+\n([\d,]+)\nkg/m", std_section)
+    # Densidade Relativa do Gás Real — Condição Padrão
+    # PDF text pattern: "Densidade Relativa do Gás Real\n1B\n1,0509\n-"
+    m = re.search(r"Densidade Relativa do G[aá]s Real\n\w+\n([\d,]+)", text)
     if m:
-        result.density_abs_std = _parse_br_float(m.group(1))
-
-    # Densidade Absoluta — Condição Operação
-    m = re.search(r"Densidade Absoluta\n\w+\n([\d,]+)\nkg/m", op_section)
-    if m:
-        result.density_abs_op = _parse_br_float(m.group(1))
+        result.relative_density_real = _parse_br_float(m.group(1))
 
     return result
 

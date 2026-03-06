@@ -220,8 +220,7 @@ def validate_cro(
     
     Checks:
       1. O₂ hard limit (>0.5% = fail)
-      2. Density Abs (operating condition) against 2σ bands
-      3. Density Abs (standard condition) against 2σ bands
+      2. Densidade Relativa do Gás Real against 2σ bands
     """
     result = ValidationResult(
         report_type="CRO",
@@ -239,21 +238,11 @@ def validate_cro(
         if check.status == "fail":
             result.overall_status = "Reproved"
     
-    # Check Density Absolute — Operating Condition (primary interest)
-    if extracted.density_abs_op is not None:
-        history = _get_parameter_history(db, sample_point_id, "density_abs_op", sample.id)
+    # Check Densidade Relativa do Gás Real (dimensionless)
+    if extracted.relative_density_real is not None:
+        history = _get_parameter_history(db, sample_point_id, "relative_density_real", sample.id)
         check = _check_2sigma(
-            "density_abs_op", extracted.density_abs_op, extracted.density_abs_op_unit, history
-        )
-        result.checks.append(check)
-        if check.status == "fail":
-            result.overall_status = "Reproved"
-    
-    # Check Density Absolute — Standard Condition
-    if extracted.density_abs_std is not None:
-        history = _get_parameter_history(db, sample_point_id, "density_abs_std", sample.id)
-        check = _check_2sigma(
-            "density_abs_std", extracted.density_abs_std, extracted.density_abs_std_unit, history
+            "relative_density_real", extracted.relative_density_real, extracted.relative_density_real_unit, history
         )
         result.checks.append(check)
         if check.status == "fail":

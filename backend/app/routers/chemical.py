@@ -457,7 +457,17 @@ def update_sample_status(sample_id: int, update: schemas.SampleStatusUpdate, db:
                 emergency_date += timedelta(days=1)
                 if emergency_date.weekday() < 5:  # 0-4 are Monday-Friday
                     days_to_add -= 1
-                    
+
+            # Per spec: "a data de coleta prevista mantém se menor"
+            # Use the earlier of: emergency date OR next periodic planned date
+            next_periodic_date = None
+            if sample.sampling_date and sla_config.get("interval_days"):
+                next_periodic_date = sample.sampling_date + timedelta(days=sla_config["interval_days"])
+            
+            final_date = emergency_date
+            if next_periodic_date and next_periodic_date < emergency_date:
+                final_date = next_periodic_date
+
             prefix = sample.sample_id.split('-')[0] if '-' in sample.sample_id else 'CDI'
             new_id = f"{prefix}-{datetime.now().strftime('%Y%m')}-EMG-{sample.id}-{int(datetime.utcnow().timestamp())}"
             new_sample = models.Sample(
@@ -472,8 +482,8 @@ def update_sample_status(sample_id: int, update: schemas.SampleStatusUpdate, db:
                 validation_party=sample.validation_party,
                 is_active=1,
                 local=sample.local,
-                planned_date=emergency_date,
-                due_date=emergency_date,
+                planned_date=final_date,
+                due_date=final_date,
                 created_at=datetime.utcnow()
             )
             db.add(new_sample)
@@ -686,7 +696,7 @@ def get_lab_results(
 @router.get("/sample-points/{point_id}/parameter-history", response_model=List[schemas.ParameterHistoryItem])
 def get_parameter_history(
     point_id: int,
-    parameter: str = Query(..., description="Parameter name: density, rs, fe, o2, density_abs_op, density_abs_std"),
+    parameter: str = Query(..., description="Parameter name: density, rs, fe, o2, relative_density_real"),
     limit: int = Query(10, ge=1, le=50),
     db: Session = Depends(database.get_db),
 ):
