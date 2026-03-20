@@ -136,9 +136,9 @@ async def generate_export_zip(job_id: str, request: ExportRequest, db: Session):
                 ).all()
                 
                 for s in samples_query:
-                    # FPSO / "Chemical analysis" / Sample point tag – Sample point name / YYYY-MM-DD
+                    # FPSO / "Chemical analysis" / Sample point tag - Sample point name / YYYY-MM-DD
                     date_str = s.sampling_date.strftime("%Y-%m-%d")
-                    folder_path = f"{fpso_trigram}/Chemical analysis/{s.sample_point.tag_number}/{date_str}"
+                    folder_path = f"{fpso_trigram}/Chemical analysis/{s.sample_point.tag_number} - {s.sample_point.name}/{date_str}"
                     
                     if s.lab_report_url:
                         zip_file.writestr(f"{folder_path}/Lab_Report_{s.sample_id}.pdf", b"Mock Lab Report")

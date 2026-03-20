@@ -211,22 +211,44 @@ export default function HistoricalReportPage() {
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Report Date</label>
-              <Input
-                type="date"
-                value={uploadForm.report_date}
-                onChange={e => setUploadForm({ ...uploadForm, report_date: e.target.value })}
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Metering System</label>
+                <Input
+                  placeholder="Optional (e.g. Gas Export)"
+                  value={uploadForm.metering_system}
+                  onChange={e => setUploadForm({ ...uploadForm, metering_system: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Serial Number</label>
+                <Input
+                  placeholder="Optional Tag/SN"
+                  value={uploadForm.serial_number}
+                  onChange={e => setUploadForm({ ...uploadForm, serial_number: e.target.value })}
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Title Prefix (Optional)</label>
-              <Input
-                placeholder="e.g., Q1 Audit -"
-                value={uploadForm.title_prefix}
-                onChange={e => setUploadForm({ ...uploadForm, title_prefix: e.target.value })}
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Report Date</label>
+                <Input
+                  type="date"
+                  value={uploadForm.report_date}
+                  onChange={e => setUploadForm({ ...uploadForm, report_date: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Title Prefix</label>
+                <Input
+                  placeholder="e.g., Q1 Audit -"
+                  value={uploadForm.title_prefix}
+                  onChange={e => setUploadForm({ ...uploadForm, title_prefix: e.target.value })}
+                />
+              </div>
             </div>
 
             <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-blue-300 transition-colors bg-slate-50/30">
@@ -338,7 +360,13 @@ export default function HistoricalReportPage() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm text-slate-600">{report.fpso_name || "---"}</span>
+                        <div className="text-sm font-medium text-slate-800">{report.fpso_name || "Generic"}</div>
+                        {(report.metering_system || report.serial_number) && (
+                          <div className="text-xs text-slate-500 mt-0.5">
+                            {report.metering_system && <span className="mr-2">M.S: {report.metering_system}</span>}
+                            {report.serial_number && <span>S/N: {report.serial_number}</span>}
+                          </div>
+                        )}
                       </TableCell>
                       <TableCell className="text-right pr-6">
                         <Button variant="ghost" size="sm" className="h-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50" asChild>

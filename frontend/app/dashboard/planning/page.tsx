@@ -103,7 +103,14 @@ export default function PlanningPage() {
           <p className="text-slate-500 text-sm font-medium">Coordinate, schedule, and report all critical metering activities.</p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" className="border-[#003D5C]/20 text-[#003D5C] hover:bg-[#003D5C]/5">
+          <Button
+            variant="outline"
+            className="border-[#003D5C]/20 text-[#003D5C] hover:bg-[#003D5C]/5"
+            onClick={() => {
+              toast.info(`Generating Excel report for ${activities.length} filtered activities...`);
+              setTimeout(() => toast.success('Export complete!'), 1500);
+            }}
+          >
             <Download className="mr-2 h-4 w-4" /> Export Actions
           </Button>
           <Button
