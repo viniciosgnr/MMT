@@ -118,10 +118,10 @@ export default function DashboardPage() {
         </Link>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7" style={{ minHeight: 'calc(100vh - 320px)' }}>
 
         {/* Main Analytics Chart */}
-        <Card className="col-span-4 shadow-sm border-slate-200">
+        <Card className="col-span-4 shadow-sm border-slate-200 flex flex-col">
           <CardHeader className="border-b bg-slate-50/80 py-4">
             <div className="flex items-center justify-between">
               <div>
@@ -130,8 +130,8 @@ export default function DashboardPage() {
               </div>
             </div>
           </CardHeader>
-          <CardContent className="pt-6 pb-2">
-            <div className="h-[300px] w-full">
+          <CardContent className="pt-6 pb-2 flex-1 flex flex-col">
+            <div className="flex-1 w-full min-h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={complianceData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
@@ -162,12 +162,12 @@ export default function DashboardPage() {
         </Card>
 
         {/* Priority Action Center */}
-        <Card className="col-span-3 shadow-sm border-slate-200">
+        <Card className="col-span-3 shadow-sm border-slate-200 flex flex-col">
           <CardHeader className="border-b bg-rose-50/50 py-4">
             <CardTitle className="text-base font-bold text-red-900">Priority Action Center</CardTitle>
             <CardDescription className="text-xs font-medium mt-1 text-red-700/80">Items requiring immediate engineering intervention.</CardDescription>
           </CardHeader>
-          <CardContent className="pt-5 overflow-y-auto max-h-[350px]">
+          <CardContent className="pt-5 overflow-y-auto flex-1">
             <div className="space-y-4">
 
               {/* Action Item 1 */}
