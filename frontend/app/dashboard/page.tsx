@@ -131,7 +131,7 @@ export default function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent className="pt-4 pb-2">
-            <div className="h-[240px] w-full">
+            <div className="h-[280px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={complianceData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
@@ -167,7 +167,7 @@ export default function DashboardPage() {
             <CardTitle className="text-base font-bold text-red-900">Priority Action Center</CardTitle>
             <CardDescription className="text-xs font-medium mt-1 text-red-700/80">Items requiring immediate engineering intervention.</CardDescription>
           </CardHeader>
-          <CardContent className="pt-4 overflow-y-auto max-h-[260px]">
+          <CardContent className="pt-4 overflow-y-auto max-h-[310px]">
             <div className="space-y-4">
 
               {/* Action Item 1 */}
