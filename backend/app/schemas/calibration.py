@@ -113,6 +113,11 @@ class CertificateData(BaseModel):
     standard_reading: Optional[float] = None
     equipment_reading: Optional[float] = None
 
+class FCUpdateData(BaseModel):
+    """Data for updating Flow Computer evidence."""
+    fc_evidence_url: str
+    notes: Optional[str] = None
+
 class SealInstallationData(BaseModel):
     """Data for recording a seal installation."""
     tag_id: int

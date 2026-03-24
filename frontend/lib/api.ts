@@ -2,7 +2,7 @@
 import { createClient } from '@/utils/supabase/client'
 
 export const API_URL = typeof window === 'undefined'
-  ? process.env.BACKEND_INTERNAL_URL || 'http://backend:8000/api'
+  ? process.env.BACKEND_INTERNAL_URL || 'http://127.0.0.1:8000/api'
   : process.env.NEXT_PUBLIC_API_URL || '/api'
 
 type FetchOptions = RequestInit & {
@@ -94,6 +94,21 @@ export async function failCalibrationTask(taskId: number, reason: string) {
   const res = await apiFetch(`/calibration/tasks/${taskId}/fail`, {
     method: 'POST',
     params: { reason } // using query param as seen in router
+  })
+  return res.json()
+}
+
+export async function generateCertificateCode(taskId: number, certType: string) {
+  const res = await apiFetch(`/calibration/tasks/${taskId}/certificate/generate?cert_type=${certType}`, {
+    method: 'POST'
+  })
+  return res.json()
+}
+
+export async function uploadFCEvidence(taskId: number, data: any) {
+  const res = await apiFetch(`/calibration/tasks/${taskId}/fc-update`, {
+    method: 'POST',
+    body: JSON.stringify(data)
   })
   return res.json()
 }

@@ -11,8 +11,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { toast } from "sonner"
-import { Calendar, CheckCircle2, Clock, FileCheck, Stamp, Upload, AlertCircle, ArrowLeft, XCircle } from "lucide-react"
-import { apiFetch, planCalibration, executeCalibration, uploadCertificate, validateCertificate, getTagSealHistory, failCalibrationTask } from "@/lib/api"
+import { Calendar, CheckCircle2, Clock, FileCheck, Stamp, Upload, AlertCircle, ArrowLeft, XCircle, ShieldCheck } from "lucide-react"
+import { apiFetch, planCalibration, executeCalibration, uploadCertificate, validateCertificate, getTagSealHistory, failCalibrationTask, generateCertificateCode, uploadFCEvidence } from "@/lib/api"
 
 export default function CalibrationTaskDetail() {
   const params = useParams()
@@ -54,6 +54,13 @@ export default function CalibrationTaskDetail() {
   const [issueData, setIssueData] = useState({
     template: "Standard Calibration Certificate (ISO 5167)",
     signatory: "Metrologist A",
+    notes: ""
+  })
+
+  // FC Dialog State
+  const [fcDialogOpen, setFcDialogOpen] = useState(false)
+  const [fcData, setFcData] = useState({
+    fc_evidence_url: "supabase://storage/fc-backups/mock-xml.xml",
     notes: ""
   })
 
@@ -145,16 +152,16 @@ export default function CalibrationTaskDetail() {
 
   async function handleIssueCertificate() {
     try {
-      // Simulate generation by "uploading" a generated record
+      const genRes = await generateCertificateCode(taskId, "PRV")
       const payload = {
-        certificate_number: `CERT-${new Date().getFullYear()}-${Math.floor(Math.random() * 10000)}`,
+        certificate_number: genRes.certificate_number,
         issue_date: new Date().toISOString().split('T')[0],
         uncertainty: 0.15, // Mock calculated value
         standard_reading: 100.00,
         equipment_reading: 100.05,
       }
       await uploadCertificate(taskId, payload)
-      toast.success("Certificate generated and signed successfully")
+      toast.success(`Certificate ${genRes.certificate_number} generated and signed successfully`)
       setIssueDialogOpen(false)
       fetchTaskDetails()
     } catch (error) {
@@ -169,12 +176,23 @@ export default function CalibrationTaskDetail() {
       if (result.issues && result.issues.length > 0) {
         toast.warning(`Validation completed with ${result.issues.length} issue(s)`)
       } else {
-        toast.success("Certificate validated successfully")
+        toast.success("Certificate validated seamlessly against CA Sandbox.")
       }
       fetchTaskDetails()
     } catch (error) {
       console.error("Error validating certificate:", error)
       toast.error("Failed to validate certificate")
+    }
+  }
+
+  async function handleUploadFCEvidence() {
+    try {
+      await uploadFCEvidence(taskId, fcData)
+      toast.success("Flow Computer Evidence audited safely. Task definitively closed.")
+      setFcDialogOpen(false)
+      fetchTaskDetails()
+    } catch (err) {
+      toast.error("Failed to append Flow Computer Evidence.")
     }
   }
 
@@ -195,6 +213,22 @@ export default function CalibrationTaskDetail() {
 
   const badgeColor = statusColor[task.status] || "bg-gray-500"
 
+  const getStepState = () => {
+    if (task.status === "Completed") return 5;
+    if (task.certificate_ca_status === "approved") return 4;
+    if (task.certificate_number) return 3;
+    if (task.status === "Executed") return 2;
+    return 1;
+  }
+  const currentStep = getStepState();
+
+  const steps = [
+    { title: "Execution", desc: "Field Work", num: 1 },
+    { title: "Certificate", desc: "Issuance", num: 2 },
+    { title: "Critical Analysis", desc: "Validation", num: 3 },
+    { title: "FC Evidence", desc: "Closure", num: 4 },
+  ];
+
   return (
     <div className="p-8 space-y-6">
       <Button variant="ghost" className="pl-0 hover:pl-2 transition-all" onClick={() => router.push('/dashboard/metrology')}>
@@ -207,7 +241,31 @@ export default function CalibrationTaskDetail() {
           <h1 className="text-3xl font-bold">{task.tag}</h1>
           <p className="text-muted-foreground">{task.description}</p>
         </div>
-        <Badge className={badgeColor}>{task.status}</Badge>
+        <Badge className={`${badgeColor} text-lg py-1 px-3`}>{task.status}</Badge>
+      </div>
+
+      <div className="w-full bg-slate-50 border rounded-lg p-6 mb-8 mt-4">
+        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-6">Metrological Compliance Progress</h3>
+        <div className="relative flex justify-between">
+          <div className="absolute top-1/2 left-0 w-full h-1 bg-slate-200 -translate-y-1/2 z-0"></div>
+          <div className="absolute top-1/2 left-0 h-1 bg-emerald-500 -translate-y-1/2 z-0 transition-all duration-500" style={{ width: `${(Math.min(currentStep - 1, 3) / 3) * 100}%` }}></div>
+
+          {steps.map((s) => {
+            const isCompleted = currentStep > s.num;
+            const isCurrent = currentStep === s.num;
+            return (
+              <div key={s.num} className="relative z-10 flex flex-col items-center">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center border-4 font-bold text-sm ${isCompleted ? 'bg-emerald-500 border-emerald-200 text-white' : isCurrent ? 'bg-white border-[#FF6B35] text-[#FF6B35]' : 'bg-white border-slate-200 text-slate-400'}`}>
+                  {isCompleted ? <CheckCircle2 className="w-5 h-5" /> : s.num}
+                </div>
+                <div className="mt-3 text-center">
+                  <div className={`text-sm font-bold ${isCompleted || isCurrent ? 'text-slate-800' : 'text-slate-400'}`}>{s.title}</div>
+                  <div className="text-xs text-slate-500">{s.desc}</div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -262,6 +320,11 @@ export default function CalibrationTaskDetail() {
                   <span className="text-muted-foreground">Installation Date:</span>
                   <span className="font-medium">{task.seal_installation_date}</span>
                 </div>
+                <div className="pt-4 mt-2 border-t">
+                  <Button variant="outline" size="sm" className="w-full text-[#003D5C]" onClick={() => window.open(`http://localhost:8000/api/calibration/tags/seals/export?tag_ids=${task.equipment_id}`, "_blank")}>
+                    Export Seal History (CSV)
+                  </Button>
+                </div>
               </>
             ) : (
               <p className="text-muted-foreground">No seal installed yet</p>
@@ -284,14 +347,27 @@ export default function CalibrationTaskDetail() {
                   <span className="text-muted-foreground">Issue Date:</span>
                   <span className="font-medium">{task.certificate_issued_date}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">CA Status:</span>
-                  <Badge variant={task.certificate_ca_status === "approved" ? "default" : "secondary"}>
-                    {task.certificate_ca_status || "pending"}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    {task.certificate_ca_status === "approved" && <ShieldCheck className="h-4 w-4 text-emerald-600" />}
+                    <Badge variant={task.certificate_ca_status === "approved" ? "default" : "secondary"} className={task.certificate_ca_status === "approved" ? "bg-emerald-600" : ""}>
+                      {task.certificate_ca_status?.toUpperCase() || "PENDING"}
+                    </Badge>
+                  </div>
                 </div>
+                {task.certificate_ca_notes && task.certificate_ca_status !== "approved" && (
+                  <div className="mt-4 bg-red-50 text-red-800 p-3 rounded-md text-sm border border-red-200">
+                    <p className="font-bold mb-1 flex items-center"><AlertCircle className="w-4 h-4 mr-2" /> Validation Issues Found:</p>
+                    <ul className="list-disc pl-5 mt-2 space-y-1">
+                      {task.certificate_ca_notes.split('\n').map((issue: string, idx: number) => (
+                        <li key={idx}>{issue}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
                 {task.is_temporary === 1 && (
-                  <div className="flex items-center gap-2 text-yellow-600">
+                  <div className="flex items-center gap-2 text-yellow-600 mt-2">
                     <AlertCircle className="h-4 w-4" />
                     <span className="text-sm">Temporary completion - awaiting definitive certificate</span>
                   </div>
@@ -507,13 +583,13 @@ export default function CalibrationTaskDetail() {
                   <DialogTrigger asChild>
                     <Button className="w-full bg-[#003D5C] hover:bg-[#FF6B35] text-white">
                       <Stamp className="mr-2 h-4 w-4" />
-                      Issue Internal Certificate (Auto-Gen)
+                      Generate & Apply Certificate (SBM S-001)
                     </Button>
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
                       <DialogTitle>Issue Certificate</DialogTitle>
-                      <DialogDescription>Generate and sign MMT-compliant certificate (Spec 6.4)</DialogDescription>
+                      <DialogDescription>Generate and sign MMT-compliant certificate (PRD §12.4)</DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
                       <div className="bg-slate-50 p-4 rounded border">
@@ -541,10 +617,52 @@ export default function CalibrationTaskDetail() {
 
             {task.certificate_number && task.certificate_ca_status !== "approved" && (
               <Button className="w-full" variant="outline" onClick={handleValidateCertificate}>
-                <FileCheck className="mr-2 h-4 w-4" />
-                Validate Certificate
+                <FileCheck className="mr-2 h-4 w-4 text-[#003D5C]" />
+                Validate Certificate (Critical Analysis)
               </Button>
             )}
+
+            {task.status === "Executed" && task.certificate_ca_status === "approved" ? (
+              <div className="pt-4 border-t mt-4">
+                <Dialog open={fcDialogOpen} onOpenChange={setFcDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-medium">
+                      <ShieldCheck className="mr-2 h-4 w-4" />
+                      Upload FC Evidence & Close Task
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Flow Computer Evidence Update</DialogTitle>
+                      <DialogDescription>Upload FC backup or audit trail to formally close this calibration (PRD § 12.11).</DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div className="bg-slate-50 border p-3 rounded-md text-sm text-slate-600">
+                        Task will automatically be marked as <strong>Completed</strong> and definitive execution dates locked.
+                      </div>
+                      <div>
+                        <Label>File URL / Path</Label>
+                        <Input value={fcData.fc_evidence_url} onChange={(e) => setFcData({ ...fcData, fc_evidence_url: e.target.value })} />
+                      </div>
+                      <div>
+                        <Label>Audit Notes</Label>
+                        <Textarea placeholder="Validation logs..." value={fcData.notes} onChange={(e) => setFcData({ ...fcData, notes: e.target.value })} />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button onClick={handleUploadFCEvidence} className="bg-emerald-700 hover:bg-emerald-800">Complete Calibration</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            ) : task.status === "Executed" && task.certificate_ca_status !== "approved" ? (
+              <div className="pt-4 border-t mt-4">
+                <Button className="w-full bg-slate-100 text-slate-400 cursor-not-allowed" variant="outline" disabled>
+                  <ShieldCheck className="mr-2 h-4 w-4" />
+                  Upload FC Evidence (Awaiting CA)
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       </div>

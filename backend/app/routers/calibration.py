@@ -1,8 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import date, datetime
 import json
+import csv
+import io
 from .. import models, database
 from ..services.integrations import IntegrationService
 from ..schemas import calibration as schemas
@@ -293,14 +296,46 @@ def validate_certificate(
         result.ca_validated_by = "System"  # TODO: Get from auth
         result.ca_validation_rules = json.dumps(validation_results)
         result.ca_issues = json.dumps(issues) if issues else None
-        task.certificate_ca_status = "approved" if not issues else "pending"
-        db.commit()
+    
+    task.certificate_ca_status = "approved" if not issues else "pending"
+    task.certificate_ca_notes = "\n".join(issues) if issues else None
+    db.commit()
     
     return {
         "validation_results": validation_results,
         "issues": issues,
         "status": "approved" if not issues else "pending"
     }
+
+@router.post("/tasks/{task_id}/fc-update")
+def complete_calibration_fc(
+    task_id: int,
+    fc_data: schemas.FCUpdateData,
+    db: Session = Depends(database.get_db),
+    current_user = Depends(get_current_user)
+):
+    """Record Flow Computer evidence upload and formalize task completion."""
+    task = db.query(models.CalibrationTask).filter(models.CalibrationTask.id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+        
+    result = task.results
+    if not result:
+        result = models.CalibrationResult(
+            task_id=task_id, 
+            standard_reading=0.0, 
+            equipment_reading=0.0
+        )
+        db.add(result)
+        
+    result.fc_evidence_url = fc_data.fc_evidence_url
+    if fc_data.notes:
+        result.notes = (result.notes or "") + "\nFC Notes: " + fc_data.notes
+        
+    task.status = "Completed"
+        
+    db.commit()
+    return {"message": "Flow Computer evidence updated successfully", "task_id": task_id}
 
 @router.post("/tasks/{task_id}/fail")
 def fail_task(
@@ -439,10 +474,18 @@ def export_seal_report(
         
     seals = query.all()
     
-    # Simple CSV construction
-    output = "Tag ID,Seal Number,Type,Location,Installed,Removed,Status\n"
+    # Build and stream CSV
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Tag ID", "Seal Number", "Type", "Location", "Installed", "Removed", "Installed By", "Reason", "Status"])
     for s in seals:
-        output += f"{s.tag_id},{s.seal_number},{s.seal_type},{s.seal_location},{s.installation_date},{s.removal_date},{'Active' if s.is_active else 'Inactive'}\n"
+        writer.writerow([
+            s.tag_id, s.seal_number, s.seal_type, s.seal_location,
+            s.installation_date, s.removal_date or "",
+            s.installed_by, s.removal_reason or "",
+            "Active" if s.is_active else "Inactive"
+        ])
         
-    # In a real app, return StreamingResponse
-    return {"csv_content": output, "count": len(seals)}
+    response = StreamingResponse(iter([output.getvalue()]), media_type="text/csv")
+    response.headers["Content-Disposition"] = "attachment; filename=seal_history_export.csv"
+    return response

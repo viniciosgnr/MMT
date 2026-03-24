@@ -228,6 +228,7 @@ export default function MetrologicalConfirmationPage() {
         <TabsList>
           <TabsTrigger value="pending">Pending / Planned</TabsTrigger>
           <TabsTrigger value="executed">Executed / Validating</TabsTrigger>
+          <TabsTrigger value="completed">Completed / FC Updated</TabsTrigger>
         </TabsList>
 
         <TabsContent value="pending" className="space-y-4 mt-4">
@@ -235,7 +236,7 @@ export default function MetrologicalConfirmationPage() {
             <div className="text-center py-8 text-muted-foreground">Loading tasks...</div>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {tasks.filter(t => t.status !== 'Executed').map(task => (
+              {tasks.filter(t => t.status === 'Pending' || t.status === 'Scheduled' || t.status === 'Overdue').map(task => (
                 <Card key={task.id} className={`${task.status === 'Overdue' ? 'border-destructive/50 bg-destructive/5' : 'hover:border-[#FF6B35]/50 transition-colors'} ${task.status === 'Scheduled' ? 'border-[#003D5C]/10' : ''}`}>
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-start">
@@ -264,7 +265,7 @@ export default function MetrologicalConfirmationPage() {
                   </CardFooter>
                 </Card>
               ))}
-              {tasks.filter(t => t.status !== 'Executed').length === 0 && (
+              {tasks.filter(t => t.status === 'Pending' || t.status === 'Scheduled' || t.status === 'Overdue').length === 0 && (
                 <div className="col-span-3 border rounded-lg h-64 flex items-center justify-center text-muted-foreground border-dashed">
                   No pending tasks. Create a new campaign to get started.
                 </div>
@@ -279,7 +280,7 @@ export default function MetrologicalConfirmationPage() {
               <Card key={task.id} className="border-green-200 bg-green-50/20">
                 <CardHeader className="pb-2">
                   <div className="flex justify-between items-start">
-                    <CardTitle className="text-base font-bold">{task.tag}</CardTitle>
+                    <CardTitle className="text-base font-bold text-green-900 hover:underline cursor-pointer" onClick={() => window.location.href = `/dashboard/calibration/tasks/${task.id}`}>{task.tag}</CardTitle>
                     <Badge className="bg-green-600 hover:bg-green-700">Executed</Badge>
                   </div>
                   <CardDescription>{task.description}</CardDescription>
@@ -291,8 +292,8 @@ export default function MetrologicalConfirmationPage() {
                   </div>
                 </CardContent>
                 <CardFooter className="justify-end gap-2 pt-2">
-                  <Button size="sm" variant="outline" className="border-green-200 hover:bg-green-100 hover:text-green-800">
-                    <FileText className="mr-2 h-4 w-4" /> Certificate
+                  <Button size="sm" variant="outline" className="border-green-200 hover:bg-green-100 hover:text-green-800" onClick={() => window.location.href = `/dashboard/calibration/tasks/${task.id}`}>
+                    <FileText className="mr-2 h-4 w-4" /> Issue Certificate...
                   </Button>
                 </CardFooter>
               </Card>
@@ -300,6 +301,38 @@ export default function MetrologicalConfirmationPage() {
             {tasks.filter(t => t.status === 'Executed').length === 0 && (
               <div className="col-span-3 border rounded-lg h-64 flex items-center justify-center text-muted-foreground border-dashed">
                 No executed tasks yet.
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="completed" className="mt-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {tasks.filter(t => t.status === 'Completed').map(task => (
+              <Card key={task.id} className="border-emerald-200 bg-emerald-50/20">
+                <CardHeader className="pb-2">
+                  <div className="flex justify-between items-start">
+                    <CardTitle className="text-base font-bold text-emerald-900 hover:underline cursor-pointer" onClick={() => window.location.href = `/dashboard/calibration/tasks/${task.id}`}>{task.tag}</CardTitle>
+                    <Badge className="bg-emerald-600">Completed (FC)</Badge>
+                  </div>
+                  <CardDescription>{task.description}</CardDescription>
+                </CardHeader>
+                <CardContent className="pb-2">
+                  <div className="flex items-center text-sm text-emerald-700 mt-2 font-medium">
+                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                    Audited / Closed
+                  </div>
+                </CardContent>
+                <CardFooter className="justify-end pt-2">
+                  <Button size="sm" variant="ghost" className="text-emerald-700" onClick={() => window.location.href = `/dashboard/calibration/tasks/${task.id}`}>
+                    View Audit Trail
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
+            {tasks.filter(t => t.status === 'Completed').length === 0 && (
+              <div className="col-span-3 border rounded-lg h-64 flex items-center justify-center text-muted-foreground border-dashed">
+                No fully completed and audited tasks.
               </div>
             )}
           </div>
