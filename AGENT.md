@@ -5,6 +5,11 @@ Bem-vindo ao projeto MMT. Este documento (`AGENT.md`) é a constituição princi
 ## 1. Visão Geral do Sistema
 O MMT é a plataforma central para gerenciar sistemas de medição fiscal e operacional em FPSOs da SBM Offshore, garantindo conformidade com normas regulatórias da ANP (ex: RTM 01/2013, Resolução 18/2014) e processos de auditoria (ISO 10012:2003).
 
+> **📄 Documentos Primários:**
+> - **PRD (Source of Truth):** `MMT Specifications/Product Requirements Document Template.pdf` — 12 módulos, 37+ requisitos, 6 referências regulatórias
+> - **Specs Extraídas:** `docs/specs/M*.md` — Cada módulo do PRD em Markdown atômico
+> - **Progresso Contínuo:** `PROGRESS.md` — Linha do tempo imutável das decisões do projeto
+
 A arquitetura moderna foi concebida sob três pilares:
 - **Frontend:** Next.js 15 (App Router), Tailwind CSS v4, componentes Radix UI via Shadcn. Focado em Server Components e alta responsividade.
 - **Backend:** API REST robusta construída em Python (FastAPI, Uvicorn, SQLAlchemy V2, Pydantic V2). Faz uso extensivo de processamento assíncrono e extração de dados via `PyMuPDF`.

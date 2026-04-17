@@ -1,0 +1,55 @@
+[tool.ruff]
+# MMT Backend — Linting Configuration
+# Referência: skill `lint-and-validate`
+target-version = "py310"
+line-length = 120
+src = ["app", "tests"]
+
+[tool.ruff.lint]
+# Regras selecionadas para projeto FastAPI com domínio metrológico
+select = [
+    "E",     # pycodestyle errors
+    "W",     # pycodestyle warnings
+    "F",     # Pyflakes
+    "I",     # isort (import sorting)
+    "N",     # pep8-naming
+    "UP",    # pyupgrade (Python 3.10+ patterns)
+    "B",     # flake8-bugbear (common bugs)
+    "A",     # flake8-builtins (shadow builtins)
+    "C4",    # flake8-comprehensions (list/dict/set comprehensions)
+    "SIM",   # flake8-simplify
+    "TCH",   # flake8-type-checking (TYPE_CHECKING imports)
+    "RUF",   # Ruff-specific rules
+]
+
+ignore = [
+    "E501",  # line too long (handled by formatter)
+    "B008",  # function call in default arg (FastAPI Depends pattern)
+    "B904",  # raise without from (acceptable in endpoints)
+    "A003",  # class attribute shadowing builtin (id, type are common in models)
+    "N805",  # first argument of a method should be self (Pydantic validators)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = [
+    "S101",  # assert allowed in tests
+    "B011",  # assert False allowed in tests
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
