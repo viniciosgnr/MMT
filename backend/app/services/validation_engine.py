@@ -158,15 +158,18 @@ def _check_2sigma(
     )
 
 
-def _check_hard_limit(parameter: str, value: float, unit: str, limit: float) -> CheckResult:
-    """Check if a value exceeds a specific hard limit."""
+def _check_hard_limit(parameter: str, value: float, unit: str, limit: float, informative: bool = False) -> CheckResult:
+    """Check if a value exceeds a specific hard limit.
+    
+    If informative is True, status is 'warning' instead of 'fail'.
+    """
     if value > limit:
         return CheckResult(
             parameter=parameter,
             value=value,
             unit=unit,
-            status="fail",
-            detail=f"{parameter} = {value}{unit} exceeds limit of {limit}{unit}",
+            status="warning" if informative else "fail",
+            detail=f"{parameter} = {value}{unit} exceeds limit of {limit}{unit} ({'Informative' if informative else 'Hard Limit'})",
         )
     return CheckResult(
         parameter=parameter,
@@ -177,13 +180,16 @@ def _check_hard_limit(parameter: str, value: float, unit: str, limit: float) -> 
     )
 
 def _check_o2_limit(o2_value: float) -> CheckResult:
-    return _check_hard_limit("o2", o2_value, "%", O2_LIMIT)
+    # O2 is a hard reproval limit (< 0.5%)
+    return _check_hard_limit("o2", o2_value, "%", O2_LIMIT, informative=False)
 
 def _check_h2s_limit(h2s_value: float) -> CheckResult:
-    return _check_hard_limit("h2s", h2s_value, "ppm", H2S_LIMIT)
+    # H2S is informative only
+    return _check_hard_limit("h2s", h2s_value, "ppm", H2S_LIMIT, informative=True)
 
 def _check_bsw_limit(bsw_value: float) -> CheckResult:
-    return _check_hard_limit("bsw", bsw_value, "%", BSW_LIMIT)
+    # BSW is informative only
+    return _check_hard_limit("bsw", bsw_value, "%", BSW_LIMIT, informative=True)
 
 
 def validate_pvt(
@@ -232,8 +238,7 @@ def validate_pvt(
     if extracted.bsw is not None:
         check = _check_bsw_limit(extracted.bsw)
         result.checks.append(check)
-        if check.status == "fail":
-            result.overall_status = "Reproved"
+        # Note: BSW is informative only, does not set overall_status to Reproved
     
     return result
 
@@ -279,8 +284,7 @@ def validate_cro(
     if extracted.h2s is not None:
         check = _check_h2s_limit(extracted.h2s)
         result.checks.append(check)
-        if check.status == "fail":
-            result.overall_status = "Reproved"
+        # Note: H2S is informative only, does not set overall_status to Reproved
     
     return result
 

@@ -30,8 +30,8 @@ def test_m3_bsw_boundary_pass(client, sp_factory, sample_factory):
         bsw_check = next(c for c in data["checks"] if c["parameter"] == "bsw")
         assert bsw_check["status"] == "pass"
 
-def test_m3_bsw_boundary_fail(client, sp_factory, sample_factory):
-    """Verifica que BS&W acima do limite (1.0) reprova."""
+def test_m3_bsw_boundary_warn(client, sp_factory, sample_factory):
+    """Verifica que BS&W acima do limite (1.0) gera Alerta (Warning) mas Aprova."""
     sp = sp_factory()
     sample = sample_factory(sample_point_id=sp["id"], status="Report issue")
     
@@ -39,7 +39,7 @@ def test_m3_bsw_boundary_fail(client, sp_factory, sample_factory):
         report_type="PVT",
         boletim="PVT-TEST-002",
         density=850.0,
-        bsw=1.1 # Acima do limite
+        bsw=1.5 # Bem acima do limite
     )
     
     with patch("app.routers.chemical.parse_pdf_bytes", return_value=mock_pvt), \
@@ -51,11 +51,12 @@ def test_m3_bsw_boundary_fail(client, sp_factory, sample_factory):
         )
         assert res.status_code == 200
         data = res.json()
-        assert data["overall_status"] == "Reproved"
+        assert data["overall_status"] == "Approved" # Informative only
         
         bsw_check = next(c for c in data["checks"] if c["parameter"] == "bsw")
-        assert bsw_check["status"] == "fail"
+        assert bsw_check["status"] == "warning"
         assert "exceeds limit" in bsw_check["detail"]
+        assert "Informative" in bsw_check["detail"]
 
 def test_m3_h2s_boundary_pass(client, sp_factory, sample_factory):
     """Verifica que H2S dentro do limite (10.0) passa."""
@@ -78,15 +79,15 @@ def test_m3_h2s_boundary_pass(client, sp_factory, sample_factory):
         assert res.status_code == 200
         assert res.json()["overall_status"] == "Approved"
 
-def test_m3_h2s_boundary_fail(client, sp_factory, sample_factory):
-    """Verifica que H2S acima do limite (10.0) reprova."""
+def test_m3_h2s_boundary_warn(client, sp_factory, sample_factory):
+    """Verifica que H2S acima do limite (10.0) gera Alerta (Warning) mas Aprova."""
     sp = sp_factory()
     sample = sample_factory(sample_point_id=sp["id"], status="Report issue")
     
     mock_cro = CROResult(
         report_type="CRO",
         boletim="CRO-TEST-002",
-        h2s=10.1 # Acima do limite
+        h2s=15.0 # Acima do limite
     )
     
     with patch("app.routers.chemical.parse_pdf_bytes", return_value=mock_cro), \
@@ -97,19 +98,22 @@ def test_m3_h2s_boundary_fail(client, sp_factory, sample_factory):
             files={"file": ("test.pdf", b"dummy content", "application/pdf")}
         )
         assert res.status_code == 200
-        assert res.json()["overall_status"] == "Reproved"
+        data = res.json()
+        assert data["overall_status"] == "Approved" # Informative only
+        
+        h2s_check = next(c for c in data["checks"] if c["parameter"] == "h2s")
+        assert h2s_check["status"] == "warning"
 
-def test_m3_stress_combined_fail(client, sp_factory, sample_factory):
-    """Verifica que qualquer falha (mesmo com outros passando) reprova."""
+def test_m3_o2_boundary_fail(client, sp_factory, sample_factory):
+    """Verifica que O2 acima do limite (0.5) CONTINUA reprovando."""
     sp = sp_factory()
     sample = sample_factory(sample_point_id=sp["id"], status="Report issue")
     
-    # O2 passa, mas H2S falha
     mock_cro = CROResult(
         report_type="CRO",
-        boletim="CRO-TEST-003",
-        o2=0.1,  # Pass (Limit 0.5)
-        h2s=15.0 # Fail (Limit 10.0)
+        boletim="CRO-TEST-O2-FAIL",
+        o2=0.6,  # Fail (Limit 0.5)
+        h2s=5.0  # Pass
     )
     
     with patch("app.routers.chemical.parse_pdf_bytes", return_value=mock_cro), \
@@ -123,5 +127,6 @@ def test_m3_stress_combined_fail(client, sp_factory, sample_factory):
         assert res.json()["overall_status"] == "Reproved"
         
         checks = res.json()["checks"]
-        assert any(c["parameter"] == "o2" and c["status"] == "pass" for c in checks)
-        assert any(c["parameter"] == "h2s" and c["status"] == "fail" for c in checks)
+        o2_check = next(c for c in checks if c["parameter"] == "o2")
+        assert o2_check["status"] == "fail"
+        assert any(c["parameter"] == "h2s" and c["status"] == "pass" for c in checks)
