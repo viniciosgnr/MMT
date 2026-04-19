@@ -55,6 +55,44 @@ def read_tags(skip: int = 0, limit: int = 10000, tag_number: Optional[str] = Non
         query = query.filter(models.InstrumentTag.tag_number.ilike(f"%{tag_number}%"))
     return query.offset(skip).limit(limit).all()
 
+@router.put("/tags/{tag_id}", response_model=schemas.InstrumentTag)
+def update_tag(tag_id: int, tag_update: schemas.InstrumentTagBase, db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
+    db_tag = db.query(models.InstrumentTag).filter(models.InstrumentTag.id == tag_id).first()
+    if not db_tag:
+        raise HTTPException(status_code=404, detail="Tag not found")
+    
+    update_data = tag_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_tag, key, value)
+    
+    db.commit()
+    db.refresh(db_tag)
+    return db_tag
+
+@router.delete("/tags/{tag_id}")
+def delete_tag(tag_id: int, db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
+    db_tag = db.query(models.InstrumentTag).filter(models.InstrumentTag.id == tag_id).first()
+    if not db_tag:
+        raise HTTPException(status_code=404, detail="Tag not found")
+    
+    # --- Skill (backend-dev-guidelines): Integrity Guards ---
+    # 1. Check for active installations
+    active_install = db.query(models.EquipmentTagInstallation).filter(
+        models.EquipmentTagInstallation.tag_id == tag_id,
+        models.EquipmentTagInstallation.is_active == 1
+    ).first()
+    if active_install:
+        raise HTTPException(status_code=400, detail="Cannot delete tag with an active equipment installation.")
+    
+    # 2. Check for linked sample points (METER_SAMPLE_LINK)
+    # This checks if the tag is still part of the chemical analysis hierarchy
+    if db_tag.sample_points:
+        raise HTTPException(status_code=400, detail="Cannot delete tag linked to active Sample Points. Unlink them first.")
+    
+    db.delete(db_tag)
+    db.commit()
+    return {"status": "success", "message": "Tag deleted successfully"}
+
 @router.get("/tags/available", response_model=List[schemas.InstrumentTag])
 def read_available_tags(
     fpso_name: Optional[str] = None,

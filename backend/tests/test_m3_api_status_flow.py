@@ -12,7 +12,7 @@ class TestM3StatusFlowIntegration:
     def test_api_sample_transit_to_disembark(self, client, db_session):
         # 1. Setup Sample Point
         sp_res = client.post("/api/chemical/sample-points", json={
-            "fase": "Prod", "number": "SP-COMPLEX", "fpso_name": "FPSO Flow", "system": "Gas", "fluid": "Gas"
+            "description": "Auto", "fase": "Prod", "tag_number": "SP-COMPLEX", "fpso_name": "FPSO Flow", "system": "Gas", "fluid": "Gas"
         })
         sp_id = sp_res.json()["id"]
 

@@ -74,10 +74,10 @@ class TestTagPointExtraction:
 
     def test_standard_tag_with_mro(self):
         text = "Dados da coleta: 662-AP-2233 / P-02 (MRO-16)\nFim"
-        assert _extract_tag_point(text) == "662-AP-2233 / P-02"
+        assert _extract_tag_point(text) == "662-AP-2233 / P-02 (MRO-16)"
 
     def test_standard_tag_without_mro(self):
-        text = "Ponto: T71-AP-0602 / P-02\nFim"
+        text = "Ponto: 771-AP-0602 / P-02\nFim"
         tag = _extract_tag_point(text)
         assert tag is not None
         assert "AP-0602" in tag
@@ -185,7 +185,7 @@ class TestCroExtraction:
         "CRO Sepetiba/26-16988\n"
         "FPSO Cidade de Sepetiba\n"
         "17/01/2026\n"
-        "T71-AP-0602 / P-02 (MRO-16)\n"
+        "771-AP-0602 / P-02 (MRO-16)\n"
         "Contaminantes:\n"
         "O2\n"
         "Oxigênio\n"

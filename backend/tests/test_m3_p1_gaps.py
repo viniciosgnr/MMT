@@ -1,3 +1,4 @@
+from sqlalchemy.pool import StaticPool
 """
 Harness Engineering — P1 Tests: Coverage Gaps
 
@@ -24,8 +25,8 @@ from app.dependencies import get_current_user
 from app import models
 
 # --- Isolated DB for P1 integration tests ---
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test_p1.db"
-p1_engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
+p1_engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}, poolclass=StaticPool)
 P1TestSession = sessionmaker(autocommit=False, autoflush=False, bind=p1_engine)
 
 
@@ -49,7 +50,6 @@ def p1_client():
     Base.metadata.create_all(bind=p1_engine)
     with TestClient(app) as c:
         yield c
-    Base.metadata.drop_all(bind=p1_engine)
     import os
     try:
         os.remove("./test_p1.db")
@@ -263,7 +263,7 @@ class TestListSamplesEquipmentFilter:
 
         sp_db = p1_db.query(models.SamplePoint).filter(models.SamplePoint.id == sp["id"]).first()
         sp_db.meters.append(tag)
-
+        p1_db.commit()
         install = models.EquipmentTagInstallation(
             equipment_id=equip.id,
             tag_id=tag.id,
@@ -272,6 +272,9 @@ class TestListSamplesEquipmentFilter:
         )
         p1_db.add(install)
         p1_db.commit()
+
+        # Create sample AFTER installation
+        sample = _create_sample(p1_client, sp["id"])
 
         response = p1_client.get(f"/api/chemical/samples?equipment_id={equip.id}")
         assert response.status_code == 200

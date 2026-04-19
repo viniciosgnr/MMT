@@ -21,7 +21,7 @@ class TestSBMValidation:
 
     def _setup_sp(self, client, sp_num="SP-VAL"):
         res = client.post("/api/chemical/sample-points", json={
-            "fase": "Prod", "number": sp_num, "fpso_name": "FPSO Validation",
+            "description": "Auto", "fase": "Prod", "tag_number": sp_num, "fpso_name": "FPSO Validation",
             "system": "Oil", "fluid": "Oil"
         })
         return res.json()["id"]
@@ -155,7 +155,7 @@ class TestParameterHistory:
 
     def _setup(self, client, sp_num="SP-HIST"):
         sp = client.post("/api/chemical/sample-points", json={
-            "fase": "Prod", "number": sp_num, "fpso_name": "FPSO History",
+            "description": "Auto", "fase": "Prod", "tag_number": sp_num, "fpso_name": "FPSO History",
             "system": "Oil", "fluid": "Oil"
         })
         sp_id = sp.json()["id"]

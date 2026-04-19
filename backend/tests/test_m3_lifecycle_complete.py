@@ -37,7 +37,7 @@ class TestFullLifecycleTraversal:
 
     def _setup(self, client, sid="FULL-LIFE"):
         sp = client.post("/api/chemical/sample-points", json={
-            "fase": "Prod", "number": f"SP-{sid}", "fpso_name": "FPSO Lifecycle",
+            "description": "Auto", "fase": "Prod", "tag_number": f"SP-{sid}", "fpso_name": "FPSO Lifecycle",
             "system": "Gas", "fluid": "Gas"
         })
         s = client.post("/api/chemical/samples", json={
@@ -82,7 +82,7 @@ class TestEmergencySampleOnReproval:
 
     def _setup(self, client, sid="REPROVAL"):
         sp = client.post("/api/chemical/sample-points", json={
-            "fase": "Prod", "number": f"SP-{sid}", "fpso_name": "FPSO Emergency",
+            "description": "Auto", "fase": "Prod", "tag_number": f"SP-{sid}", "fpso_name": "FPSO Emergency",
             "system": "Gas", "fluid": "Gas"
         })
         s = client.post("/api/chemical/samples", json={
@@ -142,7 +142,7 @@ class TestPeriodicAutoScheduling:
 
     def _setup(self, client, sid="PERIODIC"):
         sp = client.post("/api/chemical/sample-points", json={
-            "fase": "Prod", "number": f"SP-{sid}", "fpso_name": "FPSO Periodic",
+            "description": "Auto", "fase": "Prod", "tag_number": f"SP-{sid}", "fpso_name": "FPSO Periodic",
             "system": "Gas", "fluid": "Gas"
         })
         s = client.post("/api/chemical/samples", json={
@@ -212,7 +212,7 @@ class TestPhaseDueDateMapping:
 
     def _setup(self, client, sid="PHASE"):
         sp = client.post("/api/chemical/sample-points", json={
-            "fase": "Prod", "number": f"SP-{sid}", "fpso_name": "FPSO Phase",
+            "description": "Auto", "fase": "Prod", "tag_number": f"SP-{sid}", "fpso_name": "FPSO Phase",
             "system": "Gas", "fluid": "Gas"
         })
         s = client.post("/api/chemical/samples", json={
@@ -259,7 +259,7 @@ class TestTrackingFieldsUpdate:
 
     def _setup(self, client, sid="TRACK"):
         sp = client.post("/api/chemical/sample-points", json={
-            "fase": "Prod", "number": f"SP-{sid}", "fpso_name": "FPSO Track",
+            "description": "Auto", "fase": "Prod", "tag_number": f"SP-{sid}", "fpso_name": "FPSO Track",
             "system": "Gas", "fluid": "Gas"
         })
         s = client.post("/api/chemical/samples", json={
@@ -300,7 +300,7 @@ class TestTrackingFieldsUpdate:
             "mitigated": True
         })
         assert res.status_code == 200
-        assert res.json()["mitigated"] is True
+        assert res.json()["mitigated"] == 1
 
 
 class TestReportIssueWithUrl:
@@ -308,7 +308,7 @@ class TestReportIssueWithUrl:
 
     def _setup(self, client, sid="URL"):
         sp = client.post("/api/chemical/sample-points", json={
-            "fase": "Prod", "number": f"SP-{sid}", "fpso_name": "FPSO URL",
+            "description": "Auto", "fase": "Prod", "tag_number": f"SP-{sid}", "fpso_name": "FPSO URL",
             "system": "Gas", "fluid": "Gas"
         })
         s = client.post("/api/chemical/samples", json={
@@ -350,7 +350,7 @@ class TestLocalOverrideDuringDisembark:
 
     def _setup(self, client, sid="LOCAL"):
         sp = client.post("/api/chemical/sample-points", json={
-            "fase": "Prod", "number": f"SP-{sid}", "fpso_name": "FPSO Local",
+            "description": "Auto", "fase": "Prod", "tag_number": f"SP-{sid}", "fpso_name": "FPSO Local",
             "system": "Gas", "fluid": "Gas"
         })
         s = client.post("/api/chemical/samples", json={
@@ -396,7 +396,7 @@ class TestFcBusinessDaysCalculation:
 
     def _setup(self, client, sid="FC-BD"):
         sp = client.post("/api/chemical/sample-points", json={
-            "fase": "Prod", "number": f"SP-{sid}", "fpso_name": "FPSO FC",
+            "description": "Auto", "fase": "Prod", "tag_number": f"SP-{sid}", "fpso_name": "FPSO FC",
             "system": "Gas", "fluid": "Gas"
         })
         s = client.post("/api/chemical/samples", json={

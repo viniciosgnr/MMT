@@ -21,13 +21,13 @@ class TestSamplePointCRUD:
 
     def test_create_sample_point(self, client):
         res = client.post("/api/chemical/sample-points", json={
-            "fase": "Prod", "number": "SP-INT-001", "description": "Ponto Master",
+            "description": "Auto", "fase": "Prod", "tag_number": "SP-INT-001", "description": "Ponto Master",
             "fpso_name": "FPSO Sepetiba", "system": "Gas", "fluid": "Gas"
         })
         assert res.status_code == 200
         data = res.json()
         assert data["fpso_name"] == "FPSO Sepetiba"
-        assert data["number"] == "SP-INT-001"
+        assert data["tag_number"] == "SP-INT-001"
         assert "id" in data
 
     def test_list_sample_points_all(self, client):
@@ -47,7 +47,7 @@ class TestSampleCreation:
 
     def _create_sp(self, client, number="SP-AUTO"):
         res = client.post("/api/chemical/sample-points", json={
-            "fase": "Prod", "number": number, "fpso_name": "FPSO Test", "system": "Oil", "fluid": "Oil"
+            "description": "Auto", "fase": "Prod", "tag_number": number, "description": "dummy_desc", "fpso_name": "FPSO Test", "system": "Oil", "fluid": "Oil"
         })
         return res.json()["id"]
 
@@ -118,7 +118,7 @@ class TestStatusFlowLifecycle:
 
     def _setup_sample(self, client, sample_id="LIFECYCLE-001"):
         sp_res = client.post("/api/chemical/sample-points", json={
-            "fase": "Prod", "number": f"SP-{sample_id}",
+            "description": "Auto", "fase": "Prod", "tag_number": f"SP-{sample_id}", "description": "LIFECYCLE",
             "fpso_name": "FPSO Flow", "system": "Gas", "fluid": "Gas"
         })
         sp_id = sp_res.json()["id"]
@@ -193,7 +193,7 @@ class TestOverrideDate:
 
     def _setup(self, client, sid="OVERRIDE-001"):
         sp_res = client.post("/api/chemical/sample-points", json={
-            "fase": "Prod", "number": f"SP-{sid}", "fpso_name": "FPSO OV",
+            "description": "Auto", "fase": "Prod", "tag_number": f"SP-{sid}", "fpso_name": "FPSO OV", "description": "OV",
             "system": "Gas", "fluid": "Gas"
         })
         s_res = client.post("/api/chemical/samples", json={
@@ -248,7 +248,7 @@ class TestSampleResults:
 
     def _setup(self, client, sid="RESULT-001"):
         sp_res = client.post("/api/chemical/sample-points", json={
-            "fase": "Prod", "number": f"SP-{sid}", "fpso_name": "FPSO Res",
+            "description": "Auto", "fase": "Prod", "tag_number": f"SP-{sid}", "description": "RESULT", "fpso_name": "FPSO Res",
             "system": "Oil", "fluid": "Oil"
         })
         s_res = client.post("/api/chemical/samples", json={

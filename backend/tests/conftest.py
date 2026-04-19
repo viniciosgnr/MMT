@@ -10,20 +10,26 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.pool import StaticPool
 import sys
 import os
+from datetime import datetime
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from app.main import app
 from app.database import Base, get_db
+import app.models as db_models
 from app.dependencies import get_current_user
 
-# --- Skill (fastapi-pro): SQLite in-memory for ultra-fast isolated tests ---
+# --- Skill (fastapi-pro): SQLite in-memory for ultra-fast durable tests ---
+from sqlalchemy.pool import StaticPool
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 
 engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+    SQLALCHEMY_DATABASE_URL,
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -90,6 +96,81 @@ class SampleFactory:
         return res.json()
 
 
+class EquipmentFactory:
+    """Factory para gerar Equipamentos físicos de teste."""
+    _counter = 0
+
+    @classmethod
+    def create(cls, client, **overrides):
+        cls._counter += 1
+        defaults = {
+            "serial_number": f"SN-FAC-{cls._counter:04d}",
+            "model": f"Model-{cls._counter}",
+            "manufacturer": "Harness Corp",
+            "equipment_type": "Flow Computer",
+            "fpso_name": "FPSO Harness",
+            "status": "Active"
+        }
+        defaults.update(overrides)
+        res = client.post("/api/equipment/", json=defaults)
+        assert res.status_code == 200, f"Factory Equipment failed: {res.text}"
+        return res.json()
+
+
+class InstrumentTagFactory:
+    """Factory para gerar Tags de instrumentação (Locais)."""
+    _counter = 0
+
+    @classmethod
+    def create(cls, client, **overrides):
+        cls._counter += 1
+        defaults = {
+            "tag_number": f"TAG-FAC-{cls._counter:04d}",
+            "description": f"Harness Test Tag {cls._counter}",
+            "area": "Process",
+            "service": "Metering"
+        }
+        defaults.update(overrides)
+        res = client.post("/api/equipment/tags", json=defaults)
+        assert res.status_code == 200, f"Factory InstrumentTag failed: {res.text}"
+        return res.json()
+
+
+class EquipmentTagInstallationFactory:
+    """Factory para gerar instalações de equipamentos em tags."""
+
+    @classmethod
+    def create(cls, client, equipment_id, tag_id, **overrides):
+        defaults = {
+            "equipment_id": equipment_id,
+            "tag_id": tag_id,
+            "installed_by": "Harness Engineer",
+            "installation_date": datetime.utcnow().isoformat()
+        }
+        defaults.update(overrides)
+        res = client.post("/api/equipment/install", json=defaults)
+        assert res.status_code == 200, f"Factory Installation failed: {res.text}"
+        return res.json()
+
+
+class HierarchyNodeFactory:
+    """Factory para gerar nós da hierarquia (M11)."""
+    _counter = 0
+
+    @classmethod
+    def create(cls, client, **overrides):
+        cls._counter += 1
+        defaults = {
+            "tag": f"NODE-FAC-{cls._counter:04d}",
+            "description": f"Hierarchy Node {cls._counter}",
+            "level_type": "System"
+        }
+        defaults.update(overrides)
+        res = client.post("/api/config/hierarchy/nodes", json=defaults)
+        assert res.status_code == 200, f"Factory HierarchyNode failed: {res.text}"
+        return res.json()
+
+
 # --- Fixtures ---
 @pytest.fixture(scope="module")
 def client():
@@ -97,7 +178,6 @@ def client():
     Base.metadata.create_all(bind=engine)
     with TestClient(app) as c:
         yield c
-    Base.metadata.drop_all(bind=engine)
 
 
 @pytest.fixture(scope="module")
@@ -120,3 +200,27 @@ def sample_factory(client):
     def _create(sample_point_id, **kw):
         return SampleFactory.create(client, sample_point_id, **kw)
     return _create
+
+
+@pytest.fixture
+def equipment_factory(client):
+    """Fixture para factory de Equipment."""
+    return lambda **kw: EquipmentFactory.create(client, **kw)
+
+
+@pytest.fixture
+def tag_factory(client):
+    """Fixture para factory de InstrumentTag."""
+    return lambda **kw: InstrumentTagFactory.create(client, **kw)
+
+
+@pytest.fixture
+def installation_factory(client):
+    """Fixture para factory de Installation."""
+    return lambda eq_id, t_id, **kw: EquipmentTagInstallationFactory.create(client, eq_id, t_id, **kw)
+
+
+@pytest.fixture
+def hierarchy_factory(client):
+    """Fixture para factory de HierarchyNode."""
+    return lambda **kw: HierarchyNodeFactory.create(client, **kw)

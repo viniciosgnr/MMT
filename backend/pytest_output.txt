@@ -1,0 +1,1229 @@
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-9.0.3, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/marcosgnr/MMT/backend
+configfile: pyproject.toml
+plugins: cov-7.1.0, anyio-3.7.1
+collecting ... collected 23 items
+
+tests/test_m3_api_integration.py::TestSamplePointCRUD::test_create_sample_point FAILED [  4%]
+tests/test_m3_api_integration.py::TestSamplePointCRUD::test_list_sample_points_all FAILED [  8%]
+tests/test_m3_api_integration.py::TestSamplePointCRUD::test_list_sample_points_filtered_by_fpso FAILED [ 13%]
+tests/test_m3_api_integration.py::TestSampleCreation::test_create_sample_starts_at_sample_status FAILED [ 17%]
+tests/test_m3_api_integration.py::TestSampleCreation::test_create_sample_operational_category FAILED [ 21%]
+tests/test_m3_api_integration.py::TestSampleCreation::test_create_sample_chromatography_is_coleta FAILED [ 26%]
+tests/test_m3_api_integration.py::TestSampleCreation::test_create_sample_invalid_sp_returns_404 FAILED [ 30%]
+tests/test_m3_api_integration.py::TestSampleCreation::test_get_sample_by_id FAILED [ 34%]
+tests/test_m3_api_integration.py::TestSampleCreation::test_get_sample_not_found FAILED [ 39%]
+tests/test_m3_api_integration.py::TestSampleCreation::test_list_samples_all FAILED [ 43%]
+tests/test_m3_api_integration.py::TestStatusFlowLifecycle::test_sample_to_disembark_sets_sla_dates FAILED [ 47%]
+tests/test_m3_api_integration.py::TestStatusFlowLifecycle::test_disembark_logistics_sets_date FAILED [ 52%]
+tests/test_m3_api_integration.py::TestStatusFlowLifecycle::test_deliver_at_vendor_sets_date FAILED [ 56%]
+tests/test_m3_api_integration.py::TestStatusFlowLifecycle::test_report_issue_sets_fc_expected FAILED [ 60%]
+tests/test_m3_api_integration.py::TestStatusFlowLifecycle::test_fc_update_sets_timestamp FAILED [ 65%]
+tests/test_m3_api_integration.py::TestOverrideDate::test_override_due_date FAILED [ 69%]
+tests/test_m3_api_integration.py::TestOverrideDate::test_override_with_null_clears_date FAILED [ 73%]
+tests/test_m3_api_integration.py::TestOverrideDate::test_override_nonexistent_sample_404 FAILED [ 78%]
+tests/test_m3_api_integration.py::TestDashboard::test_dashboard_returns_all_groups FAILED [ 82%]
+tests/test_m3_api_integration.py::TestDashboard::test_dashboard_with_fpso_filter FAILED [ 86%]
+tests/test_m3_api_integration.py::TestSampleResults::test_add_result FAILED [ 91%]
+tests/test_m3_api_integration.py::TestSampleResults::test_get_lab_results FAILED [ 95%]
+tests/test_m3_api_integration.py::TestCheckSlas::test_check_slas_returns_200 FAILED [100%]
+
+=================================== FAILURES ===================================
+_________________ TestSamplePointCRUD.test_create_sample_point _________________
+tests/test_m3_api_integration.py:27: in test_create_sample_point
+    assert res.status_code == 200
+E   assert 422 == 200
+E    +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+_______________ TestSamplePointCRUD.test_list_sample_points_all ________________
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1961: in _exec_single_context
+    self.dialect.do_execute(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/default.py:944: in do_execute
+    cursor.execute(statement, parameters)
+E   sqlite3.OperationalError: no such table: sample_points
+
+The above exception was the direct cause of the following exception:
+tests/test_m3_api_integration.py:34: in test_list_sample_points_all
+    res = client.get("/api/chemical/sample-points")
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:473: in get
+    return super().get(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:1053: in get
+    return self.request(
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:445: in request
+    return super().request(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:825: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+../../.local/lib/python3.10/site-packages/httpx/_client.py:914: in send
+    response = self._send_handling_auth(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:942: in _send_handling_auth
+    response = self._send_handling_redirects(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:979: in _send_handling_redirects
+    response = self._send_single_request(request)
+../../.local/lib/python3.10/site-packages/httpx/_client.py:1014: in _send_single_request
+    response = transport.handle_request(request)
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:348: in handle_request
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:345: in handle_request
+    portal.call(self.app, scope, receive, send)
+../../.local/lib/python3.10/site-packages/anyio/from_thread.py:277: in call
+    return cast(T_Retval, self.start_task_soon(func, *args).result())
+/usr/lib/python3.10/concurrent/futures/_base.py:458: in result
+    return self.__get_result()
+/usr/lib/python3.10/concurrent/futures/_base.py:403: in __get_result
+    raise self._exception
+../../.local/lib/python3.10/site-packages/anyio/from_thread.py:217: in _call_func
+    retval = await retval
+../../.local/lib/python3.10/site-packages/fastapi/applications.py:1135: in __call__
+    await super().__call__(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/applications.py:107: in __call__
+    await self.middleware_stack(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/errors.py:186: in __call__
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/middleware/errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/cors.py:85: in __call__
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+../../.local/lib/python3.10/site-packages/fastapi/middleware/asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:716: in __call__
+    await self.middleware_stack(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:736: in app
+    await route.handle(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:290: in handle
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:115: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:101: in app
+    response = await f(request)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:355: in app
+    raw_response = await run_endpoint_function(
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:245: in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+../../.local/lib/python3.10/site-packages/starlette/concurrency.py:32: in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+../../.local/lib/python3.10/site-packages/anyio/to_thread.py:33: in run_sync
+    return await get_asynclib().run_sync_in_worker_thread(
+../../.local/lib/python3.10/site-packages/anyio/_backends/_asyncio.py:877: in run_sync_in_worker_thread
+    return await future
+../../.local/lib/python3.10/site-packages/anyio/_backends/_asyncio.py:807: in run
+    result = context.run(func, *args)
+app/routers/chemical.py:50: in list_sample_points
+    return query.all()
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/query.py:2704: in all
+    return self._iter().all()  # type: ignore
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/query.py:2857: in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/session.py:2365: in execute
+    return self._execute_internal(
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/session.py:2251: in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/context.py:306: in orm_execute_statement
+    result = conn.execute(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1413: in execute
+    return meth(
+../../.local/lib/python3.10/site-packages/sqlalchemy/sql/elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1635: in _execute_clauseelement
+    ret = self._execute_context(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1840: in _execute_context
+    return self._exec_single_context(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1980: in _exec_single_context
+    self._handle_dbapi_exception(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:2349: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1961: in _exec_single_context
+    self.dialect.do_execute(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/default.py:944: in do_execute
+    cursor.execute(statement, parameters)
+E   sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: sample_points
+E   [SQL: SELECT sample_points.id AS sample_points_id, sample_points.tag_number AS sample_points_tag_number, sample_points.description AS sample_points_description, sample_points.fpso_name AS sample_points_fpso_name, sample_points.is_operational AS sample_points_is_operational, sample_points.sampling_interval_days AS sample_points_sampling_interval_days, sample_points.validation_method_implemented AS sample_points_validation_method_implemented, sample_points.analysis_types AS sample_points_analysis_types, sample_points.created_at AS sample_points_created_at 
+E   FROM sample_points]
+E   (Background on this error at: https://sqlalche.me/e/20/e3q8)
+_________ TestSamplePointCRUD.test_list_sample_points_filtered_by_fpso _________
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1961: in _exec_single_context
+    self.dialect.do_execute(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/default.py:944: in do_execute
+    cursor.execute(statement, parameters)
+E   sqlite3.OperationalError: no such table: sample_points
+
+The above exception was the direct cause of the following exception:
+tests/test_m3_api_integration.py:39: in test_list_sample_points_filtered_by_fpso
+    res = client.get("/api/chemical/sample-points?fpso_name=FPSO Sepetiba")
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:473: in get
+    return super().get(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:1053: in get
+    return self.request(
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:445: in request
+    return super().request(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:825: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+../../.local/lib/python3.10/site-packages/httpx/_client.py:914: in send
+    response = self._send_handling_auth(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:942: in _send_handling_auth
+    response = self._send_handling_redirects(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:979: in _send_handling_redirects
+    response = self._send_single_request(request)
+../../.local/lib/python3.10/site-packages/httpx/_client.py:1014: in _send_single_request
+    response = transport.handle_request(request)
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:348: in handle_request
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:345: in handle_request
+    portal.call(self.app, scope, receive, send)
+../../.local/lib/python3.10/site-packages/anyio/from_thread.py:277: in call
+    return cast(T_Retval, self.start_task_soon(func, *args).result())
+/usr/lib/python3.10/concurrent/futures/_base.py:458: in result
+    return self.__get_result()
+/usr/lib/python3.10/concurrent/futures/_base.py:403: in __get_result
+    raise self._exception
+../../.local/lib/python3.10/site-packages/anyio/from_thread.py:217: in _call_func
+    retval = await retval
+../../.local/lib/python3.10/site-packages/fastapi/applications.py:1135: in __call__
+    await super().__call__(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/applications.py:107: in __call__
+    await self.middleware_stack(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/errors.py:186: in __call__
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/middleware/errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/cors.py:85: in __call__
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+../../.local/lib/python3.10/site-packages/fastapi/middleware/asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:716: in __call__
+    await self.middleware_stack(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:736: in app
+    await route.handle(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:290: in handle
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:115: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:101: in app
+    response = await f(request)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:355: in app
+    raw_response = await run_endpoint_function(
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:245: in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+../../.local/lib/python3.10/site-packages/starlette/concurrency.py:32: in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+../../.local/lib/python3.10/site-packages/anyio/to_thread.py:33: in run_sync
+    return await get_asynclib().run_sync_in_worker_thread(
+../../.local/lib/python3.10/site-packages/anyio/_backends/_asyncio.py:877: in run_sync_in_worker_thread
+    return await future
+../../.local/lib/python3.10/site-packages/anyio/_backends/_asyncio.py:807: in run
+    result = context.run(func, *args)
+app/routers/chemical.py:50: in list_sample_points
+    return query.all()
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/query.py:2704: in all
+    return self._iter().all()  # type: ignore
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/query.py:2857: in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/session.py:2365: in execute
+    return self._execute_internal(
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/session.py:2251: in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/context.py:306: in orm_execute_statement
+    result = conn.execute(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1413: in execute
+    return meth(
+../../.local/lib/python3.10/site-packages/sqlalchemy/sql/elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1635: in _execute_clauseelement
+    ret = self._execute_context(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1840: in _execute_context
+    return self._exec_single_context(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1980: in _exec_single_context
+    self._handle_dbapi_exception(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:2349: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1961: in _exec_single_context
+    self.dialect.do_execute(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/default.py:944: in do_execute
+    cursor.execute(statement, parameters)
+E   sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: sample_points
+E   [SQL: SELECT sample_points.id AS sample_points_id, sample_points.tag_number AS sample_points_tag_number, sample_points.description AS sample_points_description, sample_points.fpso_name AS sample_points_fpso_name, sample_points.is_operational AS sample_points_is_operational, sample_points.sampling_interval_days AS sample_points_sampling_interval_days, sample_points.validation_method_implemented AS sample_points_validation_method_implemented, sample_points.analysis_types AS sample_points_analysis_types, sample_points.created_at AS sample_points_created_at 
+E   FROM sample_points 
+E   WHERE sample_points.fpso_name = ?]
+E   [parameters: ('FPSO Sepetiba',)]
+E   (Background on this error at: https://sqlalche.me/e/20/e3q8)
+________ TestSampleCreation.test_create_sample_starts_at_sample_status _________
+tests/test_m3_api_integration.py:55: in test_create_sample_starts_at_sample_status
+    sp_id = self._create_sp(client, "SP-CREATE-01")
+tests/test_m3_api_integration.py:52: in _create_sp
+    return res.json()["id"]
+E   KeyError: 'id'
+__________ TestSampleCreation.test_create_sample_operational_category __________
+tests/test_m3_api_integration.py:66: in test_create_sample_operational_category
+    sp_id = self._create_sp(client, "SP-CREATE-02")
+tests/test_m3_api_integration.py:52: in _create_sp
+    return res.json()["id"]
+E   KeyError: 'id'
+________ TestSampleCreation.test_create_sample_chromatography_is_coleta ________
+tests/test_m3_api_integration.py:77: in test_create_sample_chromatography_is_coleta
+    sp_id = self._create_sp(client, "SP-CREATE-03")
+tests/test_m3_api_integration.py:52: in _create_sp
+    return res.json()["id"]
+E   KeyError: 'id'
+_________ TestSampleCreation.test_create_sample_invalid_sp_returns_404 _________
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1961: in _exec_single_context
+    self.dialect.do_execute(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/default.py:944: in do_execute
+    cursor.execute(statement, parameters)
+E   sqlite3.OperationalError: no such table: sample_points
+
+The above exception was the direct cause of the following exception:
+tests/test_m3_api_integration.py:87: in test_create_sample_invalid_sp_returns_404
+    res = client.post("/api/chemical/samples", json={
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:546: in post
+    return super().post(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:1144: in post
+    return self.request(
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:445: in request
+    return super().request(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:825: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+../../.local/lib/python3.10/site-packages/httpx/_client.py:914: in send
+    response = self._send_handling_auth(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:942: in _send_handling_auth
+    response = self._send_handling_redirects(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:979: in _send_handling_redirects
+    response = self._send_single_request(request)
+../../.local/lib/python3.10/site-packages/httpx/_client.py:1014: in _send_single_request
+    response = transport.handle_request(request)
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:348: in handle_request
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:345: in handle_request
+    portal.call(self.app, scope, receive, send)
+../../.local/lib/python3.10/site-packages/anyio/from_thread.py:277: in call
+    return cast(T_Retval, self.start_task_soon(func, *args).result())
+/usr/lib/python3.10/concurrent/futures/_base.py:458: in result
+    return self.__get_result()
+/usr/lib/python3.10/concurrent/futures/_base.py:403: in __get_result
+    raise self._exception
+../../.local/lib/python3.10/site-packages/anyio/from_thread.py:217: in _call_func
+    retval = await retval
+../../.local/lib/python3.10/site-packages/fastapi/applications.py:1135: in __call__
+    await super().__call__(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/applications.py:107: in __call__
+    await self.middleware_stack(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/errors.py:186: in __call__
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/middleware/errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/cors.py:85: in __call__
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+../../.local/lib/python3.10/site-packages/fastapi/middleware/asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:716: in __call__
+    await self.middleware_stack(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:736: in app
+    await route.handle(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:290: in handle
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:115: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:101: in app
+    response = await f(request)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:355: in app
+    raw_response = await run_endpoint_function(
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:245: in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+../../.local/lib/python3.10/site-packages/starlette/concurrency.py:32: in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+../../.local/lib/python3.10/site-packages/anyio/to_thread.py:33: in run_sync
+    return await get_asynclib().run_sync_in_worker_thread(
+../../.local/lib/python3.10/site-packages/anyio/_backends/_asyncio.py:877: in run_sync_in_worker_thread
+    return await future
+../../.local/lib/python3.10/site-packages/anyio/_backends/_asyncio.py:807: in run
+    result = context.run(func, *args)
+app/routers/chemical.py:181: in create_sample
+    sp = db.query(models.SamplePoint).filter(models.SamplePoint.id == sample.sample_point_id).first()
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/query.py:2759: in first
+    return self.limit(1)._iter().first()  # type: ignore
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/query.py:2857: in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/session.py:2365: in execute
+    return self._execute_internal(
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/session.py:2251: in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/context.py:306: in orm_execute_statement
+    result = conn.execute(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1413: in execute
+    return meth(
+../../.local/lib/python3.10/site-packages/sqlalchemy/sql/elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1635: in _execute_clauseelement
+    ret = self._execute_context(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1840: in _execute_context
+    return self._exec_single_context(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1980: in _exec_single_context
+    self._handle_dbapi_exception(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:2349: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1961: in _exec_single_context
+    self.dialect.do_execute(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/default.py:944: in do_execute
+    cursor.execute(statement, parameters)
+E   sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: sample_points
+E   [SQL: SELECT sample_points.id AS sample_points_id, sample_points.tag_number AS sample_points_tag_number, sample_points.description AS sample_points_description, sample_points.fpso_name AS sample_points_fpso_name, sample_points.is_operational AS sample_points_is_operational, sample_points.sampling_interval_days AS sample_points_sampling_interval_days, sample_points.validation_method_implemented AS sample_points_validation_method_implemented, sample_points.analysis_types AS sample_points_analysis_types, sample_points.created_at AS sample_points_created_at 
+E   FROM sample_points 
+E   WHERE sample_points.id = ?
+E    LIMIT ? OFFSET ?]
+E   [parameters: (999999, 1, 0)]
+E   (Background on this error at: https://sqlalche.me/e/20/e3q8)
+___________________ TestSampleCreation.test_get_sample_by_id ___________________
+tests/test_m3_api_integration.py:95: in test_get_sample_by_id
+    sp_id = self._create_sp(client, "SP-GET-01")
+tests/test_m3_api_integration.py:52: in _create_sp
+    return res.json()["id"]
+E   KeyError: 'id'
+_________________ TestSampleCreation.test_get_sample_not_found _________________
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1961: in _exec_single_context
+    self.dialect.do_execute(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/default.py:944: in do_execute
+    cursor.execute(statement, parameters)
+E   sqlite3.OperationalError: no such table: samples
+
+The above exception was the direct cause of the following exception:
+tests/test_m3_api_integration.py:107: in test_get_sample_not_found
+    res = client.get("/api/chemical/samples/999999")
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:473: in get
+    return super().get(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:1053: in get
+    return self.request(
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:445: in request
+    return super().request(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:825: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+../../.local/lib/python3.10/site-packages/httpx/_client.py:914: in send
+    response = self._send_handling_auth(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:942: in _send_handling_auth
+    response = self._send_handling_redirects(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:979: in _send_handling_redirects
+    response = self._send_single_request(request)
+../../.local/lib/python3.10/site-packages/httpx/_client.py:1014: in _send_single_request
+    response = transport.handle_request(request)
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:348: in handle_request
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:345: in handle_request
+    portal.call(self.app, scope, receive, send)
+../../.local/lib/python3.10/site-packages/anyio/from_thread.py:277: in call
+    return cast(T_Retval, self.start_task_soon(func, *args).result())
+/usr/lib/python3.10/concurrent/futures/_base.py:458: in result
+    return self.__get_result()
+/usr/lib/python3.10/concurrent/futures/_base.py:403: in __get_result
+    raise self._exception
+../../.local/lib/python3.10/site-packages/anyio/from_thread.py:217: in _call_func
+    retval = await retval
+../../.local/lib/python3.10/site-packages/fastapi/applications.py:1135: in __call__
+    await super().__call__(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/applications.py:107: in __call__
+    await self.middleware_stack(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/errors.py:186: in __call__
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/middleware/errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/cors.py:85: in __call__
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+../../.local/lib/python3.10/site-packages/fastapi/middleware/asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:716: in __call__
+    await self.middleware_stack(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:736: in app
+    await route.handle(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:290: in handle
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:115: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:101: in app
+    response = await f(request)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:355: in app
+    raw_response = await run_endpoint_function(
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:245: in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+../../.local/lib/python3.10/site-packages/starlette/concurrency.py:32: in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+../../.local/lib/python3.10/site-packages/anyio/to_thread.py:33: in run_sync
+    return await get_asynclib().run_sync_in_worker_thread(
+../../.local/lib/python3.10/site-packages/anyio/_backends/_asyncio.py:877: in run_sync_in_worker_thread
+    return await future
+../../.local/lib/python3.10/site-packages/anyio/_backends/_asyncio.py:807: in run
+    result = context.run(func, *args)
+app/routers/chemical.py:258: in get_sample
+    sample = db.query(models.Sample).filter(models.Sample.id == sample_id).first()
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/query.py:2759: in first
+    return self.limit(1)._iter().first()  # type: ignore
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/query.py:2857: in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/session.py:2365: in execute
+    return self._execute_internal(
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/session.py:2251: in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/context.py:306: in orm_execute_statement
+    result = conn.execute(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1413: in execute
+    return meth(
+../../.local/lib/python3.10/site-packages/sqlalchemy/sql/elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1635: in _execute_clauseelement
+    ret = self._execute_context(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1840: in _execute_context
+    return self._exec_single_context(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1980: in _exec_single_context
+    self._handle_dbapi_exception(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:2349: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1961: in _exec_single_context
+    self.dialect.do_execute(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/default.py:944: in do_execute
+    cursor.execute(statement, parameters)
+E   sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: samples
+E   [SQL: SELECT samples.id AS samples_id, samples.campaign_id AS samples_campaign_id, samples.sample_point_id AS samples_sample_point_id, samples.meter_id AS samples_meter_id, samples.well_id AS samples_well_id, samples.sample_id AS samples_sample_id, samples.type AS samples_type, samples.category AS samples_category, samples.status AS samples_status, samples.responsible AS samples_responsible, samples.osm_id AS samples_osm_id, samples.laudo_number AS samples_laudo_number, samples.mitigated AS samples_mitigated, samples.validation_party AS samples_validation_party, samples.is_active AS samples_is_active, samples.local AS samples_local, samples.planned_date AS samples_planned_date, samples.disembark_expected_date AS samples_disembark_expected_date, samples.lab_expected_date AS samples_lab_expected_date, samples.report_expected_date AS samples_report_expected_date, samples.fc_expected_date AS samples_fc_expected_date, samples.sampling_date AS samples_sampling_date, samples.disembark_date AS samples_disembark_date, samples.delivery_date AS samples_delivery_date, samples.report_issue_date AS samples_report_issue_date, samples.fc_update_date AS samples_fc_update_date, samples.due_date AS samples_due_date, samples.lab_report_url AS samples_lab_report_url, samples.validation_status AS samples_validation_status, samples.validation_report_url AS samples_validation_report_url, samples.fc_evidence_url AS samples_fc_evidence_url, samples.notes AS samples_notes, samples.created_at AS samples_created_at 
+E   FROM samples 
+E   WHERE samples.id = ?
+E    LIMIT ? OFFSET ?]
+E   [parameters: (999999, 1, 0)]
+E   (Background on this error at: https://sqlalche.me/e/20/e3q8)
+___________________ TestSampleCreation.test_list_samples_all ___________________
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1961: in _exec_single_context
+    self.dialect.do_execute(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/default.py:944: in do_execute
+    cursor.execute(statement, parameters)
+E   sqlite3.OperationalError: no such table: samples
+
+The above exception was the direct cause of the following exception:
+tests/test_m3_api_integration.py:111: in test_list_samples_all
+    res = client.get("/api/chemical/samples")
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:473: in get
+    return super().get(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:1053: in get
+    return self.request(
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:445: in request
+    return super().request(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:825: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+../../.local/lib/python3.10/site-packages/httpx/_client.py:914: in send
+    response = self._send_handling_auth(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:942: in _send_handling_auth
+    response = self._send_handling_redirects(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:979: in _send_handling_redirects
+    response = self._send_single_request(request)
+../../.local/lib/python3.10/site-packages/httpx/_client.py:1014: in _send_single_request
+    response = transport.handle_request(request)
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:348: in handle_request
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:345: in handle_request
+    portal.call(self.app, scope, receive, send)
+../../.local/lib/python3.10/site-packages/anyio/from_thread.py:277: in call
+    return cast(T_Retval, self.start_task_soon(func, *args).result())
+/usr/lib/python3.10/concurrent/futures/_base.py:458: in result
+    return self.__get_result()
+/usr/lib/python3.10/concurrent/futures/_base.py:403: in __get_result
+    raise self._exception
+../../.local/lib/python3.10/site-packages/anyio/from_thread.py:217: in _call_func
+    retval = await retval
+../../.local/lib/python3.10/site-packages/fastapi/applications.py:1135: in __call__
+    await super().__call__(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/applications.py:107: in __call__
+    await self.middleware_stack(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/errors.py:186: in __call__
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/middleware/errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/cors.py:85: in __call__
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+../../.local/lib/python3.10/site-packages/fastapi/middleware/asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:716: in __call__
+    await self.middleware_stack(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:736: in app
+    await route.handle(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:290: in handle
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:115: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:101: in app
+    response = await f(request)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:355: in app
+    raw_response = await run_endpoint_function(
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:245: in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+../../.local/lib/python3.10/site-packages/starlette/concurrency.py:32: in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+../../.local/lib/python3.10/site-packages/anyio/to_thread.py:33: in run_sync
+    return await get_asynclib().run_sync_in_worker_thread(
+../../.local/lib/python3.10/site-packages/anyio/_backends/_asyncio.py:877: in run_sync_in_worker_thread
+    return await future
+../../.local/lib/python3.10/site-packages/anyio/_backends/_asyncio.py:807: in run
+    result = context.run(func, *args)
+app/routers/chemical.py:254: in list_samples
+    return query.all()
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/query.py:2704: in all
+    return self._iter().all()  # type: ignore
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/query.py:2857: in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/session.py:2365: in execute
+    return self._execute_internal(
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/session.py:2251: in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/context.py:306: in orm_execute_statement
+    result = conn.execute(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1413: in execute
+    return meth(
+../../.local/lib/python3.10/site-packages/sqlalchemy/sql/elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1635: in _execute_clauseelement
+    ret = self._execute_context(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1840: in _execute_context
+    return self._exec_single_context(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1980: in _exec_single_context
+    self._handle_dbapi_exception(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:2349: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1961: in _exec_single_context
+    self.dialect.do_execute(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/default.py:944: in do_execute
+    cursor.execute(statement, parameters)
+E   sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: samples
+E   [SQL: SELECT samples.id AS samples_id, samples.campaign_id AS samples_campaign_id, samples.sample_point_id AS samples_sample_point_id, samples.meter_id AS samples_meter_id, samples.well_id AS samples_well_id, samples.sample_id AS samples_sample_id, samples.type AS samples_type, samples.category AS samples_category, samples.status AS samples_status, samples.responsible AS samples_responsible, samples.osm_id AS samples_osm_id, samples.laudo_number AS samples_laudo_number, samples.mitigated AS samples_mitigated, samples.validation_party AS samples_validation_party, samples.is_active AS samples_is_active, samples.local AS samples_local, samples.planned_date AS samples_planned_date, samples.disembark_expected_date AS samples_disembark_expected_date, samples.lab_expected_date AS samples_lab_expected_date, samples.report_expected_date AS samples_report_expected_date, samples.fc_expected_date AS samples_fc_expected_date, samples.sampling_date AS samples_sampling_date, samples.disembark_date AS samples_disembark_date, samples.delivery_date AS samples_delivery_date, samples.report_issue_date AS samples_report_issue_date, samples.fc_update_date AS samples_fc_update_date, samples.due_date AS samples_due_date, samples.lab_report_url AS samples_lab_report_url, samples.validation_status AS samples_validation_status, samples.validation_report_url AS samples_validation_report_url, samples.fc_evidence_url AS samples_fc_evidence_url, samples.notes AS samples_notes, samples.created_at AS samples_created_at, sample_points_1.id AS sample_points_1_id, sample_points_1.tag_number AS sample_points_1_tag_number, sample_points_1.description AS sample_points_1_description, sample_points_1.fpso_name AS sample_points_1_fpso_name, sample_points_1.is_operational AS sample_points_1_is_operational, sample_points_1.sampling_interval_days AS sample_points_1_sampling_interval_days, sample_points_1.validation_method_implemented AS sample_points_1_validation_method_implemented, sample_points_1.analysis_types AS sample_points_1_analysis_types, sample_points_1.created_at AS sample_points_1_created_at, instrument_tags_1.id AS instrument_tags_1_id, instrument_tags_1.tag_number AS instrument_tags_1_tag_number, instrument_tags_1.description AS instrument_tags_1_description, instrument_tags_1.area AS instrument_tags_1_area, instrument_tags_1.service AS instrument_tags_1_service, instrument_tags_1.classification AS instrument_tags_1_classification, instrument_tags_1.hierarchy_node_id AS instrument_tags_1_hierarchy_node_id, instrument_tags_1.created_at AS instrument_tags_1_created_at, wells_1.id AS wells_1_id, wells_1.tag AS wells_1_tag, wells_1.description AS wells_1_description, wells_1.fpso AS wells_1_fpso, wells_1.anp_code AS wells_1_anp_code, wells_1.sbm_code AS wells_1_sbm_code, wells_1.sample_point_gas AS wells_1_sample_point_gas, wells_1.sample_point_oil AS wells_1_sample_point_oil, wells_1.status AS wells_1_status, wells_1.created_at AS wells_1_created_at 
+E   FROM samples LEFT OUTER JOIN sample_points ON sample_points.id = samples.sample_point_id LEFT OUTER JOIN sample_points AS sample_points_1 ON sample_points_1.id = samples.sample_point_id LEFT OUTER JOIN instrument_tags AS instrument_tags_1 ON instrument_tags_1.id = samples.meter_id LEFT OUTER JOIN wells AS wells_1 ON wells_1.id = samples.well_id]
+E   (Background on this error at: https://sqlalche.me/e/20/e3q8)
+_______ TestStatusFlowLifecycle.test_sample_to_disembark_sets_sla_dates ________
+tests/test_m3_api_integration.py:139: in test_sample_to_disembark_sets_sla_dates
+    s_id = self._setup_sample(client, "SLA-DATES-01")
+tests/test_m3_api_integration.py:124: in _setup_sample
+    sp_id = sp_res.json()["id"]
+E   KeyError: 'id'
+__________ TestStatusFlowLifecycle.test_disembark_logistics_sets_date __________
+tests/test_m3_api_integration.py:153: in test_disembark_logistics_sets_date
+    s_id = self._setup_sample(client, "DISEMBARK-LOG-01")
+tests/test_m3_api_integration.py:124: in _setup_sample
+    sp_id = sp_res.json()["id"]
+E   KeyError: 'id'
+___________ TestStatusFlowLifecycle.test_deliver_at_vendor_sets_date ___________
+tests/test_m3_api_integration.py:162: in test_deliver_at_vendor_sets_date
+    s_id = self._setup_sample(client, "DELIVER-01")
+tests/test_m3_api_integration.py:124: in _setup_sample
+    sp_id = sp_res.json()["id"]
+E   KeyError: 'id'
+__________ TestStatusFlowLifecycle.test_report_issue_sets_fc_expected __________
+tests/test_m3_api_integration.py:172: in test_report_issue_sets_fc_expected
+    s_id = self._setup_sample(client, "REPORT-FC-01")
+tests/test_m3_api_integration.py:124: in _setup_sample
+    sp_id = sp_res.json()["id"]
+E   KeyError: 'id'
+____________ TestStatusFlowLifecycle.test_fc_update_sets_timestamp _____________
+tests/test_m3_api_integration.py:183: in test_fc_update_sets_timestamp
+    s_id = self._setup_sample(client, "FC-UPD-01")
+tests/test_m3_api_integration.py:124: in _setup_sample
+    sp_id = sp_res.json()["id"]
+E   KeyError: 'id'
+___________________ TestOverrideDate.test_override_due_date ____________________
+tests/test_m3_api_integration.py:207: in test_override_due_date
+    s_id = self._setup(client, "OV-TEST-01")
+tests/test_m3_api_integration.py:201: in _setup
+    "sample_point_id": sp_res.json()["id"], "local": "Onshore",
+E   KeyError: 'id'
+_____________ TestOverrideDate.test_override_with_null_clears_date _____________
+tests/test_m3_api_integration.py:214: in test_override_with_null_clears_date
+    s_id = self._setup(client, "OV-TEST-02")
+tests/test_m3_api_integration.py:201: in _setup
+    "sample_point_id": sp_res.json()["id"], "local": "Onshore",
+E   KeyError: 'id'
+____________ TestOverrideDate.test_override_nonexistent_sample_404 _____________
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1961: in _exec_single_context
+    self.dialect.do_execute(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/default.py:944: in do_execute
+    cursor.execute(statement, parameters)
+E   sqlite3.OperationalError: no such table: samples
+
+The above exception was the direct cause of the following exception:
+tests/test_m3_api_integration.py:221: in test_override_nonexistent_sample_404
+    res = client.patch("/api/chemical/samples/999999/due-date",
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:608: in patch
+    return super().patch(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:1218: in patch
+    return self.request(
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:445: in request
+    return super().request(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:825: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+../../.local/lib/python3.10/site-packages/httpx/_client.py:914: in send
+    response = self._send_handling_auth(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:942: in _send_handling_auth
+    response = self._send_handling_redirects(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:979: in _send_handling_redirects
+    response = self._send_single_request(request)
+../../.local/lib/python3.10/site-packages/httpx/_client.py:1014: in _send_single_request
+    response = transport.handle_request(request)
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:348: in handle_request
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:345: in handle_request
+    portal.call(self.app, scope, receive, send)
+../../.local/lib/python3.10/site-packages/anyio/from_thread.py:277: in call
+    return cast(T_Retval, self.start_task_soon(func, *args).result())
+/usr/lib/python3.10/concurrent/futures/_base.py:458: in result
+    return self.__get_result()
+/usr/lib/python3.10/concurrent/futures/_base.py:403: in __get_result
+    raise self._exception
+../../.local/lib/python3.10/site-packages/anyio/from_thread.py:217: in _call_func
+    retval = await retval
+../../.local/lib/python3.10/site-packages/fastapi/applications.py:1135: in __call__
+    await super().__call__(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/applications.py:107: in __call__
+    await self.middleware_stack(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/errors.py:186: in __call__
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/middleware/errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/cors.py:85: in __call__
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+../../.local/lib/python3.10/site-packages/fastapi/middleware/asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:716: in __call__
+    await self.middleware_stack(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:736: in app
+    await route.handle(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:290: in handle
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:115: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:101: in app
+    response = await f(request)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:355: in app
+    raw_response = await run_endpoint_function(
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:245: in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+../../.local/lib/python3.10/site-packages/starlette/concurrency.py:32: in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+../../.local/lib/python3.10/site-packages/anyio/to_thread.py:33: in run_sync
+    return await get_asynclib().run_sync_in_worker_thread(
+../../.local/lib/python3.10/site-packages/anyio/_backends/_asyncio.py:877: in run_sync_in_worker_thread
+    return await future
+../../.local/lib/python3.10/site-packages/anyio/_backends/_asyncio.py:807: in run
+    result = context.run(func, *args)
+app/routers/chemical.py:329: in override_due_date
+    sample = db.query(models.Sample).filter(models.Sample.id == sample_id).first()
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/query.py:2759: in first
+    return self.limit(1)._iter().first()  # type: ignore
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/query.py:2857: in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/session.py:2365: in execute
+    return self._execute_internal(
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/session.py:2251: in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/context.py:306: in orm_execute_statement
+    result = conn.execute(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1413: in execute
+    return meth(
+../../.local/lib/python3.10/site-packages/sqlalchemy/sql/elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1635: in _execute_clauseelement
+    ret = self._execute_context(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1840: in _execute_context
+    return self._exec_single_context(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1980: in _exec_single_context
+    self._handle_dbapi_exception(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:2349: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1961: in _exec_single_context
+    self.dialect.do_execute(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/default.py:944: in do_execute
+    cursor.execute(statement, parameters)
+E   sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: samples
+E   [SQL: SELECT samples.id AS samples_id, samples.campaign_id AS samples_campaign_id, samples.sample_point_id AS samples_sample_point_id, samples.meter_id AS samples_meter_id, samples.well_id AS samples_well_id, samples.sample_id AS samples_sample_id, samples.type AS samples_type, samples.category AS samples_category, samples.status AS samples_status, samples.responsible AS samples_responsible, samples.osm_id AS samples_osm_id, samples.laudo_number AS samples_laudo_number, samples.mitigated AS samples_mitigated, samples.validation_party AS samples_validation_party, samples.is_active AS samples_is_active, samples.local AS samples_local, samples.planned_date AS samples_planned_date, samples.disembark_expected_date AS samples_disembark_expected_date, samples.lab_expected_date AS samples_lab_expected_date, samples.report_expected_date AS samples_report_expected_date, samples.fc_expected_date AS samples_fc_expected_date, samples.sampling_date AS samples_sampling_date, samples.disembark_date AS samples_disembark_date, samples.delivery_date AS samples_delivery_date, samples.report_issue_date AS samples_report_issue_date, samples.fc_update_date AS samples_fc_update_date, samples.due_date AS samples_due_date, samples.lab_report_url AS samples_lab_report_url, samples.validation_status AS samples_validation_status, samples.validation_report_url AS samples_validation_report_url, samples.fc_evidence_url AS samples_fc_evidence_url, samples.notes AS samples_notes, samples.created_at AS samples_created_at 
+E   FROM samples 
+E   WHERE samples.id = ?
+E    LIMIT ? OFFSET ?]
+E   [parameters: (999999, 1, 0)]
+E   (Background on this error at: https://sqlalche.me/e/20/e3q8)
+_______________ TestDashboard.test_dashboard_returns_all_groups ________________
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1961: in _exec_single_context
+    self.dialect.do_execute(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/default.py:944: in do_execute
+    cursor.execute(statement, parameters)
+E   sqlite3.OperationalError: no such table: samples
+
+The above exception was the direct cause of the following exception:
+tests/test_m3_api_integration.py:230: in test_dashboard_returns_all_groups
+    res = client.get("/api/chemical/dashboard-stats")
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:473: in get
+    return super().get(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:1053: in get
+    return self.request(
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:445: in request
+    return super().request(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:825: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+../../.local/lib/python3.10/site-packages/httpx/_client.py:914: in send
+    response = self._send_handling_auth(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:942: in _send_handling_auth
+    response = self._send_handling_redirects(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:979: in _send_handling_redirects
+    response = self._send_single_request(request)
+../../.local/lib/python3.10/site-packages/httpx/_client.py:1014: in _send_single_request
+    response = transport.handle_request(request)
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:348: in handle_request
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:345: in handle_request
+    portal.call(self.app, scope, receive, send)
+../../.local/lib/python3.10/site-packages/anyio/from_thread.py:277: in call
+    return cast(T_Retval, self.start_task_soon(func, *args).result())
+/usr/lib/python3.10/concurrent/futures/_base.py:458: in result
+    return self.__get_result()
+/usr/lib/python3.10/concurrent/futures/_base.py:403: in __get_result
+    raise self._exception
+../../.local/lib/python3.10/site-packages/anyio/from_thread.py:217: in _call_func
+    retval = await retval
+../../.local/lib/python3.10/site-packages/fastapi/applications.py:1135: in __call__
+    await super().__call__(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/applications.py:107: in __call__
+    await self.middleware_stack(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/errors.py:186: in __call__
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/middleware/errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/cors.py:85: in __call__
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+../../.local/lib/python3.10/site-packages/fastapi/middleware/asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:716: in __call__
+    await self.middleware_stack(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:736: in app
+    await route.handle(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:290: in handle
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:115: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:101: in app
+    response = await f(request)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:355: in app
+    raw_response = await run_endpoint_function(
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:245: in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+../../.local/lib/python3.10/site-packages/starlette/concurrency.py:32: in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+../../.local/lib/python3.10/site-packages/anyio/to_thread.py:33: in run_sync
+    return await get_asynclib().run_sync_in_worker_thread(
+../../.local/lib/python3.10/site-packages/anyio/_backends/_asyncio.py:877: in run_sync_in_worker_thread
+    return await future
+../../.local/lib/python3.10/site-packages/anyio/_backends/_asyncio.py:807: in run
+    result = context.run(func, *args)
+app/routers/chemical.py:117: in get_dashboard_stats
+    ).all()
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/query.py:2704: in all
+    return self._iter().all()  # type: ignore
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/query.py:2857: in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/session.py:2365: in execute
+    return self._execute_internal(
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/session.py:2251: in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/context.py:306: in orm_execute_statement
+    result = conn.execute(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1413: in execute
+    return meth(
+../../.local/lib/python3.10/site-packages/sqlalchemy/sql/elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1635: in _execute_clauseelement
+    ret = self._execute_context(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1840: in _execute_context
+    return self._exec_single_context(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1980: in _exec_single_context
+    self._handle_dbapi_exception(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:2349: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1961: in _exec_single_context
+    self.dialect.do_execute(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/default.py:944: in do_execute
+    cursor.execute(statement, parameters)
+E   sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: samples
+E   [SQL: SELECT samples.id AS samples_id, samples.campaign_id AS samples_campaign_id, samples.sample_point_id AS samples_sample_point_id, samples.meter_id AS samples_meter_id, samples.well_id AS samples_well_id, samples.sample_id AS samples_sample_id, samples.type AS samples_type, samples.category AS samples_category, samples.status AS samples_status, samples.responsible AS samples_responsible, samples.osm_id AS samples_osm_id, samples.laudo_number AS samples_laudo_number, samples.mitigated AS samples_mitigated, samples.validation_party AS samples_validation_party, samples.is_active AS samples_is_active, samples.local AS samples_local, samples.planned_date AS samples_planned_date, samples.disembark_expected_date AS samples_disembark_expected_date, samples.lab_expected_date AS samples_lab_expected_date, samples.report_expected_date AS samples_report_expected_date, samples.fc_expected_date AS samples_fc_expected_date, samples.sampling_date AS samples_sampling_date, samples.disembark_date AS samples_disembark_date, samples.delivery_date AS samples_delivery_date, samples.report_issue_date AS samples_report_issue_date, samples.fc_update_date AS samples_fc_update_date, samples.due_date AS samples_due_date, samples.lab_report_url AS samples_lab_report_url, samples.validation_status AS samples_validation_status, samples.validation_report_url AS samples_validation_report_url, samples.fc_evidence_url AS samples_fc_evidence_url, samples.notes AS samples_notes, samples.created_at AS samples_created_at 
+E   FROM samples LEFT OUTER JOIN sample_points ON sample_points.id = samples.sample_point_id 
+E   WHERE samples.status != ?]
+E   [parameters: ('Flow computer update',)]
+E   (Background on this error at: https://sqlalche.me/e/20/e3q8)
+________________ TestDashboard.test_dashboard_with_fpso_filter _________________
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1961: in _exec_single_context
+    self.dialect.do_execute(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/default.py:944: in do_execute
+    cursor.execute(statement, parameters)
+E   sqlite3.OperationalError: no such table: samples
+
+The above exception was the direct cause of the following exception:
+tests/test_m3_api_integration.py:242: in test_dashboard_with_fpso_filter
+    res = client.get("/api/chemical/dashboard-stats?fpso_name=FPSO Sepetiba")
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:473: in get
+    return super().get(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:1053: in get
+    return self.request(
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:445: in request
+    return super().request(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:825: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+../../.local/lib/python3.10/site-packages/httpx/_client.py:914: in send
+    response = self._send_handling_auth(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:942: in _send_handling_auth
+    response = self._send_handling_redirects(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:979: in _send_handling_redirects
+    response = self._send_single_request(request)
+../../.local/lib/python3.10/site-packages/httpx/_client.py:1014: in _send_single_request
+    response = transport.handle_request(request)
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:348: in handle_request
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:345: in handle_request
+    portal.call(self.app, scope, receive, send)
+../../.local/lib/python3.10/site-packages/anyio/from_thread.py:277: in call
+    return cast(T_Retval, self.start_task_soon(func, *args).result())
+/usr/lib/python3.10/concurrent/futures/_base.py:458: in result
+    return self.__get_result()
+/usr/lib/python3.10/concurrent/futures/_base.py:403: in __get_result
+    raise self._exception
+../../.local/lib/python3.10/site-packages/anyio/from_thread.py:217: in _call_func
+    retval = await retval
+../../.local/lib/python3.10/site-packages/fastapi/applications.py:1135: in __call__
+    await super().__call__(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/applications.py:107: in __call__
+    await self.middleware_stack(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/errors.py:186: in __call__
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/middleware/errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/cors.py:85: in __call__
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+../../.local/lib/python3.10/site-packages/fastapi/middleware/asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:716: in __call__
+    await self.middleware_stack(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:736: in app
+    await route.handle(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:290: in handle
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:115: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:101: in app
+    response = await f(request)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:355: in app
+    raw_response = await run_endpoint_function(
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:245: in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+../../.local/lib/python3.10/site-packages/starlette/concurrency.py:32: in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+../../.local/lib/python3.10/site-packages/anyio/to_thread.py:33: in run_sync
+    return await get_asynclib().run_sync_in_worker_thread(
+../../.local/lib/python3.10/site-packages/anyio/_backends/_asyncio.py:877: in run_sync_in_worker_thread
+    return await future
+../../.local/lib/python3.10/site-packages/anyio/_backends/_asyncio.py:807: in run
+    result = context.run(func, *args)
+app/routers/chemical.py:117: in get_dashboard_stats
+    ).all()
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/query.py:2704: in all
+    return self._iter().all()  # type: ignore
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/query.py:2857: in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/session.py:2365: in execute
+    return self._execute_internal(
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/session.py:2251: in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/context.py:306: in orm_execute_statement
+    result = conn.execute(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1413: in execute
+    return meth(
+../../.local/lib/python3.10/site-packages/sqlalchemy/sql/elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1635: in _execute_clauseelement
+    ret = self._execute_context(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1840: in _execute_context
+    return self._exec_single_context(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1980: in _exec_single_context
+    self._handle_dbapi_exception(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:2349: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1961: in _exec_single_context
+    self.dialect.do_execute(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/default.py:944: in do_execute
+    cursor.execute(statement, parameters)
+E   sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: samples
+E   [SQL: SELECT samples.id AS samples_id, samples.campaign_id AS samples_campaign_id, samples.sample_point_id AS samples_sample_point_id, samples.meter_id AS samples_meter_id, samples.well_id AS samples_well_id, samples.sample_id AS samples_sample_id, samples.type AS samples_type, samples.category AS samples_category, samples.status AS samples_status, samples.responsible AS samples_responsible, samples.osm_id AS samples_osm_id, samples.laudo_number AS samples_laudo_number, samples.mitigated AS samples_mitigated, samples.validation_party AS samples_validation_party, samples.is_active AS samples_is_active, samples.local AS samples_local, samples.planned_date AS samples_planned_date, samples.disembark_expected_date AS samples_disembark_expected_date, samples.lab_expected_date AS samples_lab_expected_date, samples.report_expected_date AS samples_report_expected_date, samples.fc_expected_date AS samples_fc_expected_date, samples.sampling_date AS samples_sampling_date, samples.disembark_date AS samples_disembark_date, samples.delivery_date AS samples_delivery_date, samples.report_issue_date AS samples_report_issue_date, samples.fc_update_date AS samples_fc_update_date, samples.due_date AS samples_due_date, samples.lab_report_url AS samples_lab_report_url, samples.validation_status AS samples_validation_status, samples.validation_report_url AS samples_validation_report_url, samples.fc_evidence_url AS samples_fc_evidence_url, samples.notes AS samples_notes, samples.created_at AS samples_created_at 
+E   FROM samples LEFT OUTER JOIN sample_points ON sample_points.id = samples.sample_point_id 
+E   WHERE sample_points.fpso_name = ? AND samples.status != ?]
+E   [parameters: ('FPSO Sepetiba', 'Flow computer update')]
+E   (Background on this error at: https://sqlalche.me/e/20/e3q8)
+______________________ TestSampleResults.test_add_result _______________________
+tests/test_m3_api_integration.py:262: in test_add_result
+    s_id = self._setup(client, "RES-ADD-01")
+tests/test_m3_api_integration.py:256: in _setup
+    "sample_point_id": sp_res.json()["id"], "local": "Onshore",
+E   KeyError: 'id'
+____________________ TestSampleResults.test_get_lab_results ____________________
+tests/test_m3_api_integration.py:271: in test_get_lab_results
+    s_id = self._setup(client, "RES-GET-01")
+tests/test_m3_api_integration.py:256: in _setup
+    "sample_point_id": sp_res.json()["id"], "local": "Onshore",
+E   KeyError: 'id'
+__________________ TestCheckSlas.test_check_slas_returns_200 ___________________
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1961: in _exec_single_context
+    self.dialect.do_execute(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/default.py:944: in do_execute
+    cursor.execute(statement, parameters)
+E   sqlite3.OperationalError: no such table: samples
+
+The above exception was the direct cause of the following exception:
+tests/test_m3_api_integration.py:286: in test_check_slas_returns_200
+    res = client.post("/api/chemical/check-slas")
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:546: in post
+    return super().post(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:1144: in post
+    return self.request(
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:445: in request
+    return super().request(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:825: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+../../.local/lib/python3.10/site-packages/httpx/_client.py:914: in send
+    response = self._send_handling_auth(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:942: in _send_handling_auth
+    response = self._send_handling_redirects(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:979: in _send_handling_redirects
+    response = self._send_single_request(request)
+../../.local/lib/python3.10/site-packages/httpx/_client.py:1014: in _send_single_request
+    response = transport.handle_request(request)
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:348: in handle_request
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:345: in handle_request
+    portal.call(self.app, scope, receive, send)
+../../.local/lib/python3.10/site-packages/anyio/from_thread.py:277: in call
+    return cast(T_Retval, self.start_task_soon(func, *args).result())
+/usr/lib/python3.10/concurrent/futures/_base.py:458: in result
+    return self.__get_result()
+/usr/lib/python3.10/concurrent/futures/_base.py:403: in __get_result
+    raise self._exception
+../../.local/lib/python3.10/site-packages/anyio/from_thread.py:217: in _call_func
+    retval = await retval
+../../.local/lib/python3.10/site-packages/fastapi/applications.py:1135: in __call__
+    await super().__call__(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/applications.py:107: in __call__
+    await self.middleware_stack(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/errors.py:186: in __call__
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/middleware/errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/cors.py:85: in __call__
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+../../.local/lib/python3.10/site-packages/fastapi/middleware/asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:716: in __call__
+    await self.middleware_stack(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:736: in app
+    await route.handle(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:290: in handle
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:115: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:101: in app
+    response = await f(request)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:355: in app
+    raw_response = await run_endpoint_function(
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:245: in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+../../.local/lib/python3.10/site-packages/starlette/concurrency.py:32: in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+../../.local/lib/python3.10/site-packages/anyio/to_thread.py:33: in run_sync
+    return await get_asynclib().run_sync_in_worker_thread(
+../../.local/lib/python3.10/site-packages/anyio/_backends/_asyncio.py:877: in run_sync_in_worker_thread
+    return await future
+../../.local/lib/python3.10/site-packages/anyio/_backends/_asyncio.py:807: in run
+    result = context.run(func, *args)
+app/routers/chemical.py:276: in check_sampling_slas
+    ).all()
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/query.py:2704: in all
+    return self._iter().all()  # type: ignore
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/query.py:2857: in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/session.py:2365: in execute
+    return self._execute_internal(
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/session.py:2251: in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/context.py:306: in orm_execute_statement
+    result = conn.execute(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1413: in execute
+    return meth(
+../../.local/lib/python3.10/site-packages/sqlalchemy/sql/elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1635: in _execute_clauseelement
+    ret = self._execute_context(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1840: in _execute_context
+    return self._exec_single_context(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1980: in _exec_single_context
+    self._handle_dbapi_exception(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:2349: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/base.py:1961: in _exec_single_context
+    self.dialect.do_execute(
+../../.local/lib/python3.10/site-packages/sqlalchemy/engine/default.py:944: in do_execute
+    cursor.execute(statement, parameters)
+E   sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: samples
+E   [SQL: SELECT samples.id AS samples_id, samples.campaign_id AS samples_campaign_id, samples.sample_point_id AS samples_sample_point_id, samples.meter_id AS samples_meter_id, samples.well_id AS samples_well_id, samples.sample_id AS samples_sample_id, samples.type AS samples_type, samples.category AS samples_category, samples.status AS samples_status, samples.responsible AS samples_responsible, samples.osm_id AS samples_osm_id, samples.laudo_number AS samples_laudo_number, samples.mitigated AS samples_mitigated, samples.validation_party AS samples_validation_party, samples.is_active AS samples_is_active, samples.local AS samples_local, samples.planned_date AS samples_planned_date, samples.disembark_expected_date AS samples_disembark_expected_date, samples.lab_expected_date AS samples_lab_expected_date, samples.report_expected_date AS samples_report_expected_date, samples.fc_expected_date AS samples_fc_expected_date, samples.sampling_date AS samples_sampling_date, samples.disembark_date AS samples_disembark_date, samples.delivery_date AS samples_delivery_date, samples.report_issue_date AS samples_report_issue_date, samples.fc_update_date AS samples_fc_update_date, samples.due_date AS samples_due_date, samples.lab_report_url AS samples_lab_report_url, samples.validation_status AS samples_validation_status, samples.validation_report_url AS samples_validation_report_url, samples.fc_evidence_url AS samples_fc_evidence_url, samples.notes AS samples_notes, samples.created_at AS samples_created_at 
+E   FROM samples 
+E   WHERE samples.status = ? AND samples.sampling_date <= ?]
+E   [parameters: ('Sample', '2026-04-03')]
+E   (Background on this error at: https://sqlalche.me/e/20/e3q8)
+=========================== short test summary info ============================
+FAILED tests/test_m3_api_integration.py::TestSamplePointCRUD::test_create_sample_point - assert 422 == 200
+ +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+FAILED tests/test_m3_api_integration.py::TestSamplePointCRUD::test_list_sample_points_all - sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: sample_points
+[SQL: SELECT sample_points.id AS sample_points_id, sample_points.tag_number AS sample_points_tag_number, sample_points.description AS sample_points_description, sample_points.fpso_name AS sample_points_fpso_name, sample_points.is_operational AS sample_points_is_operational, sample_points.sampling_interval_days AS sample_points_sampling_interval_days, sample_points.validation_method_implemented AS sample_points_validation_method_implemented, sample_points.analysis_types AS sample_points_analysis_types, sample_points.created_at AS sample_points_created_at 
+FROM sample_points]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+FAILED tests/test_m3_api_integration.py::TestSamplePointCRUD::test_list_sample_points_filtered_by_fpso - sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: sample_points
+[SQL: SELECT sample_points.id AS sample_points_id, sample_points.tag_number AS sample_points_tag_number, sample_points.description AS sample_points_description, sample_points.fpso_name AS sample_points_fpso_name, sample_points.is_operational AS sample_points_is_operational, sample_points.sampling_interval_days AS sample_points_sampling_interval_days, sample_points.validation_method_implemented AS sample_points_validation_method_implemented, sample_points.analysis_types AS sample_points_analysis_types, sample_points.created_at AS sample_points_created_at 
+FROM sample_points 
+WHERE sample_points.fpso_name = ?]
+[parameters: ('FPSO Sepetiba',)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+FAILED tests/test_m3_api_integration.py::TestSampleCreation::test_create_sample_starts_at_sample_status - KeyError: 'id'
+FAILED tests/test_m3_api_integration.py::TestSampleCreation::test_create_sample_operational_category - KeyError: 'id'
+FAILED tests/test_m3_api_integration.py::TestSampleCreation::test_create_sample_chromatography_is_coleta - KeyError: 'id'
+FAILED tests/test_m3_api_integration.py::TestSampleCreation::test_create_sample_invalid_sp_returns_404 - sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: sample_points
+[SQL: SELECT sample_points.id AS sample_points_id, sample_points.tag_number AS sample_points_tag_number, sample_points.description AS sample_points_description, sample_points.fpso_name AS sample_points_fpso_name, sample_points.is_operational AS sample_points_is_operational, sample_points.sampling_interval_days AS sample_points_sampling_interval_days, sample_points.validation_method_implemented AS sample_points_validation_method_implemented, sample_points.analysis_types AS sample_points_analysis_types, sample_points.created_at AS sample_points_created_at 
+FROM sample_points 
+WHERE sample_points.id = ?
+ LIMIT ? OFFSET ?]
+[parameters: (999999, 1, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+FAILED tests/test_m3_api_integration.py::TestSampleCreation::test_get_sample_by_id - KeyError: 'id'
+FAILED tests/test_m3_api_integration.py::TestSampleCreation::test_get_sample_not_found - sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: samples
+[SQL: SELECT samples.id AS samples_id, samples.campaign_id AS samples_campaign_id, samples.sample_point_id AS samples_sample_point_id, samples.meter_id AS samples_meter_id, samples.well_id AS samples_well_id, samples.sample_id AS samples_sample_id, samples.type AS samples_type, samples.category AS samples_category, samples.status AS samples_status, samples.responsible AS samples_responsible, samples.osm_id AS samples_osm_id, samples.laudo_number AS samples_laudo_number, samples.mitigated AS samples_mitigated, samples.validation_party AS samples_validation_party, samples.is_active AS samples_is_active, samples.local AS samples_local, samples.planned_date AS samples_planned_date, samples.disembark_expected_date AS samples_disembark_expected_date, samples.lab_expected_date AS samples_lab_expected_date, samples.report_expected_date AS samples_report_expected_date, samples.fc_expected_date AS samples_fc_expected_date, samples.sampling_date AS samples_sampling_date, samples.disembark_date AS samples_disembark_date, samples.delivery_date AS samples_delivery_date, samples.report_issue_date AS samples_report_issue_date, samples.fc_update_date AS samples_fc_update_date, samples.due_date AS samples_due_date, samples.lab_report_url AS samples_lab_report_url, samples.validation_status AS samples_validation_status, samples.validation_report_url AS samples_validation_report_url, samples.fc_evidence_url AS samples_fc_evidence_url, samples.notes AS samples_notes, samples.created_at AS samples_created_at 
+FROM samples 
+WHERE samples.id = ?
+ LIMIT ? OFFSET ?]
+[parameters: (999999, 1, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+FAILED tests/test_m3_api_integration.py::TestSampleCreation::test_list_samples_all - sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: samples
+[SQL: SELECT samples.id AS samples_id, samples.campaign_id AS samples_campaign_id, samples.sample_point_id AS samples_sample_point_id, samples.meter_id AS samples_meter_id, samples.well_id AS samples_well_id, samples.sample_id AS samples_sample_id, samples.type AS samples_type, samples.category AS samples_category, samples.status AS samples_status, samples.responsible AS samples_responsible, samples.osm_id AS samples_osm_id, samples.laudo_number AS samples_laudo_number, samples.mitigated AS samples_mitigated, samples.validation_party AS samples_validation_party, samples.is_active AS samples_is_active, samples.local AS samples_local, samples.planned_date AS samples_planned_date, samples.disembark_expected_date AS samples_disembark_expected_date, samples.lab_expected_date AS samples_lab_expected_date, samples.report_expected_date AS samples_report_expected_date, samples.fc_expected_date AS samples_fc_expected_date, samples.sampling_date AS samples_sampling_date, samples.disembark_date AS samples_disembark_date, samples.delivery_date AS samples_delivery_date, samples.report_issue_date AS samples_report_issue_date, samples.fc_update_date AS samples_fc_update_date, samples.due_date AS samples_due_date, samples.lab_report_url AS samples_lab_report_url, samples.validation_status AS samples_validation_status, samples.validation_report_url AS samples_validation_report_url, samples.fc_evidence_url AS samples_fc_evidence_url, samples.notes AS samples_notes, samples.created_at AS samples_created_at, sample_points_1.id AS sample_points_1_id, sample_points_1.tag_number AS sample_points_1_tag_number, sample_points_1.description AS sample_points_1_description, sample_points_1.fpso_name AS sample_points_1_fpso_name, sample_points_1.is_operational AS sample_points_1_is_operational, sample_points_1.sampling_interval_days AS sample_points_1_sampling_interval_days, sample_points_1.validation_method_implemented AS sample_points_1_validation_method_implemented, sample_points_1.analysis_types AS sample_points_1_analysis_types, sample_points_1.created_at AS sample_points_1_created_at, instrument_tags_1.id AS instrument_tags_1_id, instrument_tags_1.tag_number AS instrument_tags_1_tag_number, instrument_tags_1.description AS instrument_tags_1_description, instrument_tags_1.area AS instrument_tags_1_area, instrument_tags_1.service AS instrument_tags_1_service, instrument_tags_1.classification AS instrument_tags_1_classification, instrument_tags_1.hierarchy_node_id AS instrument_tags_1_hierarchy_node_id, instrument_tags_1.created_at AS instrument_tags_1_created_at, wells_1.id AS wells_1_id, wells_1.tag AS wells_1_tag, wells_1.description AS wells_1_description, wells_1.fpso AS wells_1_fpso, wells_1.anp_code AS wells_1_anp_code, wells_1.sbm_code AS wells_1_sbm_code, wells_1.sample_point_gas AS wells_1_sample_point_gas, wells_1.sample_point_oil AS wells_1_sample_point_oil, wells_1.status AS wells_1_status, wells_1.created_at AS wells_1_created_at 
+FROM samples LEFT OUTER JOIN sample_points ON sample_points.id = samples.sample_point_id LEFT OUTER JOIN sample_points AS sample_points_1 ON sample_points_1.id = samples.sample_point_id LEFT OUTER JOIN instrument_tags AS instrument_tags_1 ON instrument_tags_1.id = samples.meter_id LEFT OUTER JOIN wells AS wells_1 ON wells_1.id = samples.well_id]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+FAILED tests/test_m3_api_integration.py::TestStatusFlowLifecycle::test_sample_to_disembark_sets_sla_dates - KeyError: 'id'
+FAILED tests/test_m3_api_integration.py::TestStatusFlowLifecycle::test_disembark_logistics_sets_date - KeyError: 'id'
+FAILED tests/test_m3_api_integration.py::TestStatusFlowLifecycle::test_deliver_at_vendor_sets_date - KeyError: 'id'
+FAILED tests/test_m3_api_integration.py::TestStatusFlowLifecycle::test_report_issue_sets_fc_expected - KeyError: 'id'
+FAILED tests/test_m3_api_integration.py::TestStatusFlowLifecycle::test_fc_update_sets_timestamp - KeyError: 'id'
+FAILED tests/test_m3_api_integration.py::TestOverrideDate::test_override_due_date - KeyError: 'id'
+FAILED tests/test_m3_api_integration.py::TestOverrideDate::test_override_with_null_clears_date - KeyError: 'id'
+FAILED tests/test_m3_api_integration.py::TestOverrideDate::test_override_nonexistent_sample_404 - sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: samples
+[SQL: SELECT samples.id AS samples_id, samples.campaign_id AS samples_campaign_id, samples.sample_point_id AS samples_sample_point_id, samples.meter_id AS samples_meter_id, samples.well_id AS samples_well_id, samples.sample_id AS samples_sample_id, samples.type AS samples_type, samples.category AS samples_category, samples.status AS samples_status, samples.responsible AS samples_responsible, samples.osm_id AS samples_osm_id, samples.laudo_number AS samples_laudo_number, samples.mitigated AS samples_mitigated, samples.validation_party AS samples_validation_party, samples.is_active AS samples_is_active, samples.local AS samples_local, samples.planned_date AS samples_planned_date, samples.disembark_expected_date AS samples_disembark_expected_date, samples.lab_expected_date AS samples_lab_expected_date, samples.report_expected_date AS samples_report_expected_date, samples.fc_expected_date AS samples_fc_expected_date, samples.sampling_date AS samples_sampling_date, samples.disembark_date AS samples_disembark_date, samples.delivery_date AS samples_delivery_date, samples.report_issue_date AS samples_report_issue_date, samples.fc_update_date AS samples_fc_update_date, samples.due_date AS samples_due_date, samples.lab_report_url AS samples_lab_report_url, samples.validation_status AS samples_validation_status, samples.validation_report_url AS samples_validation_report_url, samples.fc_evidence_url AS samples_fc_evidence_url, samples.notes AS samples_notes, samples.created_at AS samples_created_at 
+FROM samples 
+WHERE samples.id = ?
+ LIMIT ? OFFSET ?]
+[parameters: (999999, 1, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+FAILED tests/test_m3_api_integration.py::TestDashboard::test_dashboard_returns_all_groups - sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: samples
+[SQL: SELECT samples.id AS samples_id, samples.campaign_id AS samples_campaign_id, samples.sample_point_id AS samples_sample_point_id, samples.meter_id AS samples_meter_id, samples.well_id AS samples_well_id, samples.sample_id AS samples_sample_id, samples.type AS samples_type, samples.category AS samples_category, samples.status AS samples_status, samples.responsible AS samples_responsible, samples.osm_id AS samples_osm_id, samples.laudo_number AS samples_laudo_number, samples.mitigated AS samples_mitigated, samples.validation_party AS samples_validation_party, samples.is_active AS samples_is_active, samples.local AS samples_local, samples.planned_date AS samples_planned_date, samples.disembark_expected_date AS samples_disembark_expected_date, samples.lab_expected_date AS samples_lab_expected_date, samples.report_expected_date AS samples_report_expected_date, samples.fc_expected_date AS samples_fc_expected_date, samples.sampling_date AS samples_sampling_date, samples.disembark_date AS samples_disembark_date, samples.delivery_date AS samples_delivery_date, samples.report_issue_date AS samples_report_issue_date, samples.fc_update_date AS samples_fc_update_date, samples.due_date AS samples_due_date, samples.lab_report_url AS samples_lab_report_url, samples.validation_status AS samples_validation_status, samples.validation_report_url AS samples_validation_report_url, samples.fc_evidence_url AS samples_fc_evidence_url, samples.notes AS samples_notes, samples.created_at AS samples_created_at 
+FROM samples LEFT OUTER JOIN sample_points ON sample_points.id = samples.sample_point_id 
+WHERE samples.status != ?]
+[parameters: ('Flow computer update',)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+FAILED tests/test_m3_api_integration.py::TestDashboard::test_dashboard_with_fpso_filter - sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: samples
+[SQL: SELECT samples.id AS samples_id, samples.campaign_id AS samples_campaign_id, samples.sample_point_id AS samples_sample_point_id, samples.meter_id AS samples_meter_id, samples.well_id AS samples_well_id, samples.sample_id AS samples_sample_id, samples.type AS samples_type, samples.category AS samples_category, samples.status AS samples_status, samples.responsible AS samples_responsible, samples.osm_id AS samples_osm_id, samples.laudo_number AS samples_laudo_number, samples.mitigated AS samples_mitigated, samples.validation_party AS samples_validation_party, samples.is_active AS samples_is_active, samples.local AS samples_local, samples.planned_date AS samples_planned_date, samples.disembark_expected_date AS samples_disembark_expected_date, samples.lab_expected_date AS samples_lab_expected_date, samples.report_expected_date AS samples_report_expected_date, samples.fc_expected_date AS samples_fc_expected_date, samples.sampling_date AS samples_sampling_date, samples.disembark_date AS samples_disembark_date, samples.delivery_date AS samples_delivery_date, samples.report_issue_date AS samples_report_issue_date, samples.fc_update_date AS samples_fc_update_date, samples.due_date AS samples_due_date, samples.lab_report_url AS samples_lab_report_url, samples.validation_status AS samples_validation_status, samples.validation_report_url AS samples_validation_report_url, samples.fc_evidence_url AS samples_fc_evidence_url, samples.notes AS samples_notes, samples.created_at AS samples_created_at 
+FROM samples LEFT OUTER JOIN sample_points ON sample_points.id = samples.sample_point_id 
+WHERE sample_points.fpso_name = ? AND samples.status != ?]
+[parameters: ('FPSO Sepetiba', 'Flow computer update')]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+FAILED tests/test_m3_api_integration.py::TestSampleResults::test_add_result - KeyError: 'id'
+FAILED tests/test_m3_api_integration.py::TestSampleResults::test_get_lab_results - KeyError: 'id'
+FAILED tests/test_m3_api_integration.py::TestCheckSlas::test_check_slas_returns_200 - sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: samples
+[SQL: SELECT samples.id AS samples_id, samples.campaign_id AS samples_campaign_id, samples.sample_point_id AS samples_sample_point_id, samples.meter_id AS samples_meter_id, samples.well_id AS samples_well_id, samples.sample_id AS samples_sample_id, samples.type AS samples_type, samples.category AS samples_category, samples.status AS samples_status, samples.responsible AS samples_responsible, samples.osm_id AS samples_osm_id, samples.laudo_number AS samples_laudo_number, samples.mitigated AS samples_mitigated, samples.validation_party AS samples_validation_party, samples.is_active AS samples_is_active, samples.local AS samples_local, samples.planned_date AS samples_planned_date, samples.disembark_expected_date AS samples_disembark_expected_date, samples.lab_expected_date AS samples_lab_expected_date, samples.report_expected_date AS samples_report_expected_date, samples.fc_expected_date AS samples_fc_expected_date, samples.sampling_date AS samples_sampling_date, samples.disembark_date AS samples_disembark_date, samples.delivery_date AS samples_delivery_date, samples.report_issue_date AS samples_report_issue_date, samples.fc_update_date AS samples_fc_update_date, samples.due_date AS samples_due_date, samples.lab_report_url AS samples_lab_report_url, samples.validation_status AS samples_validation_status, samples.validation_report_url AS samples_validation_report_url, samples.fc_evidence_url AS samples_fc_evidence_url, samples.notes AS samples_notes, samples.created_at AS samples_created_at 
+FROM samples 
+WHERE samples.status = ? AND samples.sampling_date <= ?]
+[parameters: ('Sample', '2026-04-03')]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+============================== 23 failed in 6.34s ==============================

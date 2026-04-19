@@ -26,7 +26,8 @@ class TestCampaignsCRUD:
             "fpso_name": "FPSO Sepetiba",
             "start_date": "2026-01-01",
             "end_date": "2026-06-30",
-            "status": "Active"
+            "status": "Active",
+            "responsible": "Engineer X"
         })
         assert res.status_code == 200
         data = res.json()
@@ -37,7 +38,7 @@ class TestCampaignsCRUD:
         # Cria uma campanha primeiro
         client.post("/api/chemical/campaigns", json={
             "name": "Camp List All", "fpso_name": "FPSO Test",
-            "start_date": "2026-01-01", "end_date": "2026-12-31", "status": "Active"
+            "start_date": "2026-01-01", "end_date": "2026-12-31", "status": "Active", "responsible": "Test"
         })
         res = client.get("/api/chemical/campaigns")
         assert res.status_code == 200
@@ -47,7 +48,7 @@ class TestCampaignsCRUD:
     def test_list_campaigns_filtered_by_fpso(self, client):
         client.post("/api/chemical/campaigns", json={
             "name": "Camp FPSO Filter", "fpso_name": "FPSO FilterTest",
-            "start_date": "2026-01-01", "end_date": "2026-12-31", "status": "Active"
+            "start_date": "2026-01-01", "end_date": "2026-12-31", "status": "Active", "responsible": "Test"
         })
         res = client.get("/api/chemical/campaigns?fpso_name=FPSO FilterTest")
         assert res.status_code == 200
@@ -57,7 +58,7 @@ class TestCampaignsCRUD:
     def test_list_campaigns_filtered_by_status(self, client):
         client.post("/api/chemical/campaigns", json={
             "name": "Camp Status", "fpso_name": "FPSO Status",
-            "start_date": "2026-01-01", "end_date": "2026-12-31", "status": "Closed"
+            "start_date": "2026-01-01", "end_date": "2026-12-31", "status": "Closed", "responsible": "Test"
         })
         res = client.get("/api/chemical/campaigns?status=Closed")
         assert res.status_code == 200
@@ -85,7 +86,7 @@ class TestSampleListFilters:
 
     def _create_sp_and_sample(self, client, sid, fpso, status_val=None):
         sp = client.post("/api/chemical/sample-points", json={
-            "fase": "Prod", "number": f"SP-FLT-{sid}", "fpso_name": fpso,
+            "description": "Auto", "fase": "Prod", "tag_number": f"SP-FLT-{sid}", "fpso_name": fpso,
             "system": "Gas", "fluid": "Gas"
         })
         s = client.post("/api/chemical/samples", json={
@@ -124,7 +125,7 @@ class TestDashboardAccuracy:
     def _create_overdue_sample(self, client, sid):
         """Cria uma amostra com due_date no passado (overdue)."""
         sp = client.post("/api/chemical/sample-points", json={
-            "fase": "Prod", "number": f"SP-DASH-{sid}", "fpso_name": "FPSO Dashboard",
+            "description": "Auto", "fase": "Prod", "tag_number": f"SP-DASH-{sid}", "fpso_name": "FPSO Dashboard",
             "system": "Gas", "fluid": "Gas"
         })
         s = client.post("/api/chemical/samples", json={
@@ -156,7 +157,7 @@ class TestDashboardAccuracy:
     def test_dashboard_steps_have_samples(self, client):
         """Cada step do dashboard deve listar as amostras pertencentes."""
         sp = client.post("/api/chemical/sample-points", json={
-            "fase": "Prod", "number": "SP-DASH-STEP", "fpso_name": "FPSO DashStep",
+            "description": "Auto", "fase": "Prod", "tag_number": "SP-DASH-STEP", "fpso_name": "FPSO DashStep",
             "system": "Gas", "fluid": "Gas"
         })
         s = client.post("/api/chemical/samples", json={
@@ -186,7 +187,7 @@ class TestStatusHistory:
 
     def _setup(self, client, sid="HIST-AUD"):
         sp = client.post("/api/chemical/sample-points", json={
-            "fase": "Prod", "number": f"SP-{sid}", "fpso_name": "FPSO Hist",
+            "description": "Auto", "fase": "Prod", "tag_number": f"SP-{sid}", "fpso_name": "FPSO Hist",
             "system": "Gas", "fluid": "Gas"
         })
         s = client.post("/api/chemical/samples", json={
@@ -222,7 +223,7 @@ class TestSampleCreationWithMeter:
     def test_create_sample_with_meter_id(self, client):
         """Se meter_id for fornecido, a classificação do SLA vem do meter."""
         sp = client.post("/api/chemical/sample-points", json={
-            "fase": "Prod", "number": "SP-METER-01", "fpso_name": "FPSO Meter",
+            "description": "Auto", "fase": "Prod", "tag_number": "SP-METER-01", "fpso_name": "FPSO Meter",
             "system": "Gas", "fluid": "Gas"
         })
         sp_id = sp.json()["id"]

@@ -134,6 +134,10 @@ def get_hierarchy_tree(db: Session = Depends(database.get_db)):
                     cat_node.children.append(inst_node)
             
     return [fpso]
+    
+@router.get("/hierarchy/nodes", response_model=List[schemas.HierarchyNode])
+def get_hierarchy_nodes(db: Session = Depends(database.get_db)):
+    return db.query(models.HierarchyNode).all()
 
 @router.post("/hierarchy/nodes", response_model=schemas.HierarchyNode)
 def create_hierarchy_node(node: schemas.HierarchyNodeCreate, db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
@@ -154,7 +158,10 @@ def create_hierarchy_node(node: schemas.HierarchyNodeCreate, db: Session = Depen
         
     else:
         # Fallback for generic nodes
-        db_node = models.HierarchyNode(**node.model_dump())
+        data = node.model_dump()
+        if "attributes" in data:
+            del data["attributes"]
+        db_node = models.HierarchyNode(**data)
         db.add(db_node)
         db.commit()
         db.refresh(db_node)

@@ -84,7 +84,7 @@ class SampleStatusHistory(SampleStatusHistoryBase):
 # Sample Schemas
 class SampleBase(BaseModel):
     sample_id: str
-    type: str # Fiscal, Gas Lift, Poço CG, Poço PVT, Operacional, etc.
+    type: Optional[str] = None # Fiscal, Gas Lift, Poço CG, Poço PVT, Operacional, etc.
     category: Optional[str] = "Coleta"  # "Coleta" or "Operacional"
     responsible: Optional[str] = None
     sample_point_id: Optional[int] = None

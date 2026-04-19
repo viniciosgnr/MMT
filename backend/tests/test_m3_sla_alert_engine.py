@@ -1,3 +1,4 @@
+from sqlalchemy.pool import StaticPool
 """
 Harness Engineering — P0 Test: SLA Alert Engine
 
@@ -20,8 +21,8 @@ from app.dependencies import get_current_user
 from app import models
 
 # --- Isolated DB for SLA tests ---
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test_sla.db"
-sla_engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
+sla_engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}, poolclass=StaticPool)
 SLATestSession = sessionmaker(autocommit=False, autoflush=False, bind=sla_engine)
 
 
@@ -45,7 +46,6 @@ def sla_client():
     Base.metadata.create_all(bind=sla_engine)
     with TestClient(app) as c:
         yield c
-    Base.metadata.drop_all(bind=sla_engine)
     # Clean up the file-based DB
     import os
     try:

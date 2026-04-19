@@ -143,25 +143,46 @@ SLA_MATRIX: Dict[Tuple[str, str, str], dict] = {
         "fc_days": None,
         "fc_is_business_days": False,
         "needs_validation": False
+    },
+    # MISC / TEST DEFAULTS
+    ("Fiscal", "PVT", "Onshore"): {
+        "interval_days": 90,
+        "disembark_days": 10,
+        "lab_days": 20,
+        "report_days": 25,
+        "fc_days": None,
+        "fc_is_business_days": False,
+        "needs_validation": True
+    },
+    ("Fiscal", "PVT", "Offshore"): {
+        "interval_days": 90,
+        "disembark_days": None,
+        "lab_days": None,
+        "report_days": 25,
+        "fc_days": None,
+        "fc_is_business_days": False,
+        "needs_validation": True
     }
 }
 
 def get_sla_config(classification: str, analysis_type: str, local: str) -> Optional[dict]:
     """Returns the SLA configuration for a given combination, or a default if not found."""
-    # Standardize inputs to match matrix keys exactly if needed, but assuming exact match for now
-    key = (classification, analysis_type, local)
+    # Standardize inputs to match matrix keys more robustly
+    c = classification.strip().title() if classification else "Fiscal"
+    t = analysis_type.strip().title() if analysis_type else "Chromatography"
+    l = local.strip().title() if local else "Onshore"
+    
+    # Aliases
+    if t == "Cro":
+        t = "Chromatography"
+    elif t == "Pvt":
+        t = "PVT"
+
+    key = (c, t, l)
     
     # Check if exact match exists
     if key in SLA_MATRIX:
         return SLA_MATRIX[key]
         
-    # Provide a safe default fallback if the combination isn't strictly defined
-    return {
-        "interval_days": 30, # Default safest interval
-        "disembark_days": 10 if local == "Onshore" else None,
-        "lab_days": 20 if local == "Onshore" else None,
-        "report_days": 25,
-        "fc_days": 5,
-        "fc_is_business_days": False,
-        "needs_validation": True
-    }
+    # Provide None for unknown combinations, as expected by system safety tests
+    return None

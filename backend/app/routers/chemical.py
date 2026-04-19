@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 import os
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import func, desc
+from sqlalchemy import func, desc, or_, and_, exists
 from typing import List, Optional
 from datetime import datetime, date, timedelta
 from .. import models, database
@@ -231,25 +231,36 @@ def list_samples(
         query = query.filter(models.Sample.status == status)
         
     if equipment_id:
-        # M1 -> M3 Integration: Find samples relevant to the equipment's current location (Tag)
-        # 1. Get active installation
-        active_install = db.query(models.EquipmentTagInstallation).filter(
-            models.EquipmentTagInstallation.equipment_id == equipment_id,
-            models.EquipmentTagInstallation.is_active == 1
-        ).first()
-        
-        if active_install:
-            # 2. Get Tag and its Sample Point
-            tag = db.query(models.InstrumentTag).filter(models.InstrumentTag.id == active_install.tag_id).first()
-            if tag and tag.sample_points:
-                sp_ids = [sp.id for sp in tag.sample_points]
-                query = query.filter(models.Sample.sample_point_id.in_(sp_ids))
-            else:
-                # Installed but Tag has no sample point -> No samples
-                return []
-        else:
-            # Not installed -> No associated process samples
-            return []
+        # --- Skill (backend-dev-guidelines): Unified Historical Traceability ---
+        # M1 -> M3 Integration: Find samples linked to the equipment via its 
+        # installation history. Handles both direct (meter_id) and indirect (SP) links.
+        query = query.join(
+            models.EquipmentTagInstallation,
+            and_(
+                models.EquipmentTagInstallation.equipment_id == equipment_id,
+                models.Sample.created_at >= models.EquipmentTagInstallation.installation_date,
+                or_(
+                    models.EquipmentTagInstallation.removal_date.is_(None),
+                    models.Sample.created_at <= models.EquipmentTagInstallation.removal_date
+                )
+            )
+        )
+        query = query.filter(
+            or_(
+                # Path A: Direct meter_id match
+                models.Sample.meter_id == models.EquipmentTagInstallation.tag_id,
+                # Path B: Indirect via SamplePoint (for samples missing meter_id but on correct SP)
+                and_(
+                    models.Sample.meter_id.is_(None),
+                    exists().where(
+                        and_(
+                            models.meter_sample_link.c.sample_point_id == models.Sample.sample_point_id,
+                            models.meter_sample_link.c.meter_id == models.EquipmentTagInstallation.tag_id
+                        )
+                    )
+                )
+            )
+        )
             
     return query.all()
 
@@ -395,9 +406,50 @@ def update_sample_status(sample_id: int, update: schemas.SampleStatusUpdate, db:
     meter_class = sample.meter.classification if sample.meter else "Fiscal"
     sla_config = get_sla_config(meter_class, sample.type, sample.local)
     
+    def schedule_emergency_re_sampling(s: models.Sample, db: Session, cfg: Optional[dict]):
+        # Schedule emergency sample 3 business days after emission
+        base_date = s.report_issue_date or date.today()
+        
+        # Calculate 3 business days
+        days_to_add = 3
+        emergency_date = base_date
+        while days_to_add > 0:
+            emergency_date += timedelta(days=1)
+            if emergency_date.weekday() < 5:  # 0-4 are Monday-Friday
+                days_to_add -= 1
+
+        # Per spec: "a data de coleta prevista mantém se menor"
+        # Use the earlier of: emergency date OR next periodic planned date
+        next_periodic_date = None
+        if s.sampling_date and cfg and cfg.get("interval_days"):
+            next_periodic_date = s.sampling_date + timedelta(days=cfg["interval_days"])
+        
+        final_date = emergency_date
+        if next_periodic_date and next_periodic_date < emergency_date:
+            final_date = next_periodic_date
+
+        prefix = s.sample_id.split('-')[0] if '-' in s.sample_id else 'CDI'
+        new_id = f"{prefix}-{datetime.now().strftime('%Y%m')}-EMG-{s.id}-{int(datetime.utcnow().timestamp())}"
+        new_sample = models.Sample(
+            sample_id=new_id,
+            type=s.type,
+            category=s.category,
+            status=models.SampleStatus.SAMPLE.value,
+            responsible=s.responsible,
+            sample_point_id=s.sample_point_id,
+            meter_id=s.meter_id,
+            well_id=s.well_id,
+            validation_party=s.validation_party,
+            is_active=1,
+            local=s.local,
+            planned_date=final_date,
+            due_date=final_date,
+            created_at=datetime.utcnow()
+        )
+        db.add(new_sample)
+        return new_sample
+
     # Auto-update dates based on status
-    # SLA calculations happen when moving FROM "Sample" TO "Disembark preparation"
-    # This means the collection has been performed
     if update.status == models.SampleStatus.DISEMBARK_PREP:
         if update.local:
             sample.local = update.local
@@ -411,16 +463,17 @@ def update_sample_status(sample_id: int, update: schemas.SampleStatusUpdate, db:
         existing_periodic = db.query(models.Sample).filter(
             models.Sample.sample_id.like(f"%-PER-{sample.id}-%")
         ).first()
-        if not existing_periodic:
+        if not existing_periodic and sla_config:
             schedule_next_periodic_sample(sample, sla_config)
         
-        if sla_config["disembark_days"]:
-            sample.disembark_expected_date = sampling_dt + timedelta(days=sla_config["disembark_days"])
-        if sla_config["lab_days"]:
-            sample.lab_expected_date = sampling_dt + timedelta(days=sla_config["lab_days"])
-        if sla_config["report_days"]:
-            sample.report_expected_date = sampling_dt + timedelta(days=sla_config["report_days"])
-            
+        if sla_config:
+            if sla_config["disembark_days"]:
+                sample.disembark_expected_date = sampling_dt + timedelta(days=sla_config["disembark_days"])
+            if sla_config["lab_days"]:
+                sample.lab_expected_date = sampling_dt + timedelta(days=sla_config["lab_days"])
+            if sla_config["report_days"]:
+                sample.report_expected_date = sampling_dt + timedelta(days=sla_config["report_days"])
+                
     elif update.status == models.SampleStatus.DISEMBARK_LOGISTICS:
         sample.disembark_date = update.event_date or date.today()
     elif update.status == models.SampleStatus.DELIVER_AT_VENDOR:
@@ -431,7 +484,7 @@ def update_sample_status(sample_id: int, update: schemas.SampleStatusUpdate, db:
             sample.lab_report_url = update.url
             
         # Calculate FC expected date based on report emission
-        if sla_config["fc_days"]:
+        if sla_config and sla_config["fc_days"]:
             if sla_config["fc_is_business_days"]:
                 days_to_add = sla_config["fc_days"]
                 curr_date = sample.report_issue_date
@@ -442,66 +495,30 @@ def update_sample_status(sample_id: int, update: schemas.SampleStatusUpdate, db:
                 sample.fc_expected_date = curr_date
             else:
                 sample.fc_expected_date = sample.report_issue_date + timedelta(days=sla_config["fc_days"])
-                
+    
     elif update.status == models.SampleStatus.REPORT_APPROVE_REPROVE:
         sample.validation_status = update.validation_status
         if update.url:
             sample.validation_report_url = update.url
-            
         if update.validation_status == "Reprovado":
-            # Schedule emergency sample 3 business days after emission
-            base_date = sample.report_issue_date or date.today()
-            
-            # Calculate 3 business days
-            days_to_add = 3
-            emergency_date = base_date
-            while days_to_add > 0:
-                emergency_date += timedelta(days=1)
-                if emergency_date.weekday() < 5:  # 0-4 are Monday-Friday
-                    days_to_add -= 1
-
-            # Per spec: "a data de coleta prevista mantém se menor"
-            # Use the earlier of: emergency date OR next periodic planned date
-            next_periodic_date = None
-            if sample.sampling_date and sla_config.get("interval_days"):
-                next_periodic_date = sample.sampling_date + timedelta(days=sla_config["interval_days"])
-            
-            final_date = emergency_date
-            if next_periodic_date and next_periodic_date < emergency_date:
-                final_date = next_periodic_date
-
-            prefix = sample.sample_id.split('-')[0] if '-' in sample.sample_id else 'CDI'
-            new_id = f"{prefix}-{datetime.now().strftime('%Y%m')}-EMG-{sample.id}-{int(datetime.utcnow().timestamp())}"
-            new_sample = models.Sample(
-                sample_id=new_id,
-                type=sample.type,
-                category=sample.category,
-                status=models.SampleStatus.SAMPLE.value,
-                responsible=sample.responsible,
-                sample_point_id=sample.sample_point_id,
-                meter_id=sample.meter_id,
-                well_id=sample.well_id,
-                validation_party=sample.validation_party,
-                is_active=1,
-                local=sample.local,
-                planned_date=final_date,
-                due_date=final_date,
-                created_at=datetime.utcnow()
-            )
-            db.add(new_sample)
-            
+            schedule_emergency_re_sampling(sample, db, sla_config)
+    
     elif update.status == models.SampleStatus.FLOW_COMPUTER_UPDATE:
-        sample.fc_update_date = datetime.utcnow()
+        sample.fc_update_date = update.event_date or date.today()
         if update.url:
             sample.fc_evidence_url = update.url
-
+        if update.validation_status:
+            sample.validation_status = update.validation_status
+        if update.validation_status == "Reprovado":
+            schedule_emergency_re_sampling(sample, db, sla_config)
+    
     # Handle additional tracking fields from update
     if update.osm_id is not None:
         sample.osm_id = update.osm_id
     if update.laudo_number is not None:
         sample.laudo_number = update.laudo_number
     if update.mitigated is not None:
-        sample.mitigated = update.mitigated
+        sample.mitigated = 1 if update.mitigated else 0
 
     sample.status = update.status
     

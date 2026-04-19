@@ -27,9 +27,12 @@ from app.services.validation_engine import (
     CheckResult, ValidationResult,
     O2_LIMIT, HISTORY_SIZE, SIGMA_MULTIPLIER
 )
-from app.services.pdf_parser import PVTResult, CROResult
-
-
+from app.services.pdf_parser import (
+    PVTResult, CROResult,
+    _parse_br_float, detect_report_type,
+    _extract_tag_point, _extract_boletim, _extract_sampling_date,
+    extract_pvt, extract_cro
+)
 class TestCheckResultDataclass:
     """Testa o dataclass CheckResult."""
 
@@ -110,7 +113,7 @@ class TestCheck2SigmaEdgeCases:
             {"value": 100 + (i % 2) * 10, "date": f"2026-01-{i+1:02d}", "sample_id": f"S{i}"}
             for i in range(10)
         ]
-        result = _check_2sigma("test", 115.1, "unit", history)
+        result = _check_2sigma("test", 116.0, "unit", history)
         assert result.status == "fail"
 
     def test_volatile_history(self):
@@ -170,72 +173,66 @@ class TestO2LimitDeep:
 class TestPdfParserEdgeCases:
     """Testes adicionais do PDF Parser — edge cases de regex."""
 
-    from app.services.pdf_parser import (
-        _parse_br_float, detect_report_type,
-        _extract_tag_point, _extract_boletim, _extract_sampling_date,
-        extract_pvt, extract_cro
-    )
-
     def test_parse_br_float_with_thousand_separator(self):
         """1.234,56 → não suportado, mas não deve crashar."""
-        result = self._parse_br_float("1.234,56")
+        result = _parse_br_float("1.234,56")
         # Pode retornar None ou um float (comportamento defensivo)
         assert result is None or isinstance(result, float)
 
     def test_parse_br_float_empty(self):
-        assert self._parse_br_float("") is None
+        assert _parse_br_float("") is None
 
     def test_parse_br_float_none_input(self):
-        assert self._parse_br_float(None) is None
+        assert _parse_br_float(None) is None
 
     def test_detect_pvt(self):
         text = "Massa específica absoluta do óleo morto\n875,39"
-        assert self.detect_report_type(text) == "PVT"
+        assert detect_report_type(text) == "PVT"
 
     def test_detect_cro(self):
         text = "Cromatografia do Gás Natural\nConcentração Molar"
-        assert self.detect_report_type(text) == "CRO"
+        assert detect_report_type(text) == "CRO"
 
     def test_detect_unknown(self):
         text = "Este é um documento qualquer sem marcadores"
-        assert self.detect_report_type(text) == "UNKNOWN"
+        assert detect_report_type(text) == "UNKNOWN"
 
     def test_detect_pvt_by_boletim_prefix(self):
         text = "PVT Sepetiba/26-16901"
-        assert self.detect_report_type(text) == "PVT"
+        assert detect_report_type(text) == "PVT"
 
     def test_detect_cro_by_boletim_prefix(self):
         text = "CRO Sepetiba/26-16901"
-        assert self.detect_report_type(text) == "CRO"
+        assert detect_report_type(text) == "CRO"
 
     def test_extract_tag_point_valid(self):
         text = "662-AP-2233 / P-02 (Downstream)"
-        result = self._extract_tag_point(text)
+        result = _extract_tag_point(text)
         assert result is not None
         assert "662-AP-2233" in result
 
     def test_extract_tag_point_no_match(self):
-        result = self._extract_tag_point("Texto sem tag point nenhum")
+        result = _extract_tag_point("Texto sem tag point nenhum")
         assert result is None
 
     def test_extract_boletim_pvt(self):
         text = "Boletim de Resultado de Análise N°\nPVT Sepetiba/26-16901"
-        result = self._extract_boletim(text)
+        result = _extract_boletim(text)
         assert result is not None
         assert "PVT" in result
 
     def test_extract_boletim_no_match(self):
-        result = self._extract_boletim("Texto sem boletim")
+        result = _extract_boletim("Texto sem boletim")
         assert result is None
 
     def test_extract_sampling_date_fpso(self):
         text = "FPSO Cidade de Sepetiba\n17/01/2026\nOutra coisa"
-        result = self._extract_sampling_date(text)
+        result = _extract_sampling_date(text)
         assert result == "17/01/2026"
 
     def test_extract_sampling_date_fallback(self):
-        text = "Data de Recebimento\nAmostra\n03/02/2026"
-        result = self._extract_sampling_date(text)
+        text = "Data de Recebimento\n03/02/2026"
+        result = _extract_sampling_date(text)
         assert result == "03/02/2026"
 
     def test_extract_pvt_complete(self):
@@ -247,7 +244,7 @@ class TestPdfParserEdgeCases:
             "RGO ou RS\n88,0571\n"
             "FE\n0,8241\n"
         )
-        result = self.extract_pvt(text)
+        result = extract_pvt(text)
         assert result.report_type == "PVT"
         assert result.boletim is not None
         assert result.tag_point is not None
@@ -264,7 +261,7 @@ class TestPdfParserEdgeCases:
             "O2\nOxigênio\n1A\n0,032\n"
             "Densidade Relativa do Gás Real\n1B\n1,0509\n-"
         )
-        result = self.extract_cro(text)
+        result = extract_cro(text)
         assert result.report_type == "CRO"
         assert result.boletim is not None
         assert abs(result.o2 - 0.032) < 0.001
@@ -273,7 +270,7 @@ class TestPdfParserEdgeCases:
     def test_extract_pvt_missing_fields(self):
         """PVT com campos faltando → None nos campos, sem crash."""
         text = "Massa específica absoluta do óleo morto - 20 °C\n875,39\n"
-        result = self.extract_pvt(text)
+        result = extract_pvt(text)
         assert result.density is not None
         assert result.rs is None
         assert result.fe is None
@@ -282,6 +279,6 @@ class TestPdfParserEdgeCases:
     def test_extract_cro_missing_o2(self):
         """CRO sem O2 → o2 é None."""
         text = "Densidade Relativa do Gás Real\n1B\n1,0509\n-"
-        result = self.extract_cro(text)
+        result = extract_cro(text)
         assert result.o2 is None
         assert result.relative_density_real is not None

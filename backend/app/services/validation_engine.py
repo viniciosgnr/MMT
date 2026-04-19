@@ -111,10 +111,17 @@ def _check_2sigma(
     hist_values = [h["value"] for h in history]
     hist_dates  = [h["date"]  for h in history]
 
-    # Bootstrap: pad with the current value when history is sparse
+    # Bootstrap: pad with the historical mean so the outlier does not mask itself
     bootstrapped = len(hist_values) < HISTORY_SIZE
+    
+    if not hist_values:
+        # If no history, current value becomes the baseline
+        mean_for_padding = value
+    else:
+        mean_for_padding = sum(hist_values) / len(hist_values)
+
     while len(hist_values) < HISTORY_SIZE:
-        hist_values.append(value)
+        hist_values.append(mean_for_padding)
         hist_dates.append("bootstrap")
 
     mean = sum(hist_values) / len(hist_values)

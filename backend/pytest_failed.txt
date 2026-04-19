@@ -1,0 +1,710 @@
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-9.0.3, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/marcosgnr/MMT/backend
+configfile: pyproject.toml
+plugins: cov-7.1.0, anyio-3.7.1
+collecting ... collected 209 items
+
+tests/test_m3_alerts.py::TestM3AlertDetectionSystem::test_overdue_lab_report_alert_trigger FAILED [  0%]
+tests/test_m3_api_integration.py::TestSamplePointCRUD::test_create_sample_point PASSED [  0%]
+tests/test_m3_api_integration.py::TestSamplePointCRUD::test_list_sample_points_all PASSED [  1%]
+tests/test_m3_api_integration.py::TestSamplePointCRUD::test_list_sample_points_filtered_by_fpso PASSED [  1%]
+tests/test_m3_api_integration.py::TestSampleCreation::test_create_sample_starts_at_sample_status PASSED [  2%]
+tests/test_m3_api_integration.py::TestSampleCreation::test_create_sample_operational_category PASSED [  2%]
+tests/test_m3_api_integration.py::TestSampleCreation::test_create_sample_chromatography_is_coleta PASSED [  3%]
+tests/test_m3_api_integration.py::TestSampleCreation::test_create_sample_invalid_sp_returns_404 PASSED [  3%]
+tests/test_m3_api_integration.py::TestSampleCreation::test_get_sample_by_id PASSED [  4%]
+tests/test_m3_api_integration.py::TestSampleCreation::test_get_sample_not_found PASSED [  4%]
+tests/test_m3_api_integration.py::TestSampleCreation::test_list_samples_all PASSED [  5%]
+tests/test_m3_api_integration.py::TestStatusFlowLifecycle::test_sample_to_disembark_sets_sla_dates PASSED [  5%]
+tests/test_m3_api_integration.py::TestStatusFlowLifecycle::test_disembark_logistics_sets_date PASSED [  6%]
+tests/test_m3_api_integration.py::TestStatusFlowLifecycle::test_deliver_at_vendor_sets_date PASSED [  6%]
+tests/test_m3_api_integration.py::TestStatusFlowLifecycle::test_report_issue_sets_fc_expected PASSED [  7%]
+tests/test_m3_api_integration.py::TestStatusFlowLifecycle::test_fc_update_sets_timestamp PASSED [  7%]
+tests/test_m3_api_integration.py::TestOverrideDate::test_override_due_date PASSED [  8%]
+tests/test_m3_api_integration.py::TestOverrideDate::test_override_with_null_clears_date PASSED [  8%]
+tests/test_m3_api_integration.py::TestOverrideDate::test_override_nonexistent_sample_404 PASSED [  9%]
+tests/test_m3_api_integration.py::TestDashboard::test_dashboard_returns_all_groups PASSED [  9%]
+tests/test_m3_api_integration.py::TestDashboard::test_dashboard_with_fpso_filter PASSED [ 10%]
+tests/test_m3_api_integration.py::TestSampleResults::test_add_result PASSED [ 10%]
+tests/test_m3_api_integration.py::TestSampleResults::test_get_lab_results PASSED [ 11%]
+tests/test_m3_api_integration.py::TestCheckSlas::test_check_slas_returns_200 PASSED [ 11%]
+tests/test_m3_api_status_flow.py::TestM3StatusFlowIntegration::test_api_sample_transit_to_disembark PASSED [ 11%]
+tests/test_m3_campaigns_meters.py::TestCampaignsCRUD::test_create_campaign PASSED [ 12%]
+tests/test_m3_campaigns_meters.py::TestCampaignsCRUD::test_list_campaigns_all PASSED [ 12%]
+tests/test_m3_campaigns_meters.py::TestCampaignsCRUD::test_list_campaigns_filtered_by_fpso PASSED [ 13%]
+tests/test_m3_campaigns_meters.py::TestCampaignsCRUD::test_list_campaigns_filtered_by_status PASSED [ 13%]
+tests/test_m3_campaigns_meters.py::TestMetersCRUD::test_list_meters_returns_200 PASSED [ 14%]
+tests/test_m3_campaigns_meters.py::TestMetersCRUD::test_list_meters_with_fpso_filter PASSED [ 14%]
+tests/test_m3_campaigns_meters.py::TestSampleListFilters::test_filter_by_fpso PASSED [ 15%]
+tests/test_m3_campaigns_meters.py::TestSampleListFilters::test_filter_by_status PASSED [ 15%]
+tests/test_m3_campaigns_meters.py::TestDashboardAccuracy::test_dashboard_counts_overdue PASSED [ 16%]
+tests/test_m3_campaigns_meters.py::TestDashboardAccuracy::test_dashboard_steps_have_samples PASSED [ 16%]
+tests/test_m3_campaigns_meters.py::TestDashboardAccuracy::test_dashboard_no_data PASSED [ 17%]
+tests/test_m3_campaigns_meters.py::TestStatusHistory::test_status_history_grows_with_transitions PASSED [ 17%]
+tests/test_m3_campaigns_meters.py::TestSampleCreationWithMeter::test_create_sample_with_meter_id PASSED [ 18%]
+tests/test_m3_deep_coverage.py::TestCheckResultDataclass::test_default_values PASSED [ 18%]
+tests/test_m3_deep_coverage.py::TestValidationResultDataclass::test_passed_failed_counts PASSED [ 19%]
+tests/test_m3_deep_coverage.py::TestValidationResultDataclass::test_empty_checks PASSED [ 19%]
+tests/test_m3_deep_coverage.py::TestValidationResultDataclass::test_boletim_tag_optional PASSED [ 20%]
+tests/test_m3_deep_coverage.py::TestCheck2SigmaEdgeCases::test_empty_history_bootstraps PASSED [ 20%]
+tests/test_m3_deep_coverage.py::TestCheck2SigmaEdgeCases::test_single_history_point PASSED [ 21%]
+tests/test_m3_deep_coverage.py::TestCheck2SigmaEdgeCases::test_identical_history_zero_std PASSED [ 21%]
+tests/test_m3_deep_coverage.py::TestCheck2SigmaEdgeCases::test_exact_boundary_2sigma PASSED [ 22%]
+tests/test_m3_deep_coverage.py::TestCheck2SigmaEdgeCases::test_just_outside_boundary_fails PASSED [ 22%]
+tests/test_m3_deep_coverage.py::TestCheck2SigmaEdgeCases::test_volatile_history PASSED [ 22%]
+tests/test_m3_deep_coverage.py::TestCheck2SigmaEdgeCases::test_history_fills_output PASSED [ 23%]
+tests/test_m3_deep_coverage.py::TestO2LimitDeep::test_o2_parametrized[0.0-pass] PASSED [ 23%]
+tests/test_m3_deep_coverage.py::TestO2LimitDeep::test_o2_parametrized[0.1-pass] PASSED [ 24%]
+tests/test_m3_deep_coverage.py::TestO2LimitDeep::test_o2_parametrized[0.499-pass] PASSED [ 24%]
+tests/test_m3_deep_coverage.py::TestO2LimitDeep::test_o2_parametrized[0.5-pass] PASSED [ 25%]
+tests/test_m3_deep_coverage.py::TestO2LimitDeep::test_o2_parametrized[0.501-fail] PASSED [ 25%]
+tests/test_m3_deep_coverage.py::TestO2LimitDeep::test_o2_parametrized[1.0-fail] PASSED [ 26%]
+tests/test_m3_deep_coverage.py::TestO2LimitDeep::test_o2_parametrized[5.0-fail] PASSED [ 26%]
+tests/test_m3_deep_coverage.py::TestO2LimitDeep::test_o2_parametrized[0.0001-pass] PASSED [ 27%]
+tests/test_m3_deep_coverage.py::TestO2LimitDeep::test_o2_exactly_at_limit PASSED [ 27%]
+tests/test_m3_deep_coverage.py::TestO2LimitDeep::test_o2_detail_message_on_fail PASSED [ 28%]
+tests/test_m3_deep_coverage.py::TestPdfParserEdgeCases::test_parse_br_float_with_thousand_separator PASSED [ 28%]
+tests/test_m3_deep_coverage.py::TestPdfParserEdgeCases::test_parse_br_float_empty PASSED [ 29%]
+tests/test_m3_deep_coverage.py::TestPdfParserEdgeCases::test_parse_br_float_none_input PASSED [ 29%]
+tests/test_m3_deep_coverage.py::TestPdfParserEdgeCases::test_detect_pvt PASSED [ 30%]
+tests/test_m3_deep_coverage.py::TestPdfParserEdgeCases::test_detect_cro PASSED [ 30%]
+tests/test_m3_deep_coverage.py::TestPdfParserEdgeCases::test_detect_unknown PASSED [ 31%]
+tests/test_m3_deep_coverage.py::TestPdfParserEdgeCases::test_detect_pvt_by_boletim_prefix PASSED [ 31%]
+tests/test_m3_deep_coverage.py::TestPdfParserEdgeCases::test_detect_cro_by_boletim_prefix PASSED [ 32%]
+tests/test_m3_deep_coverage.py::TestPdfParserEdgeCases::test_extract_tag_point_valid PASSED [ 32%]
+tests/test_m3_deep_coverage.py::TestPdfParserEdgeCases::test_extract_tag_point_no_match PASSED [ 33%]
+tests/test_m3_deep_coverage.py::TestPdfParserEdgeCases::test_extract_boletim_pvt PASSED [ 33%]
+tests/test_m3_deep_coverage.py::TestPdfParserEdgeCases::test_extract_boletim_no_match PASSED [ 33%]
+tests/test_m3_deep_coverage.py::TestPdfParserEdgeCases::test_extract_sampling_date_fpso PASSED [ 34%]
+tests/test_m3_deep_coverage.py::TestPdfParserEdgeCases::test_extract_sampling_date_fallback PASSED [ 34%]
+tests/test_m3_deep_coverage.py::TestPdfParserEdgeCases::test_extract_pvt_complete PASSED [ 35%]
+tests/test_m3_deep_coverage.py::TestPdfParserEdgeCases::test_extract_cro_complete PASSED [ 35%]
+tests/test_m3_deep_coverage.py::TestPdfParserEdgeCases::test_extract_pvt_missing_fields PASSED [ 36%]
+tests/test_m3_deep_coverage.py::TestPdfParserEdgeCases::test_extract_cro_missing_o2 PASSED [ 36%]
+tests/test_m3_edge_cases.py::TestChemicalSadPaths::test_link_meters_404 FAILED [ 37%]
+tests/test_m3_edge_cases.py::TestChemicalSadPaths::test_update_status_404 FAILED [ 37%]
+tests/test_m3_edge_cases.py::TestChemicalSadPaths::test_legacy_validation_endpoint_400 FAILED [ 38%]
+tests/test_m3_edge_cases.py::TestCampaignsExisted::test_create_campaign FAILED [ 38%]
+tests/test_m3_edge_cases.py::TestAutoSchedulingLogic::test_schedule_next_periodic_on_disembark FAILED [ 39%]
+tests/test_m3_edge_cases.py::TestAutoSchedulingLogic::test_schedule_emergency_on_reprovado FAILED [ 39%]
+tests/test_m3_edge_cases.py::TestDashboardUrgencyTriggers::test_get_dashboard_stats_trigger_urgency FAILED [ 40%]
+tests/test_m3_lifecycle_complete.py::TestFullLifecycleTraversal::test_traverse_all_11_statuses PASSED [ 40%]
+tests/test_m3_lifecycle_complete.py::TestFullLifecycleTraversal::test_final_status_has_fc_update_date PASSED [ 41%]
+tests/test_m3_lifecycle_complete.py::TestEmergencySampleOnReproval::test_reproval_creates_emergency_sample FAILED [ 41%]
+tests/test_m3_lifecycle_complete.py::TestEmergencySampleOnReproval::test_emergency_date_is_3_business_days FAILED [ 42%]
+tests/test_m3_lifecycle_complete.py::TestPeriodicAutoScheduling::test_disembark_prep_creates_periodic FAILED [ 42%]
+tests/test_m3_lifecycle_complete.py::TestPeriodicAutoScheduling::test_periodic_not_duplicated FAILED [ 43%]
+tests/test_m3_lifecycle_complete.py::TestPeriodicAutoScheduling::test_periodic_date_uses_interval_days FAILED [ 43%]
+tests/test_m3_lifecycle_complete.py::TestPhaseDueDateMapping::test_due_date_changes_with_phase PASSED [ 44%]
+tests/test_m3_lifecycle_complete.py::TestTrackingFieldsUpdate::test_osm_id_persisted PASSED [ 44%]
+tests/test_m3_lifecycle_complete.py::TestTrackingFieldsUpdate::test_laudo_number_persisted PASSED [ 44%]
+tests/test_m3_lifecycle_complete.py::TestTrackingFieldsUpdate::test_mitigated_flag FAILED [ 45%]
+tests/test_m3_lifecycle_complete.py::TestReportIssueWithUrl::test_report_issue_saves_url PASSED [ 45%]
+tests/test_m3_lifecycle_complete.py::TestReportIssueWithUrl::test_fc_update_saves_evidence_url PASSED [ 46%]
+tests/test_m3_lifecycle_complete.py::TestLocalOverrideDuringDisembark::test_switch_to_offshore_clears_disembark_dates PASSED [ 46%]
+tests/test_m3_lifecycle_complete.py::TestStatusUpdateOnNonexistentSample::test_update_nonexistent_returns_404 PASSED [ 47%]
+tests/test_m3_lifecycle_complete.py::TestFcBusinessDaysCalculation::test_fc_skips_weekends PASSED [ 47%]
+tests/test_m3_p1_gaps.py::TestValidatePVTDirect::test_pvt_all_pass_with_empty_history PASSED [ 48%]
+tests/test_m3_p1_gaps.py::TestValidatePVTDirect::test_pvt_density_fails_with_outlier PASSED [ 48%]
+tests/test_m3_p1_gaps.py::TestValidateCRODirect::test_cro_pass_with_low_o2 PASSED [ 49%]
+tests/test_m3_p1_gaps.py::TestValidateCRODirect::test_cro_fail_with_high_o2 PASSED [ 49%]
+tests/test_m3_p1_gaps.py::TestValidateReportDispatcher::test_dispatches_pvt PASSED [ 50%]
+tests/test_m3_p1_gaps.py::TestValidateReportDispatcher::test_dispatches_cro PASSED [ 50%]
+tests/test_m3_p1_gaps.py::TestLinkMeters::test_link_meters_to_sample_point PASSED [ 51%]
+tests/test_m3_p1_gaps.py::TestDashboardUrgency::test_dashboard_returns_urgency_fields PASSED [ 51%]
+tests/test_m3_p1_gaps.py::TestListSamplesEquipmentFilter::test_equipment_id_filter_no_installation_returns_empty PASSED [ 52%]
+tests/test_m3_p1_gaps.py::TestListSamplesEquipmentFilter::test_equipment_id_filter_with_installation PASSED [ 52%]
+tests/test_m3_p1_gaps.py::TestInvalidStatusTransition::test_skip_to_fc_update_from_plan PASSED [ 53%]
+tests/test_m3_pdf_parser.py::TestBrazilianFloatParsing::test_normal_value PASSED [ 53%]
+tests/test_m3_pdf_parser.py::TestBrazilianFloatParsing::test_integer_value PASSED [ 54%]
+tests/test_m3_pdf_parser.py::TestBrazilianFloatParsing::test_small_decimal PASSED [ 54%]
+tests/test_m3_pdf_parser.py::TestBrazilianFloatParsing::test_none_on_empty PASSED [ 55%]
+tests/test_m3_pdf_parser.py::TestBrazilianFloatParsing::test_none_on_garbage PASSED [ 55%]
+tests/test_m3_pdf_parser.py::TestReportTypeDetection::test_detects_cro_by_concentracao_molar PASSED [ 55%]
+tests/test_m3_pdf_parser.py::TestReportTypeDetection::test_detects_cro_by_cromatografia PASSED [ 56%]
+tests/test_m3_pdf_parser.py::TestReportTypeDetection::test_detects_cro_by_composicao_gas PASSED [ 56%]
+tests/test_m3_pdf_parser.py::TestReportTypeDetection::test_detects_pvt_by_fator_encolhimento PASSED [ 57%]
+tests/test_m3_pdf_parser.py::TestReportTypeDetection::test_detects_pvt_by_rgo PASSED [ 57%]
+tests/test_m3_pdf_parser.py::TestReportTypeDetection::test_detects_pvt_by_massa_especifica PASSED [ 58%]
+tests/test_m3_pdf_parser.py::TestReportTypeDetection::test_detects_pvt_by_prefix PASSED [ 58%]
+tests/test_m3_pdf_parser.py::TestReportTypeDetection::test_detects_cro_by_prefix PASSED [ 59%]
+tests/test_m3_pdf_parser.py::TestReportTypeDetection::test_returns_unknown_for_garbage PASSED [ 59%]
+tests/test_m3_pdf_parser.py::TestTagPointExtraction::test_standard_tag_with_mro PASSED [ 60%]
+tests/test_m3_pdf_parser.py::TestTagPointExtraction::test_standard_tag_without_mro PASSED [ 60%]
+tests/test_m3_pdf_parser.py::TestTagPointExtraction::test_returns_none_for_no_tag PASSED [ 61%]
+tests/test_m3_pdf_parser.py::TestBoletimExtraction::test_pvt_boletim PASSED [ 61%]
+tests/test_m3_pdf_parser.py::TestBoletimExtraction::test_cro_boletim PASSED [ 62%]
+tests/test_m3_pdf_parser.py::TestBoletimExtraction::test_fallback_pvt_pattern PASSED [ 62%]
+tests/test_m3_pdf_parser.py::TestBoletimExtraction::test_returns_none_for_no_boletim PASSED [ 63%]
+tests/test_m3_pdf_parser.py::TestSamplingDateExtraction::test_fpso_date_pattern PASSED [ 63%]
+tests/test_m3_pdf_parser.py::TestSamplingDateExtraction::test_returns_none_for_no_date PASSED [ 64%]
+tests/test_m3_pdf_parser.py::TestPvtExtraction::test_pvt_density PASSED  [ 64%]
+tests/test_m3_pdf_parser.py::TestPvtExtraction::test_pvt_rs PASSED       [ 65%]
+tests/test_m3_pdf_parser.py::TestPvtExtraction::test_pvt_fe PASSED       [ 65%]
+tests/test_m3_pdf_parser.py::TestPvtExtraction::test_pvt_boletim_extracted PASSED [ 66%]
+tests/test_m3_pdf_parser.py::TestPvtExtraction::test_pvt_tag_point_extracted PASSED [ 66%]
+tests/test_m3_pdf_parser.py::TestPvtExtraction::test_pvt_sampling_date_extracted PASSED [ 66%]
+tests/test_m3_pdf_parser.py::TestPvtExtraction::test_pvt_missing_values_graceful PASSED [ 67%]
+tests/test_m3_pdf_parser.py::TestCroExtraction::test_cro_o2 PASSED       [ 67%]
+tests/test_m3_pdf_parser.py::TestCroExtraction::test_cro_relative_density PASSED [ 68%]
+tests/test_m3_pdf_parser.py::TestCroExtraction::test_cro_boletim_extracted PASSED [ 68%]
+tests/test_m3_pdf_parser.py::TestCroExtraction::test_cro_tag_point_extracted PASSED [ 69%]
+tests/test_m3_pdf_parser.py::TestCroExtraction::test_cro_sampling_date_extracted PASSED [ 69%]
+tests/test_m3_pdf_parser.py::TestCroExtraction::test_cro_missing_values_graceful PASSED [ 70%]
+tests/test_m3_sla.py::TestSlaMatrixFullSweep::test_fiscal_chromatography_onshore PASSED [ 70%]
+tests/test_m3_sla.py::TestSlaMatrixFullSweep::test_fiscal_chromatography_offshore PASSED [ 71%]
+tests/test_m3_sla.py::TestSlaMatrixFullSweep::test_apropriation_chromatography_onshore PASSED [ 71%]
+tests/test_m3_sla.py::TestSlaMatrixFullSweep::test_apropriation_chromatography_offshore PASSED [ 72%]
+tests/test_m3_sla.py::TestSlaMatrixFullSweep::test_operational_chromatography_onshore PASSED [ 72%]
+tests/test_m3_sla.py::TestSlaMatrixFullSweep::test_operational_chromatography_offshore PASSED [ 73%]
+tests/test_m3_sla.py::TestSlaMatrixFullSweep::test_apropriation_pvt_onshore PASSED [ 73%]
+tests/test_m3_sla.py::TestSlaMatrixFullSweep::test_apropriation_pvt_offshore PASSED [ 74%]
+tests/test_m3_sla.py::TestSlaMatrixFullSweep::test_fiscal_enxofre_onshore PASSED [ 74%]
+tests/test_m3_sla.py::TestSlaMatrixFullSweep::test_fiscal_enxofre_offshore PASSED [ 75%]
+tests/test_m3_sla.py::TestSlaMatrixFullSweep::test_fiscal_viscosity_onshore PASSED [ 75%]
+tests/test_m3_sla.py::TestSlaMatrixFullSweep::test_fiscal_viscosity_offshore PASSED [ 76%]
+tests/test_m3_sla.py::TestSlaMatrixFullSweep::test_custody_transfer_viscosity_onshore PASSED [ 76%]
+tests/test_m3_sla.py::TestSlaMatrixFullSweep::test_custody_transfer_viscosity_offshore PASSED [ 77%]
+tests/test_m3_sla.py::TestSlaMatrixFullSweep::test_invalid_combination_returns_none FAILED [ 77%]
+tests/test_m3_sla.py::TestSlaMatrixFullSweep::test_case_sensitivity_guard PASSED [ 77%]
+tests/test_m3_sla.py::TestEmergencySampleDateCalculation::test_reprovacao_quarta_feira PASSED [ 78%]
+tests/test_m3_sla.py::TestEmergencySampleDateCalculation::test_reprovacao_sexta_feira PASSED [ 78%]
+tests/test_m3_sla.py::TestEmergencySampleDateCalculation::test_periodic_date_wins_when_sooner PASSED [ 79%]
+tests/test_m3_sla.py::TestEmergencySampleDateCalculation::test_reprovacao_sabado PASSED [ 79%]
+tests/test_m3_sla.py::TestEmergencySampleDateCalculation::test_reprovacao_domingo PASSED [ 80%]
+tests/test_m3_sla.py::TestEmergencySampleDateCalculation::test_same_day_periodic_wins PASSED [ 80%]
+tests/test_m3_sla.py::TestFcBusinessDaysCalculation::test_fc_3_business_days_from_monday PASSED [ 81%]
+tests/test_m3_sla.py::TestFcBusinessDaysCalculation::test_fc_3_business_days_from_thursday PASSED [ 81%]
+tests/test_m3_sla.py::TestFcBusinessDaysCalculation::test_fc_10_business_days_operational PASSED [ 82%]
+tests/test_m3_sla.py::TestFcBusinessDaysCalculation::test_fc_from_friday PASSED [ 82%]
+tests/test_m3_sla_alert_engine.py::TestSLAAlertEngine::test_creates_alert_for_overdue_report PASSED [ 83%]
+tests/test_m3_sla_alert_engine.py::TestSLAAlertEngine::test_no_duplicate_alerts PASSED [ 83%]
+tests/test_m3_sla_alert_engine.py::TestSLAAlertEngine::test_creates_alert_for_pending_validation PASSED [ 84%]
+tests/test_m3_sla_alert_engine.py::TestSLAAlertEngine::test_no_alert_for_recent_samples PASSED [ 84%]
+tests/test_m3_sla_alert_engine.py::TestSLAAlertEngine::test_no_alert_for_recent_reports PASSED [ 85%]
+tests/test_m3_validate_report_pipeline.py::TestValidateReportPipeline::test_cro_upload_happy_path PASSED [ 85%]
+tests/test_m3_validate_report_pipeline.py::TestValidateReportPipeline::test_pvt_upload_happy_path PASSED [ 86%]
+tests/test_m3_validate_report_pipeline.py::TestValidateReportPipeline::test_invalid_pdf_returns_400 PASSED [ 86%]
+tests/test_m3_validate_report_pipeline.py::TestValidateReportPipeline::test_sample_not_found_returns_404 PASSED [ 87%]
+tests/test_m3_validate_report_pipeline.py::TestValidateReportPipeline::test_results_stored_in_database PASSED [ 87%]
+tests/test_m3_validate_report_pipeline.py::TestValidateReportPipeline::test_reupload_replaces_previous_results PASSED [ 88%]
+tests/test_m3_validate_report_pipeline.py::TestValidateReportPipeline::test_validation_status_updates_sample PASSED [ 88%]
+tests/test_m3_validation_engine.py::TestO2HardLimit::test_o2_well_below_limit PASSED [ 88%]
+tests/test_m3_validation_engine.py::TestO2HardLimit::test_o2_at_limit_boundary PASSED [ 89%]
+tests/test_m3_validation_engine.py::TestO2HardLimit::test_o2_just_above_limit PASSED [ 89%]
+tests/test_m3_validation_engine.py::TestO2HardLimit::test_o2_grossly_above_limit PASSED [ 90%]
+tests/test_m3_validation_engine.py::TestO2HardLimit::test_o2_zero PASSED [ 90%]
+tests/test_m3_validation_engine.py::TestTwoSigmaValidation::test_value_within_band PASSED [ 91%]
+tests/test_m3_validation_engine.py::TestTwoSigmaValidation::test_value_far_outside_band FAILED [ 91%]
+tests/test_m3_validation_engine.py::TestTwoSigmaValidation::test_value_negative_outlier FAILED [ 92%]
+tests/test_m3_validation_engine.py::TestTwoSigmaValidation::test_returns_mean_and_std PASSED [ 92%]
+tests/test_m3_validation_engine.py::TestTwoSigmaValidation::test_empty_history_bootstrap PASSED [ 93%]
+tests/test_m3_validation_engine.py::TestTwoSigmaValidation::test_single_sample_history PASSED [ 93%]
+tests/test_m3_validation_engine.py::TestTwoSigmaValidation::test_different_parameters PASSED [ 94%]
+tests/test_m3_validation_engine.py::TestTwoSigmaValidation::test_highly_volatile_history PASSED [ 94%]
+tests/test_m3_validation_sbm.py::TestSBMValidation::test_validate_no_results_returns_400 PASSED [ 95%]
+tests/test_m3_validation_sbm.py::TestSBMValidation::test_validate_with_insufficient_history PASSED [ 95%]
+tests/test_m3_validation_sbm.py::TestSBMValidation::test_validate_with_history_pass PASSED [ 96%]
+tests/test_m3_validation_sbm.py::TestSBMValidation::test_validate_with_history_fail PASSED [ 96%]
+tests/test_m3_validation_sbm.py::TestSBMValidation::test_validate_multiple_parameters PASSED [ 97%]
+tests/test_m3_validation_sbm.py::TestSBMValidation::test_validate_response_structure PASSED [ 97%]
+tests/test_m3_validation_sbm.py::TestParameterHistory::test_get_density_history PASSED [ 98%]
+tests/test_m3_validation_sbm.py::TestParameterHistory::test_get_rs_history PASSED [ 98%]
+tests/test_m3_validation_sbm.py::TestParameterHistory::test_history_with_limit PASSED [ 99%]
+tests/test_m3_validation_sbm.py::TestParameterHistory::test_history_empty_for_unknown_param PASSED [ 99%]
+tests/test_m3_validation_sbm.py::TestParameterHistory::test_history_nonexistent_point PASSED [100%]
+
+=================================== FAILURES ===================================
+_______ TestM3AlertDetectionSystem.test_overdue_lab_report_alert_trigger _______
+tests/test_m3_alerts.py:14: in test_overdue_lab_report_alert_trigger
+    sp = SamplePoint(description="Auto", number="SP-BAD", fpso_name="FPSO Alerts", system="Oil", fluid="Oil")
+<string>:4: in __init__
+    ???
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/state.py:571: in _initialize_instance
+    with util.safe_reraise():
+../../.local/lib/python3.10/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/state.py:569: in _initialize_instance
+    manager.original_init(*mixed[1:], **kwargs)
+../../.local/lib/python3.10/site-packages/sqlalchemy/orm/decl_base.py:2179: in _declarative_constructor
+    raise TypeError(
+E   TypeError: 'number' is an invalid keyword argument for SamplePoint
+__________________ TestChemicalSadPaths.test_link_meters_404 ___________________
+tests/test_m3_edge_cases.py:43: in test_link_meters_404
+    res = client.post("/api/chemical/sample-points/999999/link-meters", json=[1, 2, 3])
+E   NameError: name 'client' is not defined
+_________________ TestChemicalSadPaths.test_update_status_404 __________________
+tests/test_m3_edge_cases.py:49: in test_update_status_404
+    res = client.post("/api/chemical/samples/999999/update-status", json=update_data)
+E   NameError: name 'client' is not defined
+___________ TestChemicalSadPaths.test_legacy_validation_endpoint_400 ___________
+tests/test_m3_edge_cases.py:67: in test_legacy_validation_endpoint_400
+    res = client.get(f"/api/chemical/samples/{sample.id}/validate")
+E   NameError: name 'client' is not defined
+__________________ TestCampaignsExisted.test_create_campaign ___________________
+tests/test_m3_edge_cases.py:82: in test_create_campaign
+    res = client.post("/api/chemical/campaigns", json=payload)
+E   NameError: name 'client' is not defined
+_______ TestAutoSchedulingLogic.test_schedule_next_periodic_on_disembark _______
+tests/test_m3_edge_cases.py:113: in test_schedule_next_periodic_on_disembark
+    res = client.post(f"/api/chemical/samples/{sample.id}/update-status", json=payload)
+E   NameError: name 'client' is not defined
+_________ TestAutoSchedulingLogic.test_schedule_emergency_on_reprovado _________
+tests/test_m3_edge_cases.py:146: in test_schedule_emergency_on_reprovado
+    res = client.post(f"/api/chemical/samples/{sample.id}/update-status", json=payload)
+E   NameError: name 'client' is not defined
+____ TestDashboardUrgencyTriggers.test_get_dashboard_stats_trigger_urgency _____
+tests/test_m3_edge_cases.py:179: in test_get_dashboard_stats_trigger_urgency
+    res = client.get("/api/chemical/dashboard-stats")
+E   NameError: name 'client' is not defined
+_____ TestEmergencySampleOnReproval.test_reproval_creates_emergency_sample _____
+tests/test_m3_lifecycle_complete.py:113: in test_reproval_creates_emergency_sample
+    samples = client.get("/api/chemical/samples").json()
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:473: in get
+    return super().get(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:1053: in get
+    return self.request(
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:445: in request
+    return super().request(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:825: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+../../.local/lib/python3.10/site-packages/httpx/_client.py:914: in send
+    response = self._send_handling_auth(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:942: in _send_handling_auth
+    response = self._send_handling_redirects(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:979: in _send_handling_redirects
+    response = self._send_single_request(request)
+../../.local/lib/python3.10/site-packages/httpx/_client.py:1014: in _send_single_request
+    response = transport.handle_request(request)
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:348: in handle_request
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:345: in handle_request
+    portal.call(self.app, scope, receive, send)
+../../.local/lib/python3.10/site-packages/anyio/from_thread.py:277: in call
+    return cast(T_Retval, self.start_task_soon(func, *args).result())
+/usr/lib/python3.10/concurrent/futures/_base.py:458: in result
+    return self.__get_result()
+/usr/lib/python3.10/concurrent/futures/_base.py:403: in __get_result
+    raise self._exception
+../../.local/lib/python3.10/site-packages/anyio/from_thread.py:217: in _call_func
+    retval = await retval
+../../.local/lib/python3.10/site-packages/fastapi/applications.py:1135: in __call__
+    await super().__call__(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/applications.py:107: in __call__
+    await self.middleware_stack(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/errors.py:186: in __call__
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/middleware/errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/cors.py:85: in __call__
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+../../.local/lib/python3.10/site-packages/fastapi/middleware/asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:716: in __call__
+    await self.middleware_stack(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:736: in app
+    await route.handle(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:290: in handle
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:115: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:101: in app
+    response = await f(request)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:377: in app
+    content = await serialize_response(
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:215: in serialize_response
+    raise ResponseValidationError(
+E   fastapi.exceptions.ResponseValidationError: 3 validation errors:
+E     {'type': 'string_type', 'loc': ('response', 32, 'type'), 'msg': 'Input should be a valid string', 'input': None}
+E     {'type': 'string_type', 'loc': ('response', 33, 'type'), 'msg': 'Input should be a valid string', 'input': None}
+E     {'type': 'string_type', 'loc': ('response', 34, 'type'), 'msg': 'Input should be a valid string', 'input': None}
+E   
+E     File "/home/marcosgnr/MMT/backend/app/routers/chemical.py", line 215, in list_samples
+E       GET /api/chemical/samples
+_____ TestEmergencySampleOnReproval.test_emergency_date_is_3_business_days _____
+tests/test_m3_lifecycle_complete.py:130: in test_emergency_date_is_3_business_days
+    samples = client.get("/api/chemical/samples").json()
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:473: in get
+    return super().get(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:1053: in get
+    return self.request(
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:445: in request
+    return super().request(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:825: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+../../.local/lib/python3.10/site-packages/httpx/_client.py:914: in send
+    response = self._send_handling_auth(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:942: in _send_handling_auth
+    response = self._send_handling_redirects(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:979: in _send_handling_redirects
+    response = self._send_single_request(request)
+../../.local/lib/python3.10/site-packages/httpx/_client.py:1014: in _send_single_request
+    response = transport.handle_request(request)
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:348: in handle_request
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:345: in handle_request
+    portal.call(self.app, scope, receive, send)
+../../.local/lib/python3.10/site-packages/anyio/from_thread.py:277: in call
+    return cast(T_Retval, self.start_task_soon(func, *args).result())
+/usr/lib/python3.10/concurrent/futures/_base.py:458: in result
+    return self.__get_result()
+/usr/lib/python3.10/concurrent/futures/_base.py:403: in __get_result
+    raise self._exception
+../../.local/lib/python3.10/site-packages/anyio/from_thread.py:217: in _call_func
+    retval = await retval
+../../.local/lib/python3.10/site-packages/fastapi/applications.py:1135: in __call__
+    await super().__call__(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/applications.py:107: in __call__
+    await self.middleware_stack(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/errors.py:186: in __call__
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/middleware/errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/cors.py:85: in __call__
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+../../.local/lib/python3.10/site-packages/fastapi/middleware/asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:716: in __call__
+    await self.middleware_stack(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:736: in app
+    await route.handle(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:290: in handle
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:115: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:101: in app
+    response = await f(request)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:377: in app
+    content = await serialize_response(
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:215: in serialize_response
+    raise ResponseValidationError(
+E   fastapi.exceptions.ResponseValidationError: 3 validation errors:
+E     {'type': 'string_type', 'loc': ('response', 32, 'type'), 'msg': 'Input should be a valid string', 'input': None}
+E     {'type': 'string_type', 'loc': ('response', 33, 'type'), 'msg': 'Input should be a valid string', 'input': None}
+E     {'type': 'string_type', 'loc': ('response', 34, 'type'), 'msg': 'Input should be a valid string', 'input': None}
+E   
+E     File "/home/marcosgnr/MMT/backend/app/routers/chemical.py", line 215, in list_samples
+E       GET /api/chemical/samples
+_______ TestPeriodicAutoScheduling.test_disembark_prep_creates_periodic ________
+tests/test_m3_lifecycle_complete.py:165: in test_disembark_prep_creates_periodic
+    samples = client.get("/api/chemical/samples").json()
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:473: in get
+    return super().get(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:1053: in get
+    return self.request(
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:445: in request
+    return super().request(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:825: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+../../.local/lib/python3.10/site-packages/httpx/_client.py:914: in send
+    response = self._send_handling_auth(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:942: in _send_handling_auth
+    response = self._send_handling_redirects(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:979: in _send_handling_redirects
+    response = self._send_single_request(request)
+../../.local/lib/python3.10/site-packages/httpx/_client.py:1014: in _send_single_request
+    response = transport.handle_request(request)
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:348: in handle_request
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:345: in handle_request
+    portal.call(self.app, scope, receive, send)
+../../.local/lib/python3.10/site-packages/anyio/from_thread.py:277: in call
+    return cast(T_Retval, self.start_task_soon(func, *args).result())
+/usr/lib/python3.10/concurrent/futures/_base.py:458: in result
+    return self.__get_result()
+/usr/lib/python3.10/concurrent/futures/_base.py:403: in __get_result
+    raise self._exception
+../../.local/lib/python3.10/site-packages/anyio/from_thread.py:217: in _call_func
+    retval = await retval
+../../.local/lib/python3.10/site-packages/fastapi/applications.py:1135: in __call__
+    await super().__call__(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/applications.py:107: in __call__
+    await self.middleware_stack(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/errors.py:186: in __call__
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/middleware/errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/cors.py:85: in __call__
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+../../.local/lib/python3.10/site-packages/fastapi/middleware/asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:716: in __call__
+    await self.middleware_stack(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:736: in app
+    await route.handle(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:290: in handle
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:115: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:101: in app
+    response = await f(request)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:377: in app
+    content = await serialize_response(
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:215: in serialize_response
+    raise ResponseValidationError(
+E   fastapi.exceptions.ResponseValidationError: 3 validation errors:
+E     {'type': 'string_type', 'loc': ('response', 32, 'type'), 'msg': 'Input should be a valid string', 'input': None}
+E     {'type': 'string_type', 'loc': ('response', 33, 'type'), 'msg': 'Input should be a valid string', 'input': None}
+E     {'type': 'string_type', 'loc': ('response', 34, 'type'), 'msg': 'Input should be a valid string', 'input': None}
+E   
+E     File "/home/marcosgnr/MMT/backend/app/routers/chemical.py", line 215, in list_samples
+E       GET /api/chemical/samples
+___________ TestPeriodicAutoScheduling.test_periodic_not_duplicated ____________
+tests/test_m3_lifecycle_complete.py:182: in test_periodic_not_duplicated
+    s for s in client.get("/api/chemical/samples").json()
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:473: in get
+    return super().get(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:1053: in get
+    return self.request(
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:445: in request
+    return super().request(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:825: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+../../.local/lib/python3.10/site-packages/httpx/_client.py:914: in send
+    response = self._send_handling_auth(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:942: in _send_handling_auth
+    response = self._send_handling_redirects(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:979: in _send_handling_redirects
+    response = self._send_single_request(request)
+../../.local/lib/python3.10/site-packages/httpx/_client.py:1014: in _send_single_request
+    response = transport.handle_request(request)
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:348: in handle_request
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:345: in handle_request
+    portal.call(self.app, scope, receive, send)
+../../.local/lib/python3.10/site-packages/anyio/from_thread.py:277: in call
+    return cast(T_Retval, self.start_task_soon(func, *args).result())
+/usr/lib/python3.10/concurrent/futures/_base.py:458: in result
+    return self.__get_result()
+/usr/lib/python3.10/concurrent/futures/_base.py:403: in __get_result
+    raise self._exception
+../../.local/lib/python3.10/site-packages/anyio/from_thread.py:217: in _call_func
+    retval = await retval
+../../.local/lib/python3.10/site-packages/fastapi/applications.py:1135: in __call__
+    await super().__call__(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/applications.py:107: in __call__
+    await self.middleware_stack(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/errors.py:186: in __call__
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/middleware/errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/cors.py:85: in __call__
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+../../.local/lib/python3.10/site-packages/fastapi/middleware/asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:716: in __call__
+    await self.middleware_stack(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:736: in app
+    await route.handle(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:290: in handle
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:115: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:101: in app
+    response = await f(request)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:377: in app
+    content = await serialize_response(
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:215: in serialize_response
+    raise ResponseValidationError(
+E   fastapi.exceptions.ResponseValidationError: 3 validation errors:
+E     {'type': 'string_type', 'loc': ('response', 32, 'type'), 'msg': 'Input should be a valid string', 'input': None}
+E     {'type': 'string_type', 'loc': ('response', 33, 'type'), 'msg': 'Input should be a valid string', 'input': None}
+E     {'type': 'string_type', 'loc': ('response', 34, 'type'), 'msg': 'Input should be a valid string', 'input': None}
+E   
+E     File "/home/marcosgnr/MMT/backend/app/routers/chemical.py", line 215, in list_samples
+E       GET /api/chemical/samples
+_______ TestPeriodicAutoScheduling.test_periodic_date_uses_interval_days _______
+tests/test_m3_lifecycle_complete.py:201: in test_periodic_date_uses_interval_days
+    samples = client.get("/api/chemical/samples").json()
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:473: in get
+    return super().get(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:1053: in get
+    return self.request(
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:445: in request
+    return super().request(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:825: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+../../.local/lib/python3.10/site-packages/httpx/_client.py:914: in send
+    response = self._send_handling_auth(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:942: in _send_handling_auth
+    response = self._send_handling_redirects(
+../../.local/lib/python3.10/site-packages/httpx/_client.py:979: in _send_handling_redirects
+    response = self._send_single_request(request)
+../../.local/lib/python3.10/site-packages/httpx/_client.py:1014: in _send_single_request
+    response = transport.handle_request(request)
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:348: in handle_request
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/testclient.py:345: in handle_request
+    portal.call(self.app, scope, receive, send)
+../../.local/lib/python3.10/site-packages/anyio/from_thread.py:277: in call
+    return cast(T_Retval, self.start_task_soon(func, *args).result())
+/usr/lib/python3.10/concurrent/futures/_base.py:458: in result
+    return self.__get_result()
+/usr/lib/python3.10/concurrent/futures/_base.py:403: in __get_result
+    raise self._exception
+../../.local/lib/python3.10/site-packages/anyio/from_thread.py:217: in _call_func
+    retval = await retval
+../../.local/lib/python3.10/site-packages/fastapi/applications.py:1135: in __call__
+    await super().__call__(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/applications.py:107: in __call__
+    await self.middleware_stack(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/errors.py:186: in __call__
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/middleware/errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/cors.py:85: in __call__
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/middleware/exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+../../.local/lib/python3.10/site-packages/fastapi/middleware/asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:716: in __call__
+    await self.middleware_stack(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:736: in app
+    await route.handle(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/routing.py:290: in handle
+    await self.app(scope, receive, send)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:115: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:53: in wrapped_app
+    raise exc
+../../.local/lib/python3.10/site-packages/starlette/_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:101: in app
+    response = await f(request)
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:377: in app
+    content = await serialize_response(
+../../.local/lib/python3.10/site-packages/fastapi/routing.py:215: in serialize_response
+    raise ResponseValidationError(
+E   fastapi.exceptions.ResponseValidationError: 3 validation errors:
+E     {'type': 'string_type', 'loc': ('response', 32, 'type'), 'msg': 'Input should be a valid string', 'input': None}
+E     {'type': 'string_type', 'loc': ('response', 33, 'type'), 'msg': 'Input should be a valid string', 'input': None}
+E     {'type': 'string_type', 'loc': ('response', 34, 'type'), 'msg': 'Input should be a valid string', 'input': None}
+E   
+E     File "/home/marcosgnr/MMT/backend/app/routers/chemical.py", line 215, in list_samples
+E       GET /api/chemical/samples
+_________________ TestTrackingFieldsUpdate.test_mitigated_flag _________________
+tests/test_m3_lifecycle_complete.py:303: in test_mitigated_flag
+    assert res.json()["mitigated"] is True
+E   assert 1 is True
+_________ TestSlaMatrixFullSweep.test_invalid_combination_returns_none _________
+tests/test_m3_sla.py:157: in test_invalid_combination_returns_none
+    assert result is None, "get_sla_config DEVE retornar None para combinações inexistentes"
+E   AssertionError: get_sla_config DEVE retornar None para combinações inexistentes
+E   assert {'interval_days': 30, 'disembark_days': None, 'lab_days': None, 'report_days': 25, 'fc_days': 5, 'fc_is_business_days': False, 'needs_validation': True} is None
+______________ TestTwoSigmaValidation.test_value_far_outside_band ______________
+tests/test_m3_validation_engine.py:58: in test_value_far_outside_band
+    assert check.status == "fail"
+E   AssertionError: assert 'pass' == 'fail'
+E     
+E     - fail
+E     + pass
+______________ TestTwoSigmaValidation.test_value_negative_outlier ______________
+tests/test_m3_validation_engine.py:62: in test_value_negative_outlier
+    assert check.status == "fail"
+E   AssertionError: assert 'pass' == 'fail'
+E     
+E     - fail
+E     + pass
+=========================== short test summary info ============================
+FAILED tests/test_m3_alerts.py::TestM3AlertDetectionSystem::test_overdue_lab_report_alert_trigger - TypeError: 'number' is an invalid keyword argument for SamplePoint
+FAILED tests/test_m3_edge_cases.py::TestChemicalSadPaths::test_link_meters_404 - NameError: name 'client' is not defined
+FAILED tests/test_m3_edge_cases.py::TestChemicalSadPaths::test_update_status_404 - NameError: name 'client' is not defined
+FAILED tests/test_m3_edge_cases.py::TestChemicalSadPaths::test_legacy_validation_endpoint_400 - NameError: name 'client' is not defined
+FAILED tests/test_m3_edge_cases.py::TestCampaignsExisted::test_create_campaign - NameError: name 'client' is not defined
+FAILED tests/test_m3_edge_cases.py::TestAutoSchedulingLogic::test_schedule_next_periodic_on_disembark - NameError: name 'client' is not defined
+FAILED tests/test_m3_edge_cases.py::TestAutoSchedulingLogic::test_schedule_emergency_on_reprovado - NameError: name 'client' is not defined
+FAILED tests/test_m3_edge_cases.py::TestDashboardUrgencyTriggers::test_get_dashboard_stats_trigger_urgency - NameError: name 'client' is not defined
+FAILED tests/test_m3_lifecycle_complete.py::TestEmergencySampleOnReproval::test_reproval_creates_emergency_sample - fastapi.exceptions.ResponseValidationError: 3 validation errors:
+  {'type': 'string_type', 'loc': ('response', 32, 'type'), 'msg': 'Input should be a valid string', 'input': None}
+  {'type': 'string_type', 'loc': ('response', 33, 'type'), 'msg': 'Input should be a valid string', 'input': None}
+  {'type': 'string_type', 'loc': ('response', 34, 'type'), 'msg': 'Input should be a valid string', 'input': None}
+
+  File "/home/marcosgnr/MMT/backend/app/routers/chemical.py", line 215, in list_samples
+    GET /api/chemical/samples
+FAILED tests/test_m3_lifecycle_complete.py::TestEmergencySampleOnReproval::test_emergency_date_is_3_business_days - fastapi.exceptions.ResponseValidationError: 3 validation errors:
+  {'type': 'string_type', 'loc': ('response', 32, 'type'), 'msg': 'Input should be a valid string', 'input': None}
+  {'type': 'string_type', 'loc': ('response', 33, 'type'), 'msg': 'Input should be a valid string', 'input': None}
+  {'type': 'string_type', 'loc': ('response', 34, 'type'), 'msg': 'Input should be a valid string', 'input': None}
+
+  File "/home/marcosgnr/MMT/backend/app/routers/chemical.py", line 215, in list_samples
+    GET /api/chemical/samples
+FAILED tests/test_m3_lifecycle_complete.py::TestPeriodicAutoScheduling::test_disembark_prep_creates_periodic - fastapi.exceptions.ResponseValidationError: 3 validation errors:
+  {'type': 'string_type', 'loc': ('response', 32, 'type'), 'msg': 'Input should be a valid string', 'input': None}
+  {'type': 'string_type', 'loc': ('response', 33, 'type'), 'msg': 'Input should be a valid string', 'input': None}
+  {'type': 'string_type', 'loc': ('response', 34, 'type'), 'msg': 'Input should be a valid string', 'input': None}
+
+  File "/home/marcosgnr/MMT/backend/app/routers/chemical.py", line 215, in list_samples
+    GET /api/chemical/samples
+FAILED tests/test_m3_lifecycle_complete.py::TestPeriodicAutoScheduling::test_periodic_not_duplicated - fastapi.exceptions.ResponseValidationError: 3 validation errors:
+  {'type': 'string_type', 'loc': ('response', 32, 'type'), 'msg': 'Input should be a valid string', 'input': None}
+  {'type': 'string_type', 'loc': ('response', 33, 'type'), 'msg': 'Input should be a valid string', 'input': None}
+  {'type': 'string_type', 'loc': ('response', 34, 'type'), 'msg': 'Input should be a valid string', 'input': None}
+
+  File "/home/marcosgnr/MMT/backend/app/routers/chemical.py", line 215, in list_samples
+    GET /api/chemical/samples
+FAILED tests/test_m3_lifecycle_complete.py::TestPeriodicAutoScheduling::test_periodic_date_uses_interval_days - fastapi.exceptions.ResponseValidationError: 3 validation errors:
+  {'type': 'string_type', 'loc': ('response', 32, 'type'), 'msg': 'Input should be a valid string', 'input': None}
+  {'type': 'string_type', 'loc': ('response', 33, 'type'), 'msg': 'Input should be a valid string', 'input': None}
+  {'type': 'string_type', 'loc': ('response', 34, 'type'), 'msg': 'Input should be a valid string', 'input': None}
+
+  File "/home/marcosgnr/MMT/backend/app/routers/chemical.py", line 215, in list_samples
+    GET /api/chemical/samples
+FAILED tests/test_m3_lifecycle_complete.py::TestTrackingFieldsUpdate::test_mitigated_flag - assert 1 is True
+FAILED tests/test_m3_sla.py::TestSlaMatrixFullSweep::test_invalid_combination_returns_none - AssertionError: get_sla_config DEVE retornar None para combinações inexistentes
+assert {'interval_days': 30, 'disembark_days': None, 'lab_days': None, 'report_days': 25, 'fc_days': 5, 'fc_is_business_days': False, 'needs_validation': True} is None
+FAILED tests/test_m3_validation_engine.py::TestTwoSigmaValidation::test_value_far_outside_band - AssertionError: assert 'pass' == 'fail'
+  
+  - fail
+  + pass
+FAILED tests/test_m3_validation_engine.py::TestTwoSigmaValidation::test_value_negative_outlier - AssertionError: assert 'pass' == 'fail'
+  
+  - fail
+  + pass
+======================== 17 failed, 192 passed in 4.04s ========================

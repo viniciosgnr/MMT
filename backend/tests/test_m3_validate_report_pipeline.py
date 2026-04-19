@@ -1,3 +1,4 @@
+from sqlalchemy.pool import StaticPool
 """
 Harness Engineering — P0 Test: Validate Report Pipeline
 
@@ -19,8 +20,8 @@ from app.database import Base, get_db
 from app.dependencies import get_current_user
 
 # --- Isolated DB for Pipeline tests ---
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test_pipeline.db"
-pipe_engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
+pipe_engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}, poolclass=StaticPool)
 PipeTestSession = sessionmaker(autocommit=False, autoflush=False, bind=pipe_engine)
 
 
@@ -44,7 +45,6 @@ def pipe_client():
     Base.metadata.create_all(bind=pipe_engine)
     with TestClient(app) as c:
         yield c
-    Base.metadata.drop_all(bind=pipe_engine)
     import os
     try:
         os.remove("./test_pipeline.db")

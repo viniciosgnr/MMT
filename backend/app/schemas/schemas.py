@@ -46,6 +46,7 @@ class InstrumentTagBase(BaseModel):
     description: str
     area: Optional[str] = None
     service: Optional[str] = None
+    classification: Optional[str] = None
     hierarchy_node_id: Optional[int] = None
 
 class InstrumentTagCreate(InstrumentTagBase):

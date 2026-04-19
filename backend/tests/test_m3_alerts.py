@@ -11,7 +11,7 @@ class TestM3AlertDetectionSystem:
     def test_overdue_lab_report_alert_trigger(self, client, db_session):
         # 1. Manually inject a rotten sample directly into the SQLite mocked database
         # Sample collected 16 days ago (threshold is > 15 days without lab report)
-        sp = SamplePoint(fase="Prod", number="SP-BAD", fpso_name="FPSO Alerts", system="Oil", fluid="Oil")
+        sp = SamplePoint(description="Auto", tag_number="SP-BAD", fpso_name="FPSO Alerts")
         db_session.add(sp)
         db_session.commit()
 
