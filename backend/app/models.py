@@ -64,6 +64,9 @@ class SyncStatusEnum(str, enum.Enum):
 
 class AlertSeverity(str, enum.Enum):
     INFO = "Info"
+    LOW = "Low"
+    MEDIUM = "Medium"
+    HIGH = "High"
     WARNING = "Warning"
     CRITICAL = "Critical"
 

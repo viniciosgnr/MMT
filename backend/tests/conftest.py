@@ -60,12 +60,9 @@ class SamplePointFactory:
     def create(cls, client, **overrides):
         cls._counter += 1
         defaults = {
-            "fase": "Prod",
-            "number": f"SP-FACTORY-{cls._counter:04d}",
+            "tag_number": f"SP-FACTORY-{cls._counter:04d}",
             "description": f"Auto-generated SP {cls._counter}",
             "fpso_name": "FPSO Harness",
-            "system": "Gas",
-            "fluid": "Gas",
         }
         defaults.update(overrides)
         res = client.post("/api/chemical/sample-points", json=defaults)

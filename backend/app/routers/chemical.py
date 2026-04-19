@@ -284,7 +284,8 @@ def check_sampling_slas(db: Session = Depends(database.get_db)):
                 fpso_name=s.sample_point.fpso_name if s.sample_point else "Unknown",
                 severity=AlertSeverity.HIGH.value,
                 type="Lab Report Overdue",
-                description=f"Sample {s.sample_id} was taken on {s.sampling_date} but lab report is missing (>15 days).",
+                title="Lab Report Overdue",
+                message=f"Sample {s.sample_id} was taken on {s.sampling_date} but lab report is missing (>15 days).",
                 acknowledged=0,
                 created_at=datetime.utcnow()
             )
@@ -305,7 +306,8 @@ def check_sampling_slas(db: Session = Depends(database.get_db)):
                 fpso_name=s.sample_point.fpso_name if s.sample_point else "Unknown",
                 severity=AlertSeverity.MEDIUM.value,
                 type="Validation Pending",
-                description=f"Lab report for {s.sample_id} was issued on {s.report_issue_date} but remains unvalidated (>3 days).",
+                title="Validation Pending",
+                message=f"Lab report for {s.sample_id} was issued on {s.report_issue_date} but remains unvalidated (>3 days).",
                 acknowledged=0,
                 created_at=datetime.utcnow()
             )
