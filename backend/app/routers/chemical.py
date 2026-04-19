@@ -8,6 +8,8 @@ from .. import models, database
 from ..schemas import chemical as schemas
 from ..dependencies import get_current_user
 from ..services.sla_matrix import get_sla_config
+from ..services.pdf_parser import parse_pdf_bytes
+from ..services.validation_engine import validate_report
 
 router = APIRouter(
     prefix="/api/chemical",
@@ -621,8 +623,6 @@ async def validate_report_endpoint(
     current_user = Depends(get_current_user),
 ):
     """Upload a lab report PDF, extract values, store them, and run validation."""
-    from ..services.pdf_parser import parse_pdf_bytes
-    from ..services.validation_engine import validate_report
 
     sample = db.query(models.Sample).filter(models.Sample.id == sample_id).first()
     if not sample:

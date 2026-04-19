@@ -25,6 +25,8 @@ class PVTResult:
     rs_unit: str = "m³ STD gás/STD óleo morto"
     fe: Optional[float] = None              # Fator de Encolhimento
     fe_unit: str = "-"
+    bsw: Optional[float] = None               # Teor de água e sedimentos (%)
+    bsw_unit: str = "%"
     raw_text: str = ""
 
 
@@ -39,6 +41,8 @@ class CROResult:
     o2_unit: str = "%"
     relative_density_real: Optional[float] = None            # Densidade Relativa do Gás Real (dimensionless)
     relative_density_real_unit: str = "-"
+    h2s: Optional[float] = None                             # Sulfeto de Hidrogênio (ppm)
+    h2s_unit: str = "ppm"
     raw_text: str = ""
 
 

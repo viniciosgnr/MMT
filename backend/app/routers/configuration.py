@@ -167,6 +167,20 @@ def create_hierarchy_node(node: schemas.HierarchyNodeCreate, db: Session = Depen
         db.refresh(db_node)
         return db_node
 
+@router.put("/hierarchy/nodes/{node_id}", response_model=schemas.HierarchyNode)
+def update_hierarchy_node(node_id: int, node_update: schemas.HierarchyNodeBase, db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
+    db_node = db.query(models.HierarchyNode).filter(models.HierarchyNode.id == node_id).first()
+    if not db_node:
+        raise HTTPException(status_code=404, detail="Node not found")
+    
+    update_data = node_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_node, key, value)
+        
+    db.commit()
+    db.refresh(db_node)
+    return db_node
+
 @router.delete("/hierarchy/nodes/{node_id}")
 def delete_hierarchy_node(node_id: int, db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
     db_node = db.query(models.HierarchyNode).filter(models.HierarchyNode.id == node_id).first()

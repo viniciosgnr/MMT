@@ -13,7 +13,7 @@ from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.pool import StaticPool
 import sys
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -151,6 +151,25 @@ class EquipmentTagInstallationFactory:
         res = client.post("/api/equipment/install", json=defaults)
         assert res.status_code == 200, f"Factory Installation failed: {res.text}"
         return res.json()
+    
+class EquipmentCertificateFactory:
+    """Factory para gerar certificados de calibração."""
+    _counter = 0
+
+    @classmethod
+    def create(cls, client, equipment_id, **overrides):
+        cls._counter += 1
+        defaults = {
+            "equipment_id": equipment_id,
+            "certificate_number": f"CERT-FAC-{cls._counter:04d}",
+            "issue_date": (datetime.utcnow() - timedelta(days=30)).date().isoformat(),
+            "expiry_date": (datetime.utcnow() + timedelta(days=335)).date().isoformat(),
+            "certificate_type": "Calibration"
+        }
+        defaults.update(overrides)
+        res = client.post("/api/equipment/certificates", json=defaults)
+        assert res.status_code == 200, f"Factory Certificate failed: {res.text}"
+        return res.json()
 
 
 class HierarchyNodeFactory:
@@ -224,3 +243,9 @@ def installation_factory(client):
 def hierarchy_factory(client):
     """Fixture para factory de HierarchyNode."""
     return lambda **kw: HierarchyNodeFactory.create(client, **kw)
+
+
+@pytest.fixture
+def certificate_factory(client):
+    """Fixture para factory de EquipmentCertificate."""
+    return lambda eq_id, **kw: EquipmentCertificateFactory.create(client, eq_id, **kw)

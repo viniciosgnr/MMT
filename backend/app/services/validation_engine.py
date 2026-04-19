@@ -17,9 +17,13 @@ from app import models
 from app.services.pdf_parser import PVTResult, CROResult
 
 
-O2_LIMIT = 0.5  # Maximum O₂ % allowed for CRO
-HISTORY_SIZE = 10  # Number of past samples for 2σ comparison
 SIGMA_MULTIPLIER = 2  # Standard deviations for acceptance band
+HISTORY_SIZE = 10     # Number of past samples for 2σ comparison
+
+# Hard Limits for Safety/Process Compliance
+O2_LIMIT = 0.5   # (%)
+H2S_LIMIT = 10.0 # (ppm)
+BSW_LIMIT = 1.0  # (%)
 
 
 @dataclass
@@ -154,23 +158,32 @@ def _check_2sigma(
     )
 
 
-def _check_o2_limit(o2_value: float) -> CheckResult:
-    """Check if O₂ exceeds the 0.5% limit."""
-    if o2_value > O2_LIMIT:
+def _check_hard_limit(parameter: str, value: float, unit: str, limit: float) -> CheckResult:
+    """Check if a value exceeds a specific hard limit."""
+    if value > limit:
         return CheckResult(
-            parameter="o2",
-            value=o2_value,
-            unit="%",
+            parameter=parameter,
+            value=value,
+            unit=unit,
             status="fail",
-            detail=f"O₂ = {o2_value}% exceeds limit of {O2_LIMIT}%",
+            detail=f"{parameter} = {value}{unit} exceeds limit of {limit}{unit}",
         )
     return CheckResult(
-        parameter="o2",
-        value=o2_value,
-        unit="%",
+        parameter=parameter,
+        value=value,
+        unit=unit,
         status="pass",
-        detail=f"O₂ = {o2_value}% is below {O2_LIMIT}% limit",
+        detail=f"{parameter} = {value}{unit} is within {limit}{unit} limit",
     )
+
+def _check_o2_limit(o2_value: float) -> CheckResult:
+    return _check_hard_limit("o2", o2_value, "%", O2_LIMIT)
+
+def _check_h2s_limit(h2s_value: float) -> CheckResult:
+    return _check_hard_limit("h2s", h2s_value, "ppm", H2S_LIMIT)
+
+def _check_bsw_limit(bsw_value: float) -> CheckResult:
+    return _check_hard_limit("bsw", bsw_value, "%", BSW_LIMIT)
 
 
 def validate_pvt(
@@ -215,6 +228,13 @@ def validate_pvt(
         if check.status == "fail":
             result.overall_status = "Reproved"
     
+    # Check BS&W
+    if extracted.bsw is not None:
+        check = _check_bsw_limit(extracted.bsw)
+        result.checks.append(check)
+        if check.status == "fail":
+            result.overall_status = "Reproved"
+    
     return result
 
 
@@ -251,6 +271,13 @@ def validate_cro(
         check = _check_2sigma(
             "relative_density_real", extracted.relative_density_real, extracted.relative_density_real_unit, history
         )
+        result.checks.append(check)
+        if check.status == "fail":
+            result.overall_status = "Reproved"
+            
+    # Check H2S
+    if extracted.h2s is not None:
+        check = _check_h2s_limit(extracted.h2s)
         result.checks.append(check)
         if check.status == "fail":
             result.overall_status = "Reproved"

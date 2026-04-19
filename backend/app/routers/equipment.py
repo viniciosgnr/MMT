@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
+from datetime import datetime, date, timedelta
 from typing import List, Optional
-from datetime import datetime
 from .. import models, database
 from ..schemas import schemas
 from ..dependencies import get_current_user
@@ -10,6 +10,33 @@ router = APIRouter(
     prefix="/api/equipment",
     tags=["equipment"],
 )
+
+# --- Helpers ---
+def calculate_health(db_equipment: models.Equipment) -> str:
+    """Calcula o status de saúde baseado nos certificados de calibração."""
+    certs = [c for c in db_equipment.certificates if c.certificate_type == "Calibration"]
+    if not certs:
+        return "missing"
+    
+    today = date.today()
+    warning_buffer = today + timedelta(days=30)
+    
+    has_expired = False
+    has_warning = False
+    
+    for c in certs:
+        if not c.expiry_date:
+            continue
+        if c.expiry_date < today:
+            has_expired = True
+        elif c.expiry_date < warning_buffer:
+            has_warning = True
+            
+    if has_expired:
+        return "expired"
+    if has_warning:
+        return "expiring"
+    return "healthy"
 
 # --- Physical Equipment (Serial Numbers) ---
 
@@ -35,7 +62,10 @@ def read_equipments(
     if equipment_type:
         query = query.filter(models.Equipment.equipment_type == equipment_type)
     
-    return query.offset(skip).limit(limit).all()
+    equipments = query.offset(skip).limit(limit).all()
+    for eq in equipments:
+        eq.health_status = calculate_health(eq)
+    return equipments
 
 # --- Instrument Tags (Locations) ---
 # IMPORTANT: These routes must come BEFORE /{equipment_id} to avoid conflicts
@@ -128,6 +158,7 @@ def read_equipment(equipment_id: int, db: Session = Depends(database.get_db)):
     db_equipment.sync_status = states[equipment_id % 3]
     db_equipment.last_synced_at = datetime.now() if db_equipment.sync_status == "synced" else None
 
+    db_equipment.health_status = calculate_health(db_equipment)
     return db_equipment
 
 # --- Installation & History ---
@@ -166,7 +197,8 @@ def install_equipment(
             tag_id = new_tag.id
             installation.tag_id = tag_id
 
-    tag = db.query(models.InstrumentTag).filter(models.InstrumentTag.id == tag_id).first()
+    # Use with_for_update() to lock the tag record and prevented concurrent installations
+    tag = db.query(models.InstrumentTag).filter(models.InstrumentTag.id == tag_id).with_for_update().first()
     if not tag:
          raise HTTPException(status_code=404, detail="Target Tag not found")
         

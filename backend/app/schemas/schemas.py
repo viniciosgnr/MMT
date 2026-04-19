@@ -34,6 +34,9 @@ class Equipment(EquipmentBase):
     certificates: List["EquipmentCertificate"] = []
     installations: List["EquipmentTagInstallationOut"] = []
     
+    # M1 Resilience (Computed)
+    health_status: str = "unknown" # healthy, expiring, expired, missing
+    
     # M5 Sync Integration (Computed)
     last_synced_at: Optional[datetime] = None
     sync_status: Optional[str] = "unknown" # synced, warning, error, unknown
