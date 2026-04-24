@@ -185,6 +185,7 @@ def install_equipment(
         existing_tag = db.query(models.InstrumentTag).filter(models.InstrumentTag.tag_number == target_tag_name).first()
         if existing_tag:
             tag_id = existing_tag.id
+            installation.tag_id = tag_id  # Sync back so model_dump() is correct
         else:
             new_tag = models.InstrumentTag(
                 tag_number=target_tag_name,

@@ -104,7 +104,7 @@ class TestSLAAlertEngine:
         sample = self._create_sample(sla_client, sp["id"])
         self._force_sample_state(
             sla_db, sample["id"], "Sample",
-            sampling_date=date.today() - timedelta(days=20),
+            sampling_date=date.today() - timedelta(days=30),
         )
 
         response = sla_client.post("/api/chemical/check-slas")
@@ -118,7 +118,7 @@ class TestSLAAlertEngine:
         sample = self._create_sample(sla_client, sp["id"])
         self._force_sample_state(
             sla_db, sample["id"], "Sample",
-            sampling_date=date.today() - timedelta(days=20),
+            sampling_date=date.today() - timedelta(days=30),
         )
 
         sla_client.post("/api/chemical/check-slas")

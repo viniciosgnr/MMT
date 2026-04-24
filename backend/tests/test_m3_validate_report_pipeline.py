@@ -109,9 +109,10 @@ class TestValidateReportPipeline:
         """Helper to upload a fake PDF with mocked parsing and file I/O."""
         from unittest.mock import mock_open
         fake_pdf = BytesIO(b"%PDF-1.4 fake content")
-        with patch("app.services.pdf_parser.parse_pdf_bytes", return_value=mock_result), \
-             patch("builtins.open", mock_open()), \
-             patch("os.makedirs"):
+        # Patch at the import site (the router), not at the definition site (pdf_parser)
+        with patch("app.routers.chemical.parse_pdf_bytes", return_value=mock_result), \
+             patch("app.routers.chemical.open", mock_open()), \
+             patch("app.routers.chemical.os.makedirs"):
             response = client.post(
                 f"/api/chemical/samples/{sample_id}/validate-report",
                 files={"file": (filename, fake_pdf, "application/pdf")},
@@ -136,17 +137,9 @@ class TestValidateReportPipeline:
 
     def test_pvt_upload_happy_path(self, pipe_client):
         """PVT report → density, RS, FE checks."""
-        from unittest.mock import mock_open
         _, sample = self._create_sp_and_sample(pipe_client)
         mock = self._mock_parse_result("PVT")
-        fake_pdf = BytesIO(b"%PDF-1.4 fake pvt")
-        with patch("app.services.pdf_parser.parse_pdf_bytes", return_value=mock), \
-             patch("builtins.open", mock_open()), \
-             patch("os.makedirs"):
-            response = pipe_client.post(
-                f"/api/chemical/samples/{sample['id']}/validate-report",
-                files={"file": ("pvt_report.pdf", fake_pdf, "application/pdf")},
-            )
+        response = self._upload_pdf(pipe_client, sample["id"], mock, filename="pvt_report.pdf")
 
         assert response.status_code == 200
         data = response.json()
@@ -159,9 +152,10 @@ class TestValidateReportPipeline:
         _, sample = self._create_sp_and_sample(pipe_client)
         fake_pdf = BytesIO(b"NOT A PDF AT ALL")
         with patch(
-            "app.services.pdf_parser.parse_pdf_bytes",
+            "app.routers.chemical.parse_pdf_bytes",
             side_effect=ValueError("Unknown report type"),
-        ):
+        ), patch("app.routers.chemical.os.makedirs"), \
+           patch("app.routers.chemical.open"):
             response = pipe_client.post(
                 f"/api/chemical/samples/{sample['id']}/validate-report",
                 files={"file": ("garbage.pdf", fake_pdf, "application/pdf")},

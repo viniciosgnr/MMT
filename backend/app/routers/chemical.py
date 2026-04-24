@@ -275,58 +275,68 @@ def get_sample(sample_id: int, db: Session = Depends(database.get_db)):
 
 @router.post("/check-slas")
 def check_sampling_slas(db: Session = Depends(database.get_db)):
-    """Scans active samples and creates alerts for SLA violations."""
+    """Scans active samples and creates alerts for SLA violations dynamically using the 22-combination SLA matrix."""
     from datetime import date, timedelta
     from ..models import Alert, AlertSeverity, SampleStatus
+    from ..services.sla_matrix import get_sla_config
     
     today = date.today()
     alerts_created = 0
     
-    # 1. Check Samples that are 'Sampled' but missing report for > 15 days
-    overdue_reports = db.query(models.Sample).filter(
-        models.Sample.status == SampleStatus.SAMPLE.value,
-        models.Sample.sampling_date <= today - timedelta(days=15)
+    # 1. Fetch samples in statuses that have SLAs
+    active_samples = db.query(models.Sample).filter(
+        models.Sample.status.in_([SampleStatus.SAMPLE.value, SampleStatus.REPORT_ISSUE.value])
     ).all()
     
-    for s in overdue_reports:
-        # Check if alert already exists for this sample/type
-        existing = db.query(Alert).filter(Alert.tag_number == s.sample_id, Alert.type == "Lab Report Overdue").first()
-        if not existing:
-            alert = Alert(
-                tag_number=s.sample_id,
-                fpso_name=s.sample_point.fpso_name if s.sample_point else "Unknown",
-                severity=AlertSeverity.HIGH.value,
-                type="Lab Report Overdue",
-                title="Lab Report Overdue",
-                message=f"Sample {s.sample_id} was taken on {s.sampling_date} but lab report is missing (>15 days).",
-                acknowledged=0,
-                created_at=datetime.utcnow()
-            )
-            db.add(alert)
-            alerts_created += 1
+    for s in active_samples:
+        classification = "Fiscal"
+        if s.meter and hasattr(s.meter, 'classification') and s.meter.classification:
+            classification = s.meter.classification
             
-    # 2. Check Reports Issued but not Approved for > 3 days
-    pending_validation = db.query(models.Sample).filter(
-        models.Sample.status == SampleStatus.REPORT_ISSUE.value,
-        models.Sample.report_issue_date <= today - timedelta(days=3)
-    ).all()
-    
-    for s in pending_validation:
-        existing = db.query(Alert).filter(Alert.tag_number == s.sample_id, Alert.type == "Validation Pending").first()
-        if not existing:
-            alert = Alert(
-                tag_number=s.sample_id,
-                fpso_name=s.sample_point.fpso_name if s.sample_point else "Unknown",
-                severity=AlertSeverity.MEDIUM.value,
-                type="Validation Pending",
-                title="Validation Pending",
-                message=f"Lab report for {s.sample_id} was issued on {s.report_issue_date} but remains unvalidated (>3 days).",
-                acknowledged=0,
-                created_at=datetime.utcnow()
-            )
-            db.add(alert)
-            alerts_created += 1
+        cfg = get_sla_config(classification, s.type, s.local)
+        if not cfg:
+            continue
             
+        if s.status == SampleStatus.SAMPLE.value and s.sampling_date:
+            report_days = cfg.get("report_days")
+            if report_days is not None:
+                s_date = s.sampling_date.date() if hasattr(s.sampling_date, 'date') else s.sampling_date
+                if s_date <= today - timedelta(days=report_days):
+                    existing = db.query(Alert).filter(Alert.tag_number == s.sample_id, Alert.type == "Lab Report Overdue").first()
+                    if not existing:
+                        alert = Alert(
+                            tag_number=s.sample_id,
+                            fpso_name=s.sample_point.fpso_name if s.sample_point else "Unknown",
+                            severity=AlertSeverity.HIGH.value,
+                            type="Lab Report Overdue",
+                            title="Lab Report Overdue",
+                            message=f"Sample {s.sample_id} was taken on {s_date} but lab report is missing (>{report_days} days).",
+                            acknowledged=0,
+                            created_at=datetime.utcnow()
+                        )
+                        db.add(alert)
+                        alerts_created += 1
+
+        elif s.status == SampleStatus.REPORT_ISSUE.value and s.report_issue_date:
+            fc_days = cfg.get("fc_days")
+            if fc_days is not None:
+                r_date = s.report_issue_date.date() if hasattr(s.report_issue_date, 'date') else s.report_issue_date
+                if r_date <= today - timedelta(days=fc_days):
+                    existing = db.query(Alert).filter(Alert.tag_number == s.sample_id, Alert.type == "Validation Pending").first()
+                    if not existing:
+                        alert = Alert(
+                            tag_number=s.sample_id,
+                            fpso_name=s.sample_point.fpso_name if s.sample_point else "Unknown",
+                            severity=AlertSeverity.MEDIUM.value,
+                            type="Validation Pending",
+                            title="Validation Pending",
+                            message=f"Lab report for {s.sample_id} was issued on {r_date} but remains unvalidated (>{fc_days} days).",
+                            acknowledged=0,
+                            created_at=datetime.utcnow()
+                        )
+                        db.add(alert)
+                        alerts_created += 1
+                        
     db.commit()
     return {"message": "SLA check completed", "alerts_created": alerts_created}
 

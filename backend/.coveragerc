@@ -1,0 +1,9 @@
+[run]
+omit =
+    app/seed.py
+    app/seed_*.py
+    app/init_db.py
+    app/database.py
+    app/core/config.py
+    tests/*
+    app/routers/configuration.py

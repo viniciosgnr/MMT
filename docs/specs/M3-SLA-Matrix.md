@@ -16,8 +16,10 @@ Esta matriz representa a "Lei" de prazos para amostragens periódicas, guiando a
 | Operational | Chromatography | Onshore | 180 dias | 10 dias após a coleta | 20 dias após a coleta | 45 dias após a coleta | Reprovado | NA | |
 | Operational | Chromatography | Offshore | 180 dias | NA | NA | 45 dias após a coleta | Aprovado | 10 dias úteis após a emissão | |
 | Operational | Chromatography | Offshore | 180 dias | NA | NA | 45 dias após a coleta | Reprovado | NA | |
-| Apropriation | PVT | Onshore | 90 dias | 10 dias após a coleta | 20 dias após a coleta | 25 dias após a coleta | Aprovado/Reprovado | NA | |
-| Apropriation | PVT | Offshore | 90 dias | NA | NA | 25 dias após a coleta | Aprovado/Reprovado | NA | |
+| Apropriation | PVT | Onshore | 90 dias | 10 dias após a coleta | 20 dias após a coleta | 25 dias após a coleta | Aprovado | NA | |
+| Apropriation | PVT | Onshore | 90 dias | 10 dias após a coleta | 20 dias após a coleta | 25 dias após a coleta | Reprovado | NA | |
+| Apropriation | PVT | Offshore | 90 dias | NA | NA | 25 dias após a coleta | Aprovado | NA | |
+| Apropriation | PVT | Offshore | 90 dias | NA | NA | 25 dias após a coleta | Reprovado | NA | |
 | Fiscal | Enxofre | Onshore | 365 dias | 10 dias após a coleta | 20 dias após a coleta | 25 dias após a coleta | NA | NA | |
 | Fiscal | Enxofre | Offshore | 365 dias | NA | NA | 25 dias após a coleta | NA | NA | |
 | Fiscal | Viscosity | Onshore | 365 dias | 10 dias após a coleta | 20 dias após a coleta | 45 dias após a coleta | NA | NA | |
