@@ -335,3 +335,28 @@ class TestSLABoundary:
         # Approved samples should not appear in the overdue check
         # (they passed through the whole pipeline already)
         assert res.status_code == 200
+
+    def test_reprovado_reschedules_emergency_sample(self, sla_deep_client, sla_deep_db):
+        """When a report goes to Reprovado, an emergency sample (3 biz days) must be generated."""
+        sample = self._make_sample(sla_deep_client, sla_deep_db)
+        
+        # Explicit update mapping to "Reprovado" validation status
+        res = sla_deep_client.post(f"/api/chemical/samples/{sample['id']}/update-status", json={
+            "status": "Report approve/reprove",
+            "validation_status": "Reprovado",
+            "event_date": "2026-06-05",
+            "user": "Tester"
+        })
+        assert res.status_code == 200
+        
+        # Check if an emergency sample was automatically created
+        from app import models
+        emg = sla_deep_db.query(models.Sample).filter(
+            models.Sample.sample_point_id == sample["sample_point_id"],
+            models.Sample.id != sample["id"]
+        ).order_by(models.Sample.id.desc()).first()
+        
+        assert emg is not None, "Emergency sample was not created upon Reprovado!"
+        assert "EMG" in emg.sample_id
+        assert emg.due_date is not None
+
