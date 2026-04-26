@@ -19,12 +19,11 @@ class ValidationService:
                     rules = json.loads(definition.validation_rules)
                 elif isinstance(definition.validation_rules, dict):
                     rules = definition.validation_rules
-            except json.JSONDecodeError:
-                # Log this? For now, fail safe (allow or deny? allow if rules are broken to avoid blockage)
-                # Let's log and proceed, or raise error? 
-                # Better to ignore malformed rules than blocking operations, but M11 Hardening implies strictness.
-                # Let's fail safe (pass) but maybe log.
-                pass
+            except json.JSONDecodeError as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Malformed validation rules for attribute {definition.id}: {str(e)}")
+                raise ValueError("Validation rules are corrupted (invalid JSON)")
 
         # 1. Type Validation
         if definition.type == AttributeTypeEnum.NUMERICAL.value:
@@ -53,15 +52,16 @@ class ValidationService:
                     raise ValueError(f"Value does not match required format (regex: {rules['regex']})")
                     
         elif definition.type == AttributeTypeEnum.DATE.value:
-            # Basic ISO format check? YYYY-MM-DD
-            # Using datetime.fromisoformat or simple regex
-            if not re.match(r"^\d{4}-\d{2}-\d{2}", value):
+            from datetime import datetime
+            try:
+                datetime.strptime(value, "%Y-%m-%d")
+            except ValueError:
                  raise ValueError("Date must be in YYYY-MM-DD format")
 
         elif definition.type == AttributeTypeEnum.CHOICE.value:
-            # Check if value is in options
-            if "options" in rules and isinstance(rules["options"], list):
-                if value not in rules["options"]:
-                    raise ValueError(f"Value '{value}' is not a valid option")
+            if "options" not in rules or not isinstance(rules["options"], list):
+                raise ValueError("Attribute definition is missing valid 'options' list")
+            if value not in rules["options"]:
+                raise ValueError(f"Value '{value}' is not a valid option")
 
         return True

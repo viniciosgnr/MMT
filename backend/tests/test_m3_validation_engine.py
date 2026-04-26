@@ -14,27 +14,27 @@ from app.services.validation_engine import _check_o2_limit, _check_2sigma
 class TestO2HardLimit:
     """Compliance rígida para O2 na Cromatografia (threshold: 0.5%)."""
 
-    def test_o2_well_below_limit(self):
-        check = _check_o2_limit(0.032)
+    def test_o2_well_below_limit(self, db_session):
+        check = _check_o2_limit(0.032, db_session)
         assert check.status == "pass"
 
-    def test_o2_at_limit_boundary(self):
+    def test_o2_at_limit_boundary(self, db_session):
         """Exatamente 0.5% — valor limítrofe."""
-        check = _check_o2_limit(0.5)
+        check = _check_o2_limit(0.5, db_session)
         # Dependendo da implementação (< vs <=), documenta o comportamento
         assert check.status in ("pass", "fail"), "Deve ter um resultado definido no limiar"
 
-    def test_o2_just_above_limit(self):
-        check = _check_o2_limit(0.501)
+    def test_o2_just_above_limit(self, db_session):
+        check = _check_o2_limit(0.501, db_session)
         assert check.status == "fail"
 
-    def test_o2_grossly_above_limit(self):
-        check = _check_o2_limit(5.0)
+    def test_o2_grossly_above_limit(self, db_session):
+        check = _check_o2_limit(5.0, db_session)
         assert check.status == "fail"
         assert "exceeds limit" in check.detail.lower() or "limit" in check.detail.lower()
 
-    def test_o2_zero(self):
-        check = _check_o2_limit(0.0)
+    def test_o2_zero(self, db_session):
+        check = _check_o2_limit(0.0, db_session)
         assert check.status == "pass"
 
 

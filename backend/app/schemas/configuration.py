@@ -30,10 +30,12 @@ class AttributeTypeEnum(str, Enum):
     CHOICE = "Multiple Choice"
 
 class NumericalRules(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     min: Optional[float] = None
     max: Optional[float] = None
 
 class TextRules(BaseModel):
+    model_config = ConfigDict(extra='forbid')
     min_length: Optional[int] = None
     regex: Optional[str] = None
 

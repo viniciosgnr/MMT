@@ -25,7 +25,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from app.services.validation_engine import (
     _check_2sigma, _check_o2_limit,
     CheckResult, ValidationResult,
-    O2_LIMIT, HISTORY_SIZE, SIGMA_MULTIPLIER
+    DEFAULT_O2_LIMIT, HISTORY_SIZE, SIGMA_MULTIPLIER
 )
 from app.services.pdf_parser import (
     PVTResult, CROResult,
@@ -153,19 +153,19 @@ class TestO2LimitDeep:
         (5.0, "fail"),
         (0.0001, "pass"),
     ])
-    def test_o2_parametrized(self, value, expected_status):
-        result = _check_o2_limit(value)
+    def test_o2_parametrized(self, value, expected_status, db_session):
+        result = _check_o2_limit(value, db_session)
         assert result.status == expected_status, f"O2={value}: esperado {expected_status}, got {result.status}"
 
-    def test_o2_exactly_at_limit(self):
+    def test_o2_exactly_at_limit(self, db_session):
         """O2 = 0.5 (exatamente no limite) → PASS."""
-        result = _check_o2_limit(0.5)
+        result = _check_o2_limit(0.5, db_session)
         assert result.status == "pass"
         assert result.value == 0.5
 
-    def test_o2_detail_message_on_fail(self):
+    def test_o2_detail_message_on_fail(self, db_session):
         """Detalhe do CheckResult deve explicar a falha."""
-        result = _check_o2_limit(0.8)
+        result = _check_o2_limit(0.8, db_session)
         assert result.status == "fail"
         assert "0.5" in result.detail or "limit" in result.detail.lower() or "O" in result.detail
 

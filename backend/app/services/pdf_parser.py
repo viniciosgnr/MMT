@@ -4,12 +4,24 @@ PDF Parser Service — Extracts lab report data from GT Química PDFs.
 Supports two report types:
   - PVT: Density (Massa específica), RS (RGO), FE
   - CRO (Chromatography): O₂, Densidade Relativa do Gás Real
+
+Security hardening (Phase 2):
+  - Magic bytes validation
+  - File size limits (10MB max)
+  - Safe filename handling
 """
 
 import re
+import logging
 from dataclasses import dataclass, field
 from typing import Optional
 import fitz  # pymupdf
+
+logger = logging.getLogger("mmt.pdf_parser")
+
+# Security limits
+MAX_PDF_SIZE_BYTES = 10 * 1024 * 1024  # 10 MB
+PDF_MAGIC_BYTES = b"%PDF"
 
 
 @dataclass
@@ -25,7 +37,7 @@ class PVTResult:
     rs_unit: str = "m³ STD gás/STD óleo morto"
     fe: Optional[float] = None              # Fator de Encolhimento
     fe_unit: str = "-"
-    bsw: Optional[float] = None               # Teor de água e sedimentos (%)
+    bsw: Optional[float] = None             # Teor de água e sedimentos (%)
     bsw_unit: str = "%"
     raw_text: str = ""
 
@@ -46,6 +58,28 @@ class CROResult:
     raw_text: str = ""
 
 
+def _validate_pdf_bytes(pdf_bytes: bytes, filename: str = "") -> None:
+    """Validate PDF bytes before processing.
+
+    Security checks:
+    1. Magic bytes validation (%PDF header)
+    2. File size limit (10MB)
+
+    Raises:
+        ValueError: If validation fails.
+    """
+    if len(pdf_bytes) > MAX_PDF_SIZE_BYTES:
+        logger.warning("PDF rejected: size %d bytes exceeds limit (%d). File: %s",
+                        len(pdf_bytes), MAX_PDF_SIZE_BYTES, filename)
+        raise ValueError(
+            f"PDF exceeds maximum allowed size of {MAX_PDF_SIZE_BYTES // (1024*1024)}MB"
+        )
+
+    if not pdf_bytes[:4].startswith(PDF_MAGIC_BYTES):
+        logger.warning("PDF rejected: invalid magic bytes. File: %s", filename)
+        raise ValueError("File does not appear to be a valid PDF")
+
+
 def _parse_br_float(value_str: str) -> Optional[float]:
     """Parse a Brazilian-format float (comma as decimal separator)."""
     if not value_str:
@@ -64,29 +98,20 @@ def _extract_tag_point(text: str) -> Optional[str]:
 
 def _extract_boletim(text: str) -> Optional[str]:
     """Extract the Boletim number (e.g. 'PVT Sepetiba/26-16901')."""
-    # The boletim appears after "Boletim de Resultado de Análise N°"
     m = re.search(r"Boletim de Resultado de Análise N°\n(.+)", text)
     if m:
         value = m.group(1).strip()
-        # Sometimes the next line leaks in — take only lines starting with PVT/CRO
         if re.match(r"(PVT|CRO)\s", value):
             return value
-    # Fallback: search for PVT/CRO pattern anywhere
     m2 = re.search(r"((PVT|CRO)\s+\S+/\d{2}-\d+)", text)
     return m2.group(1).strip() if m2 else None
 
 
 def _extract_sampling_date(text: str) -> Optional[str]:
-    """Extract the collection date (Data da Coleta).
-    
-    The date appears near the FPSO name in the report layout,
-    e.g. 'FPSO Cidade de Sepetiba\n17/01/2026\n'
-    """
-    # Look for date right after FPSO mention
+    """Extract the collection date (Data da Coleta)."""
     m = re.search(r"FPSO\s+.*?\n(\d{2}/\d{2}/\d{4})", text)
     if m:
         return m.group(1)
-    # Fallback: look for date near "Data da Coleta" or "Data de Receb"
     m = re.search(r"Data de Receb.*?\n.*?(\d{2}/\d{2}/\d{4})", text)
     return m.group(1) if m else None
 
@@ -97,7 +122,6 @@ def detect_report_type(text: str) -> str:
         return "PVT"
     if re.search(r"Cromatografia|cromatografia|Composição.*Gás|Concentração\s+Molar", text, re.IGNORECASE):
         return "CRO"
-    # Fallback: check boletim prefix
     if re.search(r"PVT\s", text):
         return "PVT"
     if re.search(r"CRO\s", text):
@@ -106,29 +130,20 @@ def detect_report_type(text: str) -> str:
 
 
 def extract_pvt(text: str) -> PVTResult:
-    """Extract PVT values from PDF text.
-    
-    Expected text patterns:
-        Massa específica absoluta do óleo morto - 20 °C\n875,39\n...
-        RGO ou RS\n88,0571\n...
-        FE\n0,8241\n...
-    """
+    """Extract PVT values from PDF text."""
     result = PVTResult(raw_text=text)
     result.boletim = _extract_boletim(text)
     result.tag_point = _extract_tag_point(text)
     result.sampling_date = _extract_sampling_date(text)
 
-    # Massa específica absoluta do óleo morto - value is on the next line
     m = re.search(r"Massa específica absoluta.*?\n([\d,]+)", text)
     if m:
         result.density = _parse_br_float(m.group(1))
 
-    # RGO ou RS
     m = re.search(r"RGO ou RS\n([\d,]+)", text)
     if m:
         result.rs = _parse_br_float(m.group(1))
 
-    # FE (Fator de Encolhimento)
     m = re.search(r"\bFE\n([\d,]+)", text)
     if m:
         result.fe = _parse_br_float(m.group(1))
@@ -137,24 +152,16 @@ def extract_pvt(text: str) -> PVTResult:
 
 
 def extract_cro(text: str) -> CROResult:
-    """Extract Chromatography values from PDF text.
-    
-    Extracts:
-        - O₂ from the Contaminantes section
-        - Densidade Relativa do Gás Real from Condição Padrão section
-    """
+    """Extract Chromatography values from PDF text."""
     result = CROResult(raw_text=text)
     result.boletim = _extract_boletim(text)
     result.tag_point = _extract_tag_point(text)
     result.sampling_date = _extract_sampling_date(text)
 
-    # O₂ — in Contaminantes section: O2\nOxigênio\n1A\n0,032
     m = re.search(r"O2\nOxigênio\n\w+\n([\d,]+)", text)
     if m:
         result.o2 = _parse_br_float(m.group(1))
 
-    # Densidade Relativa do Gás Real — Condição Padrão
-    # PDF text pattern: "Densidade Relativa do Gás Real\n1B\n1,0509\n-"
     m = re.search(r"Densidade Relativa do G[aá]s Real\n\w+\n([\d,]+)", text)
     if m:
         result.relative_density_real = _parse_br_float(m.group(1))
@@ -164,16 +171,21 @@ def extract_cro(text: str) -> CROResult:
 
 def parse_pdf(pdf_path: str) -> PVTResult | CROResult:
     """Parse a lab report PDF and return extracted values.
-    
+
     Args:
         pdf_path: Path to the PDF file.
-    
+
     Returns:
         PVTResult or CROResult with extracted values.
-    
+
     Raises:
-        ValueError: If the report type cannot be determined.
+        ValueError: If the report type cannot be determined or file is invalid.
     """
+    # Read and validate before parsing
+    with open(pdf_path, "rb") as f:
+        raw = f.read()
+    _validate_pdf_bytes(raw, pdf_path)
+
     doc = fitz.open(pdf_path)
     text = ""
     for page in doc:
@@ -181,25 +193,30 @@ def parse_pdf(pdf_path: str) -> PVTResult | CROResult:
     doc.close()
 
     report_type = detect_report_type(text)
-    
+
     if report_type == "PVT":
         return extract_pvt(text)
     elif report_type == "CRO":
         return extract_cro(text)
     else:
-        raise ValueError(f"Unknown report type. Could not detect PVT or CRO from PDF content.")
+        raise ValueError("Unknown report type. Could not detect PVT or CRO from PDF content.")
 
 
 def parse_pdf_bytes(pdf_bytes: bytes, filename: str = "") -> PVTResult | CROResult:
     """Parse a lab report from in-memory bytes (for file upload handling).
-    
+
     Args:
         pdf_bytes: Raw PDF bytes.
         filename: Original filename (used as fallback for type detection).
-    
+
     Returns:
         PVTResult or CROResult with extracted values.
+
+    Raises:
+        ValueError: If validation fails or report type is unknown.
     """
+    _validate_pdf_bytes(pdf_bytes, filename)
+
     doc = fitz.open(stream=pdf_bytes, filetype="pdf")
     text = ""
     for page in doc:
@@ -207,7 +224,7 @@ def parse_pdf_bytes(pdf_bytes: bytes, filename: str = "") -> PVTResult | CROResu
     doc.close()
 
     report_type = detect_report_type(text)
-    
+
     # Fallback: detect from filename
     if report_type == "UNKNOWN" and filename:
         if "PVT" in filename.upper():
@@ -220,4 +237,4 @@ def parse_pdf_bytes(pdf_bytes: bytes, filename: str = "") -> PVTResult | CROResu
     elif report_type == "CRO":
         return extract_cro(text)
     else:
-        raise ValueError(f"Unknown report type. Could not detect PVT or CRO.")
+        raise ValueError("Unknown report type. Could not detect PVT or CRO.")

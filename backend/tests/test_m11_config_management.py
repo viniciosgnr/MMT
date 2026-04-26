@@ -8,6 +8,61 @@ import pytest
 
 # ─── Wells ──────────────────────────────────────────────────────────────────
 
+def test_create_attribute_with_date_rule(client):
+    payload = {
+        "entity_type": "InstrumentTag",
+        "name": "InstallationDate",
+        "type": "Date",
+        "validation_rules": {"format": "YYYY-MM-DD"} # Used to test our DATE robust validation
+    }
+    response = client.post("/api/config/attributes", json=payload)
+    assert response.status_code == 200
+    return response.json()
+
+def test_create_attribute_with_choice_rule(client):
+    payload = {
+        "entity_type": "InstrumentTag",
+        "name": "VendorName",
+        "type": "Multiple Choice",
+        "validation_rules": {"options": ["CompanyA", "CompanyB"]}
+    }
+    response = client.post("/api/config/attributes", json=payload)
+    assert response.status_code == 200
+    return response.json()
+
+def test_invalid_date_attribute_value_format(client):
+    # Relies on order or we just create it:
+    attr = test_create_attribute_with_date_rule(client)
+    payload = {
+        "attribute_id": attr["id"],
+        "entity_id": 99,
+        "value": "2024/10/01" # Invalid format
+    }
+    response = client.post("/api/config/values", json=payload)
+    assert response.status_code == 400
+    assert "YYYY-MM-DD" in response.json()["detail"]
+
+def test_valid_date_attribute_value(client):
+    attr = test_create_attribute_with_date_rule(client)
+    payload = {
+        "attribute_id": attr["id"],
+        "entity_id": 99,
+        "value": "2024-10-01"
+    }
+    response = client.post("/api/config/values", json=payload)
+    assert response.status_code == 200
+
+def test_invalid_choice_attribute_value(client):
+    attr = test_create_attribute_with_choice_rule(client)
+    payload = {
+        "attribute_id": attr["id"],
+        "entity_id": 99,
+        "value": "CompanyC" # Not in options
+    }
+    response = client.post("/api/config/values", json=payload)
+    assert response.status_code == 400
+    assert "not a valid option" in response.json()["detail"]
+
 def test_create_well(client):
     """Verifica criação de poço de produção no M11."""
     res = client.post("/api/config/wells", json={

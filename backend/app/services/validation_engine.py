@@ -20,10 +20,10 @@ from app.services.pdf_parser import PVTResult, CROResult
 SIGMA_MULTIPLIER = 2  # Standard deviations for acceptance band
 HISTORY_SIZE = 10     # Number of past samples for 2σ comparison
 
-# Hard Limits for Safety/Process Compliance
-O2_LIMIT = 0.5   # (%)
-H2S_LIMIT = 10.0 # (ppm)
-BSW_LIMIT = 1.0  # (%)
+# Default Hard Limits for Safety/Process Compliance (If not found in M11)
+DEFAULT_O2_LIMIT = 0.5   # (%)
+DEFAULT_H2S_LIMIT = 10.0 # (ppm)
+DEFAULT_BSW_LIMIT = 1.0  # (%)
 
 
 @dataclass
@@ -158,6 +158,18 @@ def _check_2sigma(
     )
 
 
+def _get_config_limit(db: Session, key: str, default: float) -> float:
+    """Fetch configuration limit from M11 or use default."""
+    param = db.query(models.ConfigParameter).filter(
+        models.ConfigParameter.key == key
+    ).first()
+    if param:
+        try:
+            return float(param.value)
+        except ValueError:
+            pass
+    return default
+    
 def _check_hard_limit(parameter: str, value: float, unit: str, limit: float, informative: bool = False) -> CheckResult:
     """Check if a value exceeds a specific hard limit.
     
@@ -179,17 +191,20 @@ def _check_hard_limit(parameter: str, value: float, unit: str, limit: float, inf
         detail=f"{parameter} = {value}{unit} is within {limit}{unit} limit",
     )
 
-def _check_o2_limit(o2_value: float) -> CheckResult:
+def _check_o2_limit(o2_value: float, db: Session) -> CheckResult:
     # O2 is a hard reproval limit (< 0.5%)
-    return _check_hard_limit("o2", o2_value, "%", O2_LIMIT, informative=False)
+    limit = _get_config_limit(db, "VALIDATION_LIMIT_O2", DEFAULT_O2_LIMIT)
+    return _check_hard_limit("o2", o2_value, "%", limit, informative=False)
 
-def _check_h2s_limit(h2s_value: float) -> CheckResult:
+def _check_h2s_limit(h2s_value: float, db: Session) -> CheckResult:
     # H2S is informative only
-    return _check_hard_limit("h2s", h2s_value, "ppm", H2S_LIMIT, informative=True)
+    limit = _get_config_limit(db, "VALIDATION_LIMIT_H2S", DEFAULT_H2S_LIMIT)
+    return _check_hard_limit("h2s", h2s_value, "ppm", limit, informative=True)
 
-def _check_bsw_limit(bsw_value: float) -> CheckResult:
+def _check_bsw_limit(bsw_value: float, db: Session) -> CheckResult:
     # BSW is informative only
-    return _check_hard_limit("bsw", bsw_value, "%", BSW_LIMIT, informative=True)
+    limit = _get_config_limit(db, "VALIDATION_LIMIT_BSW", DEFAULT_BSW_LIMIT)
+    return _check_hard_limit("bsw", bsw_value, "%", limit, informative=True)
 
 
 def validate_pvt(
@@ -236,7 +251,7 @@ def validate_pvt(
     
     # Check BS&W
     if extracted.bsw is not None:
-        check = _check_bsw_limit(extracted.bsw)
+        check = _check_bsw_limit(extracted.bsw, db)
         result.checks.append(check)
         # Note: BSW is informative only, does not set overall_status to Reproved
     
@@ -265,7 +280,7 @@ def validate_cro(
     
     # Check O₂ hard limit
     if extracted.o2 is not None:
-        check = _check_o2_limit(extracted.o2)
+        check = _check_o2_limit(extracted.o2, db)
         result.checks.append(check)
         if check.status == "fail":
             result.overall_status = "Reproved"
@@ -282,7 +297,7 @@ def validate_cro(
             
     # Check H2S
     if extracted.h2s is not None:
-        check = _check_h2s_limit(extracted.h2s)
+        check = _check_h2s_limit(extracted.h2s, db)
         result.checks.append(check)
         # Note: H2S is informative only, does not set overall_status to Reproved
     

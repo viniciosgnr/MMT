@@ -59,6 +59,7 @@ def p1_client():
 
 @pytest.fixture(scope="module")
 def p1_db():
+    Base.metadata.create_all(bind=p1_engine)
     db = P1TestSession()
     yield db
     db.close()
@@ -113,25 +114,25 @@ class TestValidatePVTDirect:
         )
 
     @patch("app.services.validation_engine._get_parameter_history")
-    def test_pvt_all_pass_with_empty_history(self, mock_history):
+    def test_pvt_all_pass_with_empty_history(self, mock_history, p1_db):
         """First sample ever → bootstrapped → all pass."""
         mock_history.return_value = []
         from app.services.validation_engine import validate_pvt
 
-        result = validate_pvt(self._make_pvt_result(), MagicMock(), MagicMock())
+        result = validate_pvt(self._make_pvt_result(), MagicMock(), p1_db)
         assert result.overall_status == "Approved"
         assert result.report_type == "PVT"
         assert len(result.checks) == 3
         assert all(c.status == "pass" for c in result.checks)
 
     @patch("app.services.validation_engine._get_parameter_history")
-    def test_pvt_density_fails_with_outlier(self, mock_history):
+    def test_pvt_density_fails_with_outlier(self, mock_history, p1_db):
         """Density way outside 2σ of history → fail."""
         history_vals = [{"value": 875.0 + i * 0.2, "date": "2026-01-01", "sample_id": i} for i in range(10)]
         mock_history.return_value = history_vals
         from app.services.validation_engine import validate_pvt
 
-        result = validate_pvt(self._make_pvt_result(density=900.0), MagicMock(), MagicMock())
+        result = validate_pvt(self._make_pvt_result(density=900.0), MagicMock(), p1_db)
         assert result.overall_status == "Reproved"
         density_check = next(c for c in result.checks if c.parameter == "density")
         assert density_check.status == "fail"
@@ -149,21 +150,21 @@ class TestValidateCRODirect:
         )
 
     @patch("app.services.validation_engine._get_parameter_history")
-    def test_cro_pass_with_low_o2(self, mock_history):
+    def test_cro_pass_with_low_o2(self, mock_history, p1_db):
         """O₂ = 0.03% (well below 0.5% limit) → pass."""
         mock_history.return_value = []
         from app.services.validation_engine import validate_cro
 
-        result = validate_cro(self._make_cro_result(o2=0.03), MagicMock(), MagicMock())
+        result = validate_cro(self._make_cro_result(o2=0.03), MagicMock(), p1_db)
         assert result.overall_status == "Approved"
 
     @patch("app.services.validation_engine._get_parameter_history")
-    def test_cro_fail_with_high_o2(self, mock_history):
+    def test_cro_fail_with_high_o2(self, mock_history, p1_db):
         """O₂ = 0.8% (above 0.5% limit) → fail."""
         mock_history.return_value = []
         from app.services.validation_engine import validate_cro
 
-        result = validate_cro(self._make_cro_result(o2=0.8), MagicMock(), MagicMock())
+        result = validate_cro(self._make_cro_result(o2=0.8), MagicMock(), p1_db)
         assert result.overall_status == "Reproved"
 
 
@@ -171,22 +172,22 @@ class TestValidateReportDispatcher:
     """Direct tests for validate_report dispatcher."""
 
     @patch("app.services.validation_engine.validate_pvt")
-    def test_dispatches_pvt(self, mock_validate_pvt):
+    def test_dispatches_pvt(self, mock_validate_pvt, p1_db):
         from app.services.pdf_parser import PVTResult
         from app.services.validation_engine import validate_report, ValidationResult
 
         mock_validate_pvt.return_value = ValidationResult(report_type="PVT", overall_status="Approved")
-        result = validate_report(PVTResult(), MagicMock(), MagicMock())
+        result = validate_report(PVTResult(), MagicMock(), p1_db)
         mock_validate_pvt.assert_called_once()
         assert result.report_type == "PVT"
 
     @patch("app.services.validation_engine.validate_cro")
-    def test_dispatches_cro(self, mock_validate_cro):
+    def test_dispatches_cro(self, mock_validate_cro, p1_db):
         from app.services.pdf_parser import CROResult
         from app.services.validation_engine import validate_report, ValidationResult
 
         mock_validate_cro.return_value = ValidationResult(report_type="CRO", overall_status="Approved")
-        result = validate_report(CROResult(), MagicMock(), MagicMock())
+        result = validate_report(CROResult(), MagicMock(), p1_db)
         mock_validate_cro.assert_called_once()
         assert result.report_type == "CRO"
 
