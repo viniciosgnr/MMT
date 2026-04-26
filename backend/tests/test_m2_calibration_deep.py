@@ -150,3 +150,75 @@ def test_fail_task(client, db_session, equipment_factory):
     res = client.post(f"/api/calibration/tasks/{task.id}/fail?reason=DamagedDuringCalibration")
     assert res.status_code == 200
     assert "notification_id" in res.json()
+
+def test_generate_certificate_number(client, db_session, equipment_factory):
+    # 1. Create Campaign
+    from app.models import CalibrationCampaign
+    from datetime import date
+    camp = CalibrationCampaign(name="Campaign 2026", fpso_name="Cidade de Saquarema", start_date=date(2026,1,1), responsible="Admin")
+    db_session.add(camp)
+    db_session.flush()
+
+    # 2. Create Task linked to campaign
+    eq = equipment_factory()
+    task = CalibrationTask(
+        campaign_id=camp.id,
+        equipment_id=eq["id"],
+        tag="T-TRIG-01",
+        description="D",
+        due_date=date.today(),
+        status="Pending"
+    )
+    db_session.add(task)
+    db_session.commit()
+
+    from app.services.calibration_service import CalibrationService
+    res = CalibrationService.generate_certificate_number(db_session, task.id, "PRV")
+    # CDS is Saquarema trigram
+    assert "CDS-PRV" in res["certificate_number"]
+
+    # 3. Test sequence increment
+    task.certificate_number = res["certificate_number"]
+    db_session.commit()
+    
+    res2 = CalibrationService.generate_certificate_number(db_session, task.id, "PRV")
+    # Should be seq 002 if 001 was extracted
+    if "-001" in res["certificate_number"]:
+        assert "-002" in res2["certificate_number"]
+
+def test_generate_certificate_number_404(db_session):
+    from app.services.calibration_service import CalibrationService
+    import pytest
+    from fastapi import HTTPException
+    with pytest.raises(HTTPException) as excinfo:
+        CalibrationService.generate_certificate_number(db_session, 99999)
+    assert excinfo.value.status_code == 404
+
+def test_generate_certificate_number_various_fpsos(db_session, equipment_factory):
+    from app.models import CalibrationCampaign, CalibrationTask
+    from app.services.calibration_service import CalibrationService
+    from datetime import date
+    fpsos = ["Cidade de Angra dos Reis", "Anchieta", "Sepetiba", "Unknown FPSO"]
+    for name in fpsos:
+        camp = CalibrationCampaign(name=f"C-{name}", fpso_name=name, start_date=date.today(), responsible="R")
+        db_session.add(camp)
+        db_session.flush()
+        eq = equipment_factory()
+        task = CalibrationTask(campaign_id=camp.id, equipment_id=eq["id"], tag="T", due_date=date.today())
+        db_session.add(task)
+        db_session.commit()
+        res = CalibrationService.generate_certificate_number(db_session, task.id)
+        assert res["certificate_number"] is not None
+
+def test_generate_certificate_number_bad_parts(db_session, equipment_factory):
+    from app.models import CalibrationTask
+    from app.services.calibration_service import CalibrationService
+    from datetime import date
+    eq = equipment_factory()
+    task = CalibrationTask(equipment_id=eq["id"], tag="T", due_date=date.today(), certificate_number="BAD-FORMAT")
+    db_session.add(task)
+    db_session.commit()
+    res = CalibrationService.generate_certificate_number(db_session, task.id)
+    assert "-001" in res["certificate_number"]
+
+

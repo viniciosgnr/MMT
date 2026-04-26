@@ -16,9 +16,9 @@ class CalibrationStatus(str, Enum):
 
 class EquipmentBase(BaseModel):
     serial_number: str
-    model: str
+    model: Optional[str] = None
     manufacturer: Optional[str] = None
-    equipment_type: str
+    equipment_type: Optional[str] = None
     fpso_name: Optional[str] = None
     specifications: Optional[str] = None
     status: str = "Active"

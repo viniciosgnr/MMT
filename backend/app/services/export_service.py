@@ -89,7 +89,7 @@ class ExportService:
                     ).all()
                     for s in samples_query:
                         date_str = s.sampling_date.strftime("%Y-%m-%d")
-                        folder_path = f"{fpso_trigram}/Chemical analysis/{s.sample_point.tag_number} - {s.sample_point.name}/{date_str}"
+                        folder_path = f"{fpso_trigram}/Chemical analysis/{s.sample_point.tag_number} - {s.sample_point.description}/{date_str}"
                         if s.lab_report_url:
                             zip_file.writestr(f"{folder_path}/Lab_Report_{s.sample_id}.pdf", b"Mock Lab Report")
                         if s.notes:
