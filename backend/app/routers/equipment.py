@@ -201,6 +201,26 @@ def read_equipment(equipment_id: int, db: Session = Depends(database.get_db)):
     db_equipment.health_status = calculate_health(db_equipment)
     return db_equipment
 
+@router.patch("/{equipment_id}", response_model=schemas.Equipment)
+def update_equipment(
+    equipment_id: int,
+    equipment_update: dict,
+    db: Session = Depends(database.get_db),
+    auth_context: dict = Depends(get_current_user_fpso),
+):
+    db_equipment = db.query(models.Equipment).filter(models.Equipment.id == equipment_id).first()
+    if not db_equipment:
+        raise HTTPException(status_code=404, detail="Equipment not found")
+        
+    for key, value in equipment_update.items():
+        if hasattr(db_equipment, key):
+            setattr(db_equipment, key, value)
+            
+    db.commit()
+    db.refresh(db_equipment)
+    return db_equipment
+
+
 # --- Installation & History ---
 
 @router.post("/install", response_model=schemas.EquipmentTagInstallation)
