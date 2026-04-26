@@ -43,7 +43,7 @@ class SyncService:
             
         sync_status = db.query(SyncStatus).filter(SyncStatus.module_name == source.name).first()
         if not sync_status:
-            sync_status = SyncStatus(module_name=source.name)
+            sync_status = SyncStatus(module_name=source.name, records_synced=0)
             db.add(sync_status)
         
         sync_status.last_sync = datetime.utcnow()

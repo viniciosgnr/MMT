@@ -48,7 +48,9 @@ def override_get_current_user():
     return {
         "id": "harness-bot-01",
         "email": "harness@sbmoffshore.com",
-        "role": "HarnessAdmin"
+        "username": "harness-bot",
+        "role": "HarnessAdmin",
+        "fpso_name": None
     }
 
 

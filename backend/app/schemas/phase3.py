@@ -235,6 +235,9 @@ class PlannedActivityCreate(PlannedActivityBase):
     pass
 
 class PlannedActivityUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    responsible: Optional[str] = None
     status: Optional[str] = None
     scheduled_date: Optional[datetime] = None
     completed_at: Optional[datetime] = None

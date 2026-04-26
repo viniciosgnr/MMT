@@ -47,7 +47,7 @@ def upload_reports(
 ):
     """Bulk upload utility for historical reports (Supabase Storage)"""
     user = current_user_data["user"]
-    username = user.get("username") if isinstance(user, dict) else getattr(user, 'username', 'System')
+    username = (user.get("username") if isinstance(user, dict) else getattr(user, 'username', 'System')) or "System"
     return HistoryService.upload_reports(db, payload, current_user_data["fpso_name"], username)
 
 # Report Types (Managed by Admin in 6.2)
