@@ -8,6 +8,20 @@ if ! command -v docker &> /dev/null; then
 fi
 
 echo "Starting MMT Application..."
+
+echo "============================================="
+echo "Running CI Pipeline: Testing Backend Components..."
+echo "============================================="
+# We spin up a temporary backend container to run pytest. If tests fail, it exits with error
+docker compose run --rm backend pytest tests/ -v
+TEST_STATUS=$?
+
+if [ $TEST_STATUS -ne 0 ]; then
+    echo "❌ CI Pipeline Failed: Tests did not pass. Deployment aborted."
+    exit 1
+fi
+echo "✅ CI Pipeline Passed: All tests succeeded."
+
 echo "Building and launching containers..."
 
 # Build and start in detached mode

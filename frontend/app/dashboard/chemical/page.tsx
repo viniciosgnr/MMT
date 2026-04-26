@@ -270,6 +270,7 @@ export default function ChemicalAnalysisDashboard() {
   const [fpsoFilter, setFpsoFilter] = useState("all")
   const [categoryFilter, setCategoryFilter] = useState<string>("all")
   const [activeGroup, setActiveGroup] = useState<string | null>(null)
+  const [fpsoList, setFpsoList] = useState<{ id: string, name: string }[]>([])
 
   // Quick-advance popover state
   const [advancingSampleId, setAdvancingSampleId] = useState<number | null>(null)
@@ -278,6 +279,7 @@ export default function ChemicalAnalysisDashboard() {
 
   useEffect(() => {
     loadData()
+    loadFpsos()
 
     const supabase = createClient()
     const channel = supabase
@@ -290,6 +292,19 @@ export default function ChemicalAnalysisDashboard() {
 
     return () => { supabase.removeChannel(channel) }
   }, [fpsoFilter])
+
+  const loadFpsos = async () => {
+    try {
+      const res = await apiFetch("/configuration/tree")
+      if (res.ok) {
+        const tree = await res.json()
+        const fpsos = tree.filter((node: any) => node.type === "FPSO").map((n: Pick<any, "id" | "name">) => ({ id: n.id, name: n.name }))
+        setFpsoList(fpsos)
+      }
+    } catch (err) {
+      console.warn("Failed to fetch FPSOs", err)
+    }
+  }
 
   const loadData = async () => {
     try {
@@ -427,16 +442,9 @@ export default function ChemicalAnalysisDashboard() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All FPSOs</SelectItem>
-            <SelectItem value="CDS - Cidade de Saquarema">CDS - Saquarema</SelectItem>
-            <SelectItem value="CDM - Cidade de Maricá">CDM - Maricá</SelectItem>
-            <SelectItem value="CDI - Cidade de Ilhabela">CDI - Ilhabela</SelectItem>
-            <SelectItem value="CDP - Cidade de Paraty">CDP - Paraty</SelectItem>
-            <SelectItem value="ESS - Espírito Santo">ESS - Espírito Santo</SelectItem>
-            <SelectItem value="CPX - Capixaba">CPX - Capixaba</SelectItem>
-            <SelectItem value="CDA - Cidade de Anchieta">CDA - Anchieta</SelectItem>
-            <SelectItem value="ADG - Alexandre de Gusmão">ADG - Alexandre de Gusmão</SelectItem>
-            <SelectItem value="ATD - Almirante Tamandaré">ATD - Almirante Tamandaré</SelectItem>
-            <SelectItem value="SEP - Sepetiba">SEP - Sepetiba</SelectItem>
+            {fpsoList.map(fpso => (
+              <SelectItem key={fpso.name} value={fpso.name}>{fpso.name.split(" - ")[0]}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
         {activeGroup && (

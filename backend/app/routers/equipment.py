@@ -28,8 +28,16 @@ router = APIRouter(
 def create_equipment(
     equipment: schemas.EquipmentCreate,
     db: Session = Depends(database.get_db),
-    current_user=Depends(get_current_user),
+    auth_context: dict = Depends(get_current_user_fpso),
 ):
+    # Security: Privilege Elevation Bypass Prevention
+    user_fpso = auth_context.get("fpso_name")
+    if user_fpso and equipment.fpso_name != user_fpso:
+        raise HTTPException(
+            status_code=403,
+            detail=f"RBAC Exclusion: You cannot create equipment for {equipment.fpso_name}"
+        )
+
     db_equipment = models.Equipment(**equipment.model_dump())
     db.add(db_equipment)
     db.commit()

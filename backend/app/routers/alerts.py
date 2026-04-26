@@ -11,6 +11,8 @@ from ..schemas.phase3 import (
     AlertConfigurationCreate
 )
 from datetime import datetime
+from ..dependencies import get_current_user_fpso
+from ..services.alerts_service import AlertsService
 
 router = APIRouter(prefix="/api/alerts", tags=["alerts"])
 
@@ -23,7 +25,8 @@ def get_alerts(
     fpso_name: Optional[str] = None,
     tag_number: Optional[str] = None,
     alert_type: Optional[str] = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user_data = Depends(get_current_user_fpso)
 ):
     """Get all alerts with extensive filters"""
     query = db.query(Alert)
@@ -34,8 +37,9 @@ def get_alerts(
     if acknowledged is not None:
         query = query.filter(Alert.acknowledged == (1 if acknowledged else 0))
 
-    if fpso_name:
-        query = query.filter(Alert.fpso_name == fpso_name)
+    filter_fpso = current_user_data["fpso_name"] if current_user_data["fpso_name"] else fpso_name
+    if filter_fpso:
+        query = query.filter(Alert.fpso_name == filter_fpso)
 
     if tag_number:
         query = query.filter(Alert.tag_number == tag_number)
@@ -46,8 +50,10 @@ def get_alerts(
     return query.order_by(Alert.created_at.desc()).offset(skip).limit(limit).all()
 
 @router.post("", response_model=AlertSchema)
-def create_alert(alert: AlertCreate, db: Session = Depends(get_db)):
+def create_alert(alert: AlertCreate, db: Session = Depends(get_db), current_user_data = Depends(get_current_user_fpso)):
     """Create a new alert"""
+    if current_user_data["fpso_name"] and alert.fpso_name != current_user_data["fpso_name"]:
+        raise HTTPException(status_code=403, detail="Forbidden: You can only create alerts for your current FPSO.")
     db_alert = Alert(**alert.model_dump())
     db.add(db_alert)
     db.commit()
@@ -58,57 +64,28 @@ def create_alert(alert: AlertCreate, db: Session = Depends(get_db)):
 def acknowledge_alert(
     alert_id: int,
     ack: AlertAcknowledge,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user_data = Depends(get_current_user_fpso)
 ):
     """Acknowledge an alert with justification and linking"""
-    alert = db.query(Alert).filter(Alert.id == alert_id).first()
-    if not alert:
-        raise HTTPException(status_code=404, detail="Alert not found")
-    
-    alert.acknowledged = 1
-    alert.acknowledged_by = ack.acknowledged_by
-    alert.acknowledged_at = datetime.utcnow()
-    alert.justification = ack.justification
-    alert.linked_event_type = ack.linked_event_type
-    alert.linked_event_id = ack.linked_event_id
-    alert.run_recheck = 1 if ack.run_recheck else 0
-    
-    db.commit()
-    db.refresh(alert)
-    return alert
+    return AlertsService.acknowledge_alert(db, alert_id, ack, current_user_data["fpso_name"])
 
 @router.get("/unread-count")
-def get_unread_count(db: Session = Depends(get_db)):
+def get_unread_count(db: Session = Depends(get_db), current_user_data = Depends(get_current_user_fpso)):
     """Get count of unacknowledged alerts"""
-    count = db.query(Alert).filter(Alert.acknowledged == 0).count()
-    return {"unread_count": count}
+    query = db.query(Alert).filter(Alert.acknowledged == 0)
+    if current_user_data["fpso_name"]:
+        query = query.filter(Alert.fpso_name == current_user_data["fpso_name"])
+    return {"unread_count": query.count()}
 
 # Configuration Endpoints
 @router.get("/configs", response_model=List[ConfigSchema])
-def get_alert_configs(db: Session = Depends(get_db)):
-    return db.query(AlertConfiguration).all()
+def get_alert_configs(db: Session = Depends(get_db), current_user_data = Depends(get_current_user_fpso)):
+    query = db.query(AlertConfiguration)
+    if current_user_data["fpso_name"]:
+        query = query.filter(AlertConfiguration.fpso_name == current_user_data["fpso_name"])
+    return query.all()
 
 @router.post("/configs", response_model=ConfigSchema)
-def create_alert_config(config: AlertConfigurationCreate, db: Session = Depends(get_db)):
-    db_config = AlertConfiguration(
-        fpso_name=config.fpso_name,
-        alert_type=config.alert_type,
-        rule_config=config.rule_config,
-        notify_email=1 if config.notify_email else 0,
-        notify_whatsapp=1 if config.notify_whatsapp else 0,
-        notify_in_app=1 if config.notify_in_app else 0
-    )
-    db.add(db_config)
-    db.commit()
-    db.refresh(db_config)
-    
-    for r in config.recipients:
-        db_recipient = AlertRecipient(
-            config_id=db_config.id,
-            **r.model_dump()
-        )
-        db.add(db_recipient)
-    
-    db.commit()
-    db.refresh(db_config)
-    return db_config
+def create_alert_config(config: AlertConfigurationCreate, db: Session = Depends(get_db), current_user_data = Depends(get_current_user_fpso)):
+    return AlertsService.create_alert_config(db, config, current_user_data["fpso_name"])

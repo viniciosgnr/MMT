@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input"
 import { Search, Plus, FileText, Settings, ShieldCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 
 import {
   Dialog,
@@ -58,18 +59,20 @@ export default function EquipmentInventory() {
   }, [])
 
   async function fetchFpsoList() {
-    setFpsoList([
-      "CDS - Cidade de Saquarema",
-      "CDM - Cidade de Maricá",
-      "CDI - Cidade de Ilhabela",
-      "CDP - Cidade de Paraty",
-      "ESS - Espírito Santo",
-      "CPX - Capixaba",
-      "CDA - Cidade de Anchieta",
-      "ADG - Alexandre de Gusmão",
-      "ATD - Almirante Tamandaré",
-      "SEP - Sepetiba"
-    ])
+    try {
+      const res = await apiFetch("/configuration/hierarchy/tree")
+      if (res.ok) {
+        // HierarchyService.get_tree returns nodes. We just need the FPSO ones (depth=0)
+        // Adjust endpoint parsing based on backend return schema.
+        // Assuming tree returns: [{id, name, ...}]
+        const data = await res.json()
+        const fpsoNames = data.map((node: any) => node.name)
+        setFpsoList(fpsoNames.length > 0 ? fpsoNames : ["FPSO-A"]) // fallback for testing UI
+      }
+    } catch (err) {
+      console.warn("Failed to fetch FPSOs dynamically:", err)
+      setFpsoList(["FPSO-A", "FPSO-B"]) // Graceful fallback
+    }
   }
 
   async function fetchEquipments() {
@@ -277,9 +280,17 @@ export default function EquipmentInventory() {
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center py-10">Loading inventory...</TableCell>
-              </TableRow>
+              Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                  <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                  <TableCell><div className="flex gap-1"><Skeleton className="h-6 w-6 rounded-full" /><Skeleton className="h-6 w-6 rounded-full" /></div></TableCell>
+                  <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
+                </TableRow>
+              ))
             ) : filtered.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">

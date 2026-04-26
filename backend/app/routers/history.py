@@ -7,10 +7,13 @@ import os
 import shutil
 from ..database import get_db
 from ..models import HistoricalReport, ReportType
+from ..dependencies import get_current_user_fpso
+from ..services.history_service import HistoryService
 from ..schemas.phase3 import (
     HistoricalReport as HistoricalReportSchema,
     ReportType as ReportTypeSchema,
-    ReportTypeCreate
+    ReportTypeCreate,
+    BulkReportUpload
 )
 
 router = APIRouter(prefix="/api/reports", tags=["reports"])
@@ -22,57 +25,30 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 def get_reports(
     report_type_id: Optional[int] = None,
     fpso_name: Optional[str] = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user_data = Depends(get_current_user_fpso)
 ):
     query = db.query(HistoricalReport)
     if report_type_id:
         query = query.filter(HistoricalReport.report_type_id == report_type_id)
-    if fpso_name:
-        query = query.filter(HistoricalReport.fpso_name == fpso_name)
+        
+    filter_fpso = current_user_data["fpso_name"] if current_user_data["fpso_name"] else fpso_name
+    if filter_fpso:
+        query = query.filter(HistoricalReport.fpso_name == filter_fpso)
+        
     return query.order_by(HistoricalReport.report_date.desc()).all()
 
-
-class FileUploadMetadata(BaseModel):
-    filename: str
-    file_url: str
-    file_size: int
-
-class BulkReportUpload(BaseModel):
-    report_type_id: int
-    title_prefix: Optional[str] = ""
-    report_date: date
-    fpso_name: Optional[str] = None
-    metering_system: Optional[str] = None
-    serial_number: Optional[str] = None
-    files: List[FileUploadMetadata]
 
 @router.post("/upload")
 def upload_reports(
     payload: BulkReportUpload,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user_data = Depends(get_current_user_fpso)
 ):
     """Bulk upload utility for historical reports (Supabase Storage)"""
-    uploaded_reports = []
-    
-    for file in payload.files:
-        # Create database record
-        db_report = HistoricalReport(
-            report_type_id=payload.report_type_id,
-            title=f"{payload.title_prefix} {file.filename}".strip(),
-            file_url=file.file_url, # Full Supabase URL or relative path
-            file_name=file.filename,
-            file_size=file.file_size,
-            report_date=payload.report_date,
-            fpso_name=payload.fpso_name,
-            metering_system=payload.metering_system,
-            serial_number=payload.serial_number,
-            uploaded_by="Current User" # Should get from auth
-        )
-        db.add(db_report)
-        uploaded_reports.append(db_report)
-        
-    db.commit()
-    return {"message": f"Successfully registered {len(payload.files)} files"}
+    user = current_user_data["user"]
+    username = user.get("username") if isinstance(user, dict) else getattr(user, 'username', 'System')
+    return HistoryService.upload_reports(db, payload, current_user_data["fpso_name"], username)
 
 # Report Types (Managed by Admin in 6.2)
 @router.get("/types", response_model=List[ReportTypeSchema])
@@ -80,9 +56,5 @@ def get_report_types(db: Session = Depends(get_db)):
     return db.query(ReportType).filter(ReportType.is_active == 1).all()
 
 @router.post("/types", response_model=ReportTypeSchema)
-def create_report_type(rt: ReportTypeCreate, db: Session = Depends(get_db)):
-    db_rt = ReportType(**rt.model_dump())
-    db.add(db_rt)
-    db.commit()
-    db.refresh(db_rt)
-    return db_rt
+def create_report_type(rt: ReportTypeCreate, db: Session = Depends(get_db), current_user_data = Depends(get_current_user_fpso)):
+    return HistoryService.create_report_type(db, rt)

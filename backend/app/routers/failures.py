@@ -12,6 +12,8 @@ from ..schemas.phase3 import (
     FPSOFailureEmailListCreate,
     FPSOFailureEmailList as FPSOFailureEmailListSchema
 )
+from ..dependencies import get_current_user_fpso
+from ..services.failures_service import FailuresService
 
 router = APIRouter(prefix="/api/failures", tags=["failures"])
 
@@ -21,11 +23,14 @@ def get_failures(
     limit: int = 100,
     anp_status: Optional[str] = None,
     equipment_id: Optional[int] = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user_data = Depends(get_current_user_fpso)
 ):
     """Get all failure notifications with optional ANP status filter"""
     query = db.query(FailureNotification)
     
+    if current_user_data["fpso_name"]:
+        query = query.filter(FailureNotification.fpso_name == current_user_data["fpso_name"])
     if anp_status:
         query = query.filter(FailureNotification.anp_status == anp_status)
     if equipment_id:
@@ -47,94 +52,50 @@ def get_failure(
 @router.post("", response_model=FailureNotificationSchema)
 def create_failure(
     failure: FailureNotificationCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user_data = Depends(get_current_user_fpso)
 ):
     """Create a new failure notification in Draft mode"""
-    
-    # M1 Integration: Validate Equipment
-    equipment = db.query(Equipment).filter(Equipment.id == failure.equipment_id).first()
-    if not equipment:
-        raise HTTPException(status_code=404, detail="Equipment not found")
-        
-    # Optional: Warn if equipment is already decommissioned?
-    if equipment.status == EquipmentStatus.DECOMMISSIONED.value:
-         raise HTTPException(status_code=400, detail="Cannot register failure for Decommissioned equipment")
-    
-    db_failure = FailureNotification(**failure.model_dump(), status="Draft")
-    db.add(db_failure)
-    db.commit()
-    db.refresh(db_failure)
-    return db_failure
+    return FailuresService.create_failure(db, failure, current_user_data["fpso_name"])
 
 @router.post("/{failure_id}/approve", response_model=FailureNotificationSchema)
 def approve_failure(
     failure_id: int,
     approval: FailureNotificationApproval,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user_data = Depends(get_current_user_fpso)
 ):
     """Approve a failure notification - triggers automatic email distribution"""
-    db_failure = db.query(FailureNotification).filter(FailureNotification.id == failure_id).first()
-    if not db_failure:
-        raise HTTPException(status_code=404, detail="Failure notification not found")
-    
-    db_failure.status = "Approved"
-    db_failure.approved_by = approval.approved_by
-    db_failure.approved_at = datetime.utcnow()
-    
-    # Trigger Email Simulation
-    recipients = db.query(FPSOFailureEmailList).filter(
-        FPSOFailureEmailList.fpso_name == db_failure.fpso_name,
-        FPSOFailureEmailList.is_active == 1
-    ).all()
-    
-    # Mock email sending logic
-    print(f"DEBUG: Triggering email distribution for approved report {db_failure.id}")
-    for rec in recipients:
-        print(f"DEBUG: Mock sending PDF/Excel report to {rec.email}")
-
-    db.commit()
-    db.refresh(db_failure)
-    return db_failure
+    return FailuresService.approve_failure(db, failure_id, approval, current_user_data["fpso_name"])
 
 @router.put("/{failure_id}/anp-submit", response_model=FailureNotificationSchema)
 def submit_to_anp(
     failure_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user_data = Depends(get_current_user_fpso)
 ):
     """Submit failure notification (records data for future XML generation)"""
-    failure = db.query(FailureNotification).filter(FailureNotification.id == failure_id).first()
-    if not failure:
-        raise HTTPException(status_code=404, detail="Failure notification not found")
-    
-    if failure.status != "Approved":
-        raise HTTPException(status_code=400, detail="Only approved notifications can be submitted")
-
-    failure.anp_submitted_date = datetime.utcnow()
-    failure.anp_status = ANPStatus.SUBMITTED.value
-    failure.status = "Submitted"
-    db.commit()
-    db.refresh(failure)
-    return failure
+    return FailuresService.submit_to_anp(db, failure_id, current_user_data["fpso_name"])
 
 # Email List Endpoints
 @router.get("/config/emails", response_model=List[FPSOFailureEmailListSchema])
-def get_email_lists(fpso_name: Optional[str] = None, db: Session = Depends(get_db)):
+def get_email_lists(fpso_name: Optional[str] = None, db: Session = Depends(get_db), current_user_data = Depends(get_current_user_fpso)):
     query = db.query(FPSOFailureEmailList)
-    if fpso_name:
-        query = query.filter(FPSOFailureEmailList.fpso_name == fpso_name)
+    filter_fpso = current_user_data["fpso_name"] if current_user_data["fpso_name"] else fpso_name
+    if filter_fpso:
+        query = query.filter(FPSOFailureEmailList.fpso_name == filter_fpso)
     return query.all()
 
 @router.post("/config/emails", response_model=FPSOFailureEmailListSchema)
-def add_email_to_list(entry: FPSOFailureEmailListCreate, db: Session = Depends(get_db)):
-    db_entry = FPSOFailureEmailList(**entry.model_dump())
-    db.add(db_entry)
-    db.commit()
-    db.refresh(db_entry)
-    return db_entry
+def add_email_to_list(entry: FPSOFailureEmailListCreate, db: Session = Depends(get_db), current_user_data = Depends(get_current_user_fpso)):
+    return FailuresService.add_email_to_list(db, entry, current_user_data["fpso_name"])
 
 @router.get("/anp-pending", response_model=List[FailureNotificationSchema])
-def get_anp_pending(db: Session = Depends(get_db)):
+def get_anp_pending(db: Session = Depends(get_db), current_user_data = Depends(get_current_user_fpso)):
     """Get all pending ANP submissions"""
-    return db.query(FailureNotification).filter(
+    query = db.query(FailureNotification).filter(
         FailureNotification.anp_status == ANPStatus.PENDING.value
-    ).all()
+    )
+    if current_user_data["fpso_name"]:
+        query = query.filter(FailureNotification.fpso_name == current_user_data["fpso_name"])
+    return query.all()

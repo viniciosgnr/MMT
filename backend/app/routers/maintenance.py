@@ -5,7 +5,8 @@ from typing import List, Optional
 from datetime import datetime, timedelta
 from .. import models, database
 from ..schemas import schemas
-from ..dependencies import get_current_user
+from ..dependencies import get_current_user_fpso
+from ..services.maintenance_service import MaintenanceService
 
 router = APIRouter(
     prefix="/api/maintenance",
@@ -14,7 +15,7 @@ router = APIRouter(
 
 # --- Columns ---
 @router.post("/columns", response_model=schemas.MaintenanceColumn)
-def create_column(column: schemas.MaintenanceColumnCreate, db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
+def create_column(column: schemas.MaintenanceColumnCreate, db: Session = Depends(database.get_db), current_user_data = Depends(get_current_user_fpso)):
     db_col = models.MaintenanceColumn(**column.model_dump())
     db.add(db_col)
     db.commit()
@@ -27,7 +28,7 @@ def read_columns(db: Session = Depends(database.get_db)):
 
 # --- Labels ---
 @router.post("/labels", response_model=schemas.MaintenanceLabel)
-def create_label(label: schemas.MaintenanceLabelCreate, db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
+def create_label(label: schemas.MaintenanceLabelCreate, db: Session = Depends(database.get_db), current_user_data = Depends(get_current_user_fpso)):
     db_label = models.MaintenanceLabel(**label.model_dump())
     db.add(db_label)
     db.commit()
@@ -40,32 +41,8 @@ def read_labels(db: Session = Depends(database.get_db)):
 
 # --- Cards ---
 @router.post("/cards", response_model=schemas.MaintenanceCard)
-def create_card(card: schemas.MaintenanceCardCreate, db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
-    # Create base card
-    card_data = card.model_dump(exclude={"label_ids", "connected_card_ids", "equipment_ids", "tag_ids"})
-    db_card = models.MaintenanceCard(**card_data)
-    
-    # Handle Relationships
-    if card.label_ids:
-        labels = db.query(models.MaintenanceLabel).filter(models.MaintenanceLabel.id.in_(card.label_ids)).all()
-        db_card.labels = labels
-        
-    if card.equipment_ids:
-        equipments = db.query(models.Equipment).filter(models.Equipment.id.in_(card.equipment_ids)).all()
-        db_card.linked_equipments = equipments
-        
-    if card.tag_ids:
-        tags = db.query(models.InstrumentTag).filter(models.InstrumentTag.id.in_(card.tag_ids)).all()
-        db_card.linked_tags = tags
-        
-    if card.connected_card_ids:
-        connections = db.query(models.MaintenanceCard).filter(models.MaintenanceCard.id.in_(card.connected_card_ids)).all()
-        db_card.connections = connections
-
-    db.add(db_card)
-    db.commit()
-    db.refresh(db_card)
-    return db_card
+def create_card(card: schemas.MaintenanceCardCreate, db: Session = Depends(database.get_db), current_user_data = Depends(get_current_user_fpso)):
+    return MaintenanceService.create_card(db, card, current_user_data["fpso_name"])
 
 @router.get("/cards", response_model=List[schemas.MaintenanceCard])
 def read_cards(
@@ -77,7 +54,8 @@ def read_cards(
     responsible: Optional[str] = None,
     search: Optional[str] = None,
     due_filter: Optional[str] = None, 
-    db: Session = Depends(database.get_db)
+    db: Session = Depends(database.get_db),
+    current_user_data = Depends(get_current_user_fpso)
 ):
     query = db.query(models.MaintenanceCard)
     
@@ -85,8 +63,11 @@ def read_cards(
         query = query.filter(models.MaintenanceCard.column_id == column_id)
     if status:
         query = query.filter(models.MaintenanceCard.status == status)
-    if fpso:
-        query = query.filter(models.MaintenanceCard.fpso == fpso)
+        
+    filter_fpso = current_user_data["fpso_name"] if current_user_data["fpso_name"] else fpso
+    if filter_fpso:
+        query = query.filter(models.MaintenanceCard.fpso == filter_fpso)
+        
     if responsible:
         query = query.filter(models.MaintenanceCard.responsible.ilike(f"%{responsible}%"))
         
@@ -124,34 +105,12 @@ def read_card(card_id: int, db: Session = Depends(database.get_db)):
     return db_card
 
 @router.patch("/cards/{card_id}", response_model=schemas.MaintenanceCard)
-def update_card(card_id: int, card_update: dict, db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
-    db_card = db.query(models.MaintenanceCard).filter(models.MaintenanceCard.id == card_id).first()
-    if not db_card:
-        raise HTTPException(status_code=404, detail="Card not found")
-    
-    for key, value in card_update.items():
-        if key == "label_ids":
-            labels = db.query(models.MaintenanceLabel).filter(models.MaintenanceLabel.id.in_(value)).all()
-            db_card.labels = labels
-        elif key == "equipment_ids":
-            equipments = db.query(models.Equipment).filter(models.Equipment.id.in_(value)).all()
-            db_card.linked_equipments = equipments
-        elif key == "tag_ids":
-            tags = db.query(models.InstrumentTag).filter(models.InstrumentTag.id.in_(value)).all()
-            db_card.linked_tags = tags
-        elif key == "connected_card_ids":
-            connections = db.query(models.MaintenanceCard).filter(models.MaintenanceCard.id.in_(value)).all()
-            db_card.connections = connections
-        else:
-            setattr(db_card, key, value)
-            
-    db.commit()
-    db.refresh(db_card)
-    return db_card
+def update_card(card_id: int, card_update: dict, db: Session = Depends(database.get_db), current_user_data = Depends(get_current_user_fpso)):
+    return MaintenanceService.update_card(db, card_id, card_update, current_user_data["fpso_name"])
 
 # --- Comments ---
 @router.post("/cards/{card_id}/comments", response_model=schemas.MaintenanceComment)
-def create_comment(card_id: int, comment: schemas.MaintenanceCommentCreate, db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
+def create_comment(card_id: int, comment: schemas.MaintenanceCommentCreate, db: Session = Depends(database.get_db), current_user_data = Depends(get_current_user_fpso)):
     db_comment = models.MaintenanceComment(**comment.model_dump(), card_id=card_id)
     db.add(db_comment)
     db.commit()
@@ -159,7 +118,7 @@ def create_comment(card_id: int, comment: schemas.MaintenanceCommentCreate, db: 
     return db_comment
 
 @router.delete("/comments/{comment_id}")
-def delete_comment(comment_id: int, db: Session = Depends(database.get_db), current_user = Depends(get_current_user)):
+def delete_comment(comment_id: int, db: Session = Depends(database.get_db), current_user_data = Depends(get_current_user_fpso)):
     db_comment = db.query(models.MaintenanceComment).filter(models.MaintenanceComment.id == comment_id).first()
     if not db_comment:
         raise HTTPException(status_code=404, detail="Comment not found")
@@ -169,7 +128,7 @@ def delete_comment(comment_id: int, db: Session = Depends(database.get_db), curr
 
 # --- Attachments ---
 @router.post("/cards/{card_id}/attachments", response_model=schemas.MaintenanceAttachment)
-async def create_attachment(card_id: int, file: UploadFile = File(...), db: Session = Depends(database.get_db)):
+async def create_attachment(card_id: int, file: UploadFile = File(...), db: Session = Depends(database.get_db), current_user_data = Depends(get_current_user_fpso)):
     # In a real app, we'd save the file to S3 or local disk. 
     # For this MVP, we'll just record the file name and a placeholder path.
     file_path = f"/uploads/maintenance/{card_id}/{file.filename}"

@@ -1,6 +1,6 @@
 from pydantic import BaseModel
-from datetime import datetime
-from typing import Optional
+from datetime import datetime, date
+from typing import Optional, List
 
 # M9 - Failure Notification Schemas
 
@@ -295,3 +295,17 @@ class HistoricalReport(HistoricalReportBase):
 
     class Config:
         from_attributes = True
+
+class FileUploadMetadata(BaseModel):
+    filename: str
+    file_url: str
+    file_size: int
+
+class BulkReportUpload(BaseModel):
+    report_type_id: int
+    title_prefix: Optional[str] = ""
+    report_date: date
+    fpso_name: Optional[str] = None
+    metering_system: Optional[str] = None
+    serial_number: Optional[str] = None
+    files: List[FileUploadMetadata]

@@ -46,18 +46,7 @@ import {
 } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 
-const FPSO_LIST = [
-  "CDS - Cidade de Saquarema",
-  "CDM - Cidade de Maricá",
-  "CDI - Cidade de Ilhabela",
-  "CDP - Cidade de Paraty",
-  "ESS - Espírito Santo",
-  "CPX - Capixaba",
-  "CDA - Cidade de Anchieta",
-  "ADG - Alexandre de Gusmão",
-  "ATD - Almirante Tamandaré",
-  "SEP - Sepetiba",
-]
+
 
 export default function SamplePointConfigPage() {
   const router = useRouter()
@@ -67,10 +56,11 @@ export default function SamplePointConfigPage() {
   const [fpsoFilter, setFpsoFilter] = useState("all")
   const [searchQuery, setSearchQuery] = useState("")
 
+  const [fpsoList, setFpsoList] = useState<string[]>([])
   const [newPoint, setNewPoint] = useState({
     tag_number: "",
     description: "",
-    fpso_name: FPSO_LIST[0],
+    fpso_name: "",
     sampling_interval_days: 30,
     is_operational: 1,
     validation_method_implemented: 0
@@ -78,7 +68,24 @@ export default function SamplePointConfigPage() {
 
   useEffect(() => {
     loadPoints()
+    loadFpsos()
   }, [])
+
+  const loadFpsos = async () => {
+    try {
+      const res = await apiFetch("/configuration/tree")
+      if (res.ok) {
+        const tree = await res.json()
+        const fpsos = tree.filter((node: any) => node.type === "FPSO").map((n: any) => n.name)
+        setFpsoList(fpsos)
+        if (fpsos.length > 0) {
+          setNewPoint(prev => ({ ...prev, fpso_name: prev.fpso_name || fpsos[0] }))
+        }
+      }
+    } catch (err) {
+      console.warn("Failed to fetch FPSOs", err)
+    }
+  }
 
   const loadPoints = async () => {
     try {
@@ -175,7 +182,7 @@ export default function SamplePointConfigPage() {
           All FPSOs
           <Badge variant="secondary" className="ml-1.5 text-[10px] h-5 px-1.5">{points.length}</Badge>
         </Button>
-        {FPSO_LIST.map(fpso => {
+        {fpsoList.map(fpso => {
           const count = fpsoCounts[fpso] || 0
           if (count === 0) return null
           const abbr = fpso.split(" - ")[0]
@@ -295,7 +302,7 @@ export default function SamplePointConfigPage() {
                 <Select value={newPoint.fpso_name} onValueChange={v => setNewPoint({ ...newPoint, fpso_name: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {FPSO_LIST.map(fpso => (
+                    {fpsoList.map(fpso => (
                       <SelectItem key={fpso} value={fpso}>{fpso}</SelectItem>
                     ))}
                   </SelectContent>
