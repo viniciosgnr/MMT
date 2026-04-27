@@ -3,15 +3,15 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from .routers import equipment, calibration, chemical, maintenance, failures, alerts, sync, planning, export, history, configuration
 from .database import engine, Base
-
-# Create tables on startup
-Base.metadata.create_all(bind=engine)
-
-# Seed sample data
 from .seed import seed_data
-seed_data()
 
 app = FastAPI(title="MMT API")
+
+@app.on_event("startup")
+def startup_event():
+    # Create tables and seed data in startup event so it doesn't block the process init
+    Base.metadata.create_all(bind=engine)
+    seed_data()
 
 # Setup CORS
 app.add_middleware(
@@ -33,8 +33,8 @@ app.include_router(sync.router)
 app.include_router(planning.router)
 app.include_router(export.router)
 app.include_router(history.router)
-app.include_router(history.router)
 app.include_router(configuration.router)
+
 from .routers import audit_simulation
 app.include_router(audit_simulation.router)
 
@@ -44,10 +44,12 @@ uploads_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads"
 os.makedirs(os.path.join(uploads_dir, "reports"), exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 def read_root():
     return {"message": "MMT API Ready - Phase 3"}
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 def health_check():
     return {"status": "ok", "version": "0.3.0"}
+
+
