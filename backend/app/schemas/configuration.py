@@ -168,3 +168,24 @@ class ConfigParameter(ConfigParameterBase):
     created_at: datetime
     class Config:
         from_attributes = True
+
+class SLARuleBase(BaseModel):
+    classification: str
+    analysis_type: str
+    local: str = "Onshore"
+    interval_days: Optional[int] = None
+    disembark_days: Optional[int] = None
+    lab_days: Optional[int] = None
+    report_days: Optional[int] = None
+    fc_days: Optional[int] = None
+    fc_is_business_days: bool = False
+    needs_validation: bool = True
+
+class SLARuleCreate(SLARuleBase):
+    pass
+
+class SLARule(SLARuleBase):
+    id: int
+    created_at: datetime
+    class Config:
+        from_attributes = True

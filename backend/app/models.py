@@ -772,6 +772,28 @@ class ConfigParameter(Base):
     fpso = Column(String, index=True)
     description = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+class SLARule(Base):
+    """Matrix configuration for SLA deadlines and validation parameters."""
+    __tablename__ = "sla_rules"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    classification = Column(String, index=True) # e.g., Fiscal, Apropriation
+    analysis_type = Column(String, index=True) # e.g., Chromatography, BSW
+    local = Column(String, default="Onshore") # Onshore or Offshore
+    
+    # Deadlines (days)
+    interval_days = Column(Integer, nullable=True)
+    disembark_days = Column(Integer, nullable=True)
+    lab_days = Column(Integer, nullable=True)
+    report_days = Column(Integer, nullable=True)
+    fc_days = Column(Integer, nullable=True)
+    fc_is_business_days = Column(Integer, default=0) # 1 = business days
+    
+    # Validation Rules
+    needs_validation = Column(Integer, default=1)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
 # M4 - Onshore Maintenance Kanban
 class MaintenanceColumn(Base):
     __tablename__ = "maintenance_columns"

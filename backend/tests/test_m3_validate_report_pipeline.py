@@ -211,3 +211,60 @@ class TestValidateReportPipeline:
         assert sample_data["validation_status"] in ("Approved", "Reproved")
         assert sample_data["lab_report_url"] is not None
         assert "test_report.pdf" in sample_data["lab_report_url"]
+
+    def test_auto_schedule_next_sample(self, pipe_client):
+        """When a sample is created, the system should automatically schedule the next one."""
+        # Note: This test requires SLARule to be populated and interval_days to be used
+        sp, sample = self._create_sp_and_sample(
+            pipe_client,
+            extra_sample_kw={
+                "classification": "Fiscal",
+                "type": "Chromatography",
+                "local": "Onshore",
+                "planned_date": "2026-06-01",
+            }
+        )
+        
+        # Check if the next sample was scheduled
+        res = pipe_client.get(f"/api/chemical/samples?sample_point_id={sp['id']}")
+        assert res.status_code == 200
+        samples = res.json()
+        
+        # We expect at least 2 samples: the one we created, and the auto-scheduled one
+        assert len(samples) >= 2, "Auto-scheduling failed: next sample not created."
+        
+        # Check the planned date of the auto-scheduled sample
+        # For Fiscal/Chromatography/Onshore, interval_days = 30
+        auto_scheduled = next((s for s in samples if s["id"] != sample["id"]), None)
+        assert auto_scheduled is not None
+        assert auto_scheduled["status"] == "Plan"
+        # The planned date should be 2026-06-01 + 30 days = 2026-07-01
+        assert "2026-07-01" in auto_scheduled["planned_date"]
+
+    def test_validation_engine_uses_db_config(self, pipe_client):
+        """Validation engine should use SIGMA_MULTIPLIER and HISTORY_SIZE from ConfigParameter."""
+        # This will be tested by creating samples and uploading a pdf that would pass with SIGMA=2 but fail with SIGMA=1
+        
+        # 1. Create custom config in DB
+        # To avoid side effects, we just verify the endpoint call fails if we tighten the sigma
+        pipe_client.post("/api/config/parameters", json={
+            "key": "SIGMA_MULTIPLIER",
+            "value": "0.1", # Very strict
+            "fpso": "GLOBAL",
+            "description": "Test multiplier"
+        })
+        
+        sp, sample = self._create_sp_and_sample(pipe_client)
+        mock = self._mock_parse_result("CRO")
+        
+        # Uploading PDF should now fail/reprove because 0.1 sigma is too strict 
+        # (Assuming the default test data has some variance)
+        response = self._upload_pdf(pipe_client, sample["id"], mock)
+        
+        assert response.status_code == 200
+        data = response.json()
+        assert data["overall_status"] == "Reproved"
+        
+        # Cleanup
+        pipe_client.delete("/api/config/parameters/SIGMA_MULTIPLIER")
+

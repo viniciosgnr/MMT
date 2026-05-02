@@ -212,6 +212,47 @@ def create_sample(sample: schemas.SampleCreate, db: Session = Depends(database.g
     db.add(sample_history)
     db.commit()
     
+    # --- Auto-schedule next periodic sample based on DB SLA configuration ---
+    meter = db.query(models.InstrumentTag).filter(models.InstrumentTag.id == db_sample.meter_id).first() if db_sample.meter_id else None
+    meter_class = meter.classification if meter else "Fiscal"
+    sla_config = get_sla_config(db, meter_class, db_sample.type, db_sample.local)
+    
+    if sla_config and sla_config.get("interval_days"):
+        base_date = db_sample.planned_date or date.today()
+        # Ensure base_date is a date object
+        if hasattr(base_date, 'date'):
+            base_date = base_date.date()
+            
+        p_date = base_date + timedelta(days=sla_config["interval_days"])
+        prefix = db_sample.sample_id.split('-')[0] if '-' in db_sample.sample_id else 'CDI'
+        new_id = f"{prefix}-{p_date.strftime('%Y%m')}-PER-{db_sample.id}-{int(datetime.utcnow().timestamp())}"
+        
+        new_sample = models.Sample(
+            sample_id=new_id,
+            type=db_sample.type,
+            category=db_sample.category,
+            status=models.SampleStatus.PLAN.value,
+            responsible=db_sample.responsible,
+            sample_point_id=db_sample.sample_point_id,
+            meter_id=db_sample.meter_id,
+            well_id=db_sample.well_id,
+            validation_party=db_sample.validation_party,
+            is_active=1,
+            local=db_sample.local,
+            planned_date=p_date,
+            due_date=p_date,
+            created_at=datetime.utcnow()
+        )
+        db.add(new_sample)
+        db.flush()
+        plan_h = models.SampleStatusHistory(
+            sample_id=new_sample.id,
+            status=models.SampleStatus.PLAN.value,
+            comments="Auto-scheduled periodic analysis."
+        )
+        db.add(plan_h)
+        db.commit()
+
     return db_sample
 
 @router.get("/samples", response_model=List[schemas.Sample])
@@ -293,7 +334,7 @@ def check_sampling_slas(db: Session = Depends(database.get_db)):
         if s.meter and hasattr(s.meter, 'classification') and s.meter.classification:
             classification = s.meter.classification
             
-        cfg = get_sla_config(classification, s.type, s.local)
+        cfg = get_sla_config(db, classification, s.type, s.local)
         if not cfg:
             continue
             
@@ -416,7 +457,7 @@ def update_sample_status(sample_id: int, update: schemas.SampleStatusUpdate, db:
         db.add(sample_h)
 
     meter_class = sample.meter.classification if sample.meter else "Fiscal"
-    sla_config = get_sla_config(meter_class, sample.type, sample.local)
+    sla_config = get_sla_config(db, meter_class, sample.type, sample.local)
     
     def schedule_emergency_re_sampling(s: models.Sample, db: Session, cfg: Optional[dict]):
         # Schedule emergency sample 3 business days after emission
@@ -465,7 +506,7 @@ def update_sample_status(sample_id: int, update: schemas.SampleStatusUpdate, db:
     if update.status == models.SampleStatus.DISEMBARK_PREP:
         if update.local:
             sample.local = update.local
-            sla_config = get_sla_config(meter_class, sample.type, sample.local)
+            sla_config = get_sla_config(db, meter_class, sample.type, sample.local)
         
         sampling_dt = update.event_date or date.today()
         sample.sampling_date = sampling_dt

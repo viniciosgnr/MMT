@@ -165,9 +165,12 @@ SLA_MATRIX: Dict[Tuple[str, str, str], dict] = {
     }
 }
 
-def get_sla_config(classification: str, analysis_type: str, local: str) -> Optional[dict]:
-    """Returns the SLA configuration for a given combination, or a default if not found."""
-    # Standardize inputs to match matrix keys more robustly
+from sqlalchemy.orm import Session
+from app import models
+
+def get_sla_config(db: Session, classification: str, analysis_type: str, local: str) -> Optional[dict]:
+    """Returns the SLA configuration from DB (SLARule) or fallback matrix if not found."""
+    # Standardize inputs
     c = classification.strip().title() if classification else "Fiscal"
     t = analysis_type.strip().title() if analysis_type else "Chromatography"
     l = local.strip().title() if local else "Onshore"
@@ -178,9 +181,26 @@ def get_sla_config(classification: str, analysis_type: str, local: str) -> Optio
     elif t == "Pvt":
         t = "PVT"
 
+    # 1. Check Database
+    rule = db.query(models.SLARule).filter(
+        models.SLARule.classification == c,
+        models.SLARule.analysis_type == t,
+        models.SLARule.local == l
+    ).first()
+
+    if rule:
+        return {
+            "interval_days": rule.interval_days,
+            "disembark_days": rule.disembark_days,
+            "lab_days": rule.lab_days,
+            "report_days": rule.report_days,
+            "fc_days": rule.fc_days,
+            "fc_is_business_days": bool(rule.fc_is_business_days),
+            "needs_validation": bool(rule.needs_validation)
+        }
+
+    # 2. Fallback to Hardcoded Matrix
     key = (c, t, l)
-    
-    # Check if exact match exists
     if key in SLA_MATRIX:
         return SLA_MATRIX[key]
         

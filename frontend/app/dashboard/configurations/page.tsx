@@ -20,6 +20,8 @@ import { AttributeRules } from "./attribute-rules"
 import { SpecializedConfigs } from "./specialized-configs"
 import { WellsConfig } from "./wells-config"
 import { PropertyEditor } from "./property-editor"
+import { ValidationLimits } from "./validation-limits"
+import { SlaMatrix } from "./sla-matrix"
 import { apiFetch } from "@/lib/api"
 import { toast } from "sonner"
 import { useEffect, useState, Suspense } from "react"
@@ -89,6 +91,8 @@ function ConfigurationsContent() {
           <TabsTrigger value="wells">Wells</TabsTrigger>
           <TabsTrigger value="specialized">Specialized</TabsTrigger>
           <TabsTrigger value="frequencies">Frequencies</TabsTrigger>
+          <TabsTrigger value="validation-limits">Validation Limits</TabsTrigger>
+          <TabsTrigger value="sla-matrix">SLA Matrix</TabsTrigger>
           <TabsTrigger value="general">System Identity</TabsTrigger>
         </TabsList>
 
@@ -183,6 +187,16 @@ function ConfigurationsContent() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Validation Limits */}
+        <TabsContent value="validation-limits" className="mt-4">
+          <ValidationLimits />
+        </TabsContent>
+
+        {/* SLA Matrix */}
+        <TabsContent value="sla-matrix" className="mt-4">
+          <SlaMatrix />
         </TabsContent>
 
         {/* General Parameters */}

@@ -329,3 +329,63 @@ def set_parameter(
     db.commit()
     db.refresh(db_param)
     return db_param
+
+@router.delete("/parameters/{key}")
+def delete_parameter(
+    key: str,
+    fpso: Optional[str] = "GLOBAL",
+    db: Session = Depends(database.get_db),
+    current_user=Depends(get_current_user),
+):
+    db_param = db.query(models.ConfigParameter).filter(
+        models.ConfigParameter.key == key,
+        models.ConfigParameter.fpso == fpso
+    ).first()
+    if not db_param:
+        raise HTTPException(status_code=404, detail="Parameter not found")
+    db.delete(db_param)
+    db.commit()
+    return {"status": "success"}
+
+@router.get("/sla-rules", response_model=List[schemas.SLARule])
+def get_sla_rules(
+    classification: Optional[str] = None,
+    analysis_type: Optional[str] = None,
+    local: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 1000,
+    db: Session = Depends(database.get_db),
+):
+    query = db.query(models.SLARule)
+    if classification:
+        query = query.filter(models.SLARule.classification == classification)
+    if analysis_type:
+        query = query.filter(models.SLARule.analysis_type == analysis_type)
+    if local:
+        query = query.filter(models.SLARule.local == local)
+    return query.offset(skip).limit(limit).all()
+
+@router.post("/sla-rules", response_model=schemas.SLARule)
+def create_sla_rule(
+    rule: schemas.SLARuleCreate,
+    db: Session = Depends(database.get_db),
+    current_user=Depends(get_current_user),
+):
+    # Overwrite if exists for same combination
+    db_rule = db.query(models.SLARule).filter(
+        models.SLARule.classification == rule.classification,
+        models.SLARule.analysis_type == rule.analysis_type,
+        models.SLARule.local == rule.local
+    ).first()
+
+    if db_rule:
+        update_data = rule.model_dump(exclude_unset=True)
+        for k, v in update_data.items():
+            setattr(db_rule, k, v)
+    else:
+        db_rule = models.SLARule(**rule.model_dump())
+        db.add(db_rule)
+
+    db.commit()
+    db.refresh(db_rule)
+    return db_rule

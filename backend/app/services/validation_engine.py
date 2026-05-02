@@ -16,10 +16,6 @@ from sqlalchemy import desc
 from app import models
 from app.services.pdf_parser import PVTResult, CROResult
 
-
-SIGMA_MULTIPLIER = 2  # Standard deviations for acceptance band
-HISTORY_SIZE = 10     # Number of past samples for 2σ comparison
-
 # Default Hard Limits for Safety/Process Compliance (If not found in M11)
 DEFAULT_O2_LIMIT = 0.5   # (%)
 DEFAULT_H2S_LIMIT = 10.0 # (ppm)
@@ -65,12 +61,14 @@ def _get_parameter_history(
     sample_point_id: int,
     parameter: str,
     exclude_sample_id: Optional[int] = None,
-    limit: int = HISTORY_SIZE,
+    limit: Optional[int] = None,
 ) -> List[dict]:
     """Query last N values of a parameter for a sample point.
     
     Returns list of dicts with keys: value, date, sample_id
     """
+    if limit is None:
+        limit = int(_get_config_limit(db, "HISTORY_SIZE", 10))
     query = (
         db.query(models.SampleResult, models.Sample)
         .join(models.Sample, models.SampleResult.sample_id == models.Sample.id)
@@ -100,6 +98,7 @@ def _get_parameter_history(
 
 
 def _check_2sigma(
+    db: Session,
     parameter: str,
     value: float,
     unit: str,
@@ -112,11 +111,14 @@ def _check_2sigma(
     the first sample always passes (σ = 0) and subsequent samples gradually
     build real variance.
     """
+    sigma_multiplier = _get_config_limit(db, "SIGMA_MULTIPLIER", 2.0)
+    history_size = int(_get_config_limit(db, "HISTORY_SIZE", 10))
+
     hist_values = [h["value"] for h in history]
     hist_dates  = [h["date"]  for h in history]
 
     # Bootstrap: pad with the historical mean so the outlier does not mask itself
-    bootstrapped = len(hist_values) < HISTORY_SIZE
+    bootstrapped = len(hist_values) < history_size
     
     if not hist_values:
         # If no history, current value becomes the baseline
@@ -124,7 +126,7 @@ def _check_2sigma(
     else:
         mean_for_padding = sum(hist_values) / len(hist_values)
 
-    while len(hist_values) < HISTORY_SIZE:
+    while len(hist_values) < history_size:
         hist_values.append(mean_for_padding)
         hist_dates.append("bootstrap")
 
@@ -132,8 +134,8 @@ def _check_2sigma(
     variance = sum((v - mean) ** 2 for v in hist_values) / (len(hist_values) - 1)
     std = math.sqrt(variance)
 
-    lower = mean - SIGMA_MULTIPLIER * std
-    upper = mean + SIGMA_MULTIPLIER * std
+    lower = mean - sigma_multiplier * std
+    upper = mean + sigma_multiplier * std
 
     within = lower <= value <= upper
 
@@ -228,7 +230,7 @@ def validate_pvt(
     # Check density (Massa específica)
     if extracted.density is not None:
         history = _get_parameter_history(db, sample_point_id, "density", sample.id)
-        check = _check_2sigma("density", extracted.density, extracted.density_unit, history)
+        check = _check_2sigma(db, "density", extracted.density, extracted.density_unit, history)
         result.checks.append(check)
         if check.status == "fail":
             result.overall_status = "Reproved"
@@ -236,7 +238,7 @@ def validate_pvt(
     # Check RS (Razão de Solubilidade)
     if extracted.rs is not None:
         history = _get_parameter_history(db, sample_point_id, "rs", sample.id)
-        check = _check_2sigma("rs", extracted.rs, extracted.rs_unit, history)
+        check = _check_2sigma(db, "rs", extracted.rs, extracted.rs_unit, history)
         result.checks.append(check)
         if check.status == "fail":
             result.overall_status = "Reproved"
@@ -244,7 +246,7 @@ def validate_pvt(
     # Check FE (Fator de Encolhimento)
     if extracted.fe is not None:
         history = _get_parameter_history(db, sample_point_id, "fe", sample.id)
-        check = _check_2sigma("fe", extracted.fe, extracted.fe_unit, history)
+        check = _check_2sigma(db, "fe", extracted.fe, extracted.fe_unit, history)
         result.checks.append(check)
         if check.status == "fail":
             result.overall_status = "Reproved"
@@ -289,7 +291,7 @@ def validate_cro(
     if extracted.relative_density_real is not None:
         history = _get_parameter_history(db, sample_point_id, "relative_density_real", sample.id)
         check = _check_2sigma(
-            "relative_density_real", extracted.relative_density_real, extracted.relative_density_real_unit, history
+            db, "relative_density_real", extracted.relative_density_real, extracted.relative_density_real_unit, history
         )
         result.checks.append(check)
         if check.status == "fail":

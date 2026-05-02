@@ -218,3 +218,37 @@ def test_update_nonexistent_hierarchy_node_returns_404(client):
         "tag": "GHOST", "description": "Ghost node", "level_type": "System"
     })
     assert res.status_code == 404
+
+# ─── SLARule ─────────────────────────────────────────────────────────────────
+
+def test_create_sla_rule(client):
+    """Verifica criação de regra SLA no M11."""
+    res = client.post("/api/config/sla-rules", json={
+        "classification": "Fiscal",
+        "analysis_type": "Chromatography",
+        "local": "Onshore",
+        "interval_days": 30,
+        "disembark_days": 10,
+        "lab_days": 20,
+        "report_days": 25,
+        "fc_days": 3,
+        "fc_is_business_days": True,
+        "needs_validation": True
+    })
+    assert res.status_code == 200
+    assert res.json()["classification"] == "Fiscal"
+    assert res.json()["interval_days"] == 30
+
+def test_list_sla_rules(client):
+    """Verifica listagem de regras SLA."""
+    client.post("/api/config/sla-rules", json={
+        "classification": "Apropriation",
+        "analysis_type": "Chromatography",
+        "local": "Offshore",
+        "interval_days": 90,
+        "report_days": 25,
+        "needs_validation": True
+    })
+    res = client.get("/api/config/sla-rules")
+    assert res.status_code == 200
+    assert len(res.json()) >= 1
