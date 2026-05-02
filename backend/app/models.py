@@ -774,13 +774,24 @@ class ConfigParameter(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class SLARule(Base):
-    """Matrix configuration for SLA deadlines and validation parameters."""
+    """Matrix configuration for SLA deadlines and validation parameters.
+    
+    Each row represents a unique combination of:
+      (classification, analysis_type, local, status_variation)
+    
+    status_variation can be:
+      - 'Approved': rule applies when the report passes validation
+      - 'Reproved': rule applies when the report fails validation
+      - 'Any': rule applies regardless of validation outcome (e.g. analyses
+               that don't go through the validation engine)
+    """
     __tablename__ = "sla_rules"
     
     id = Column(Integer, primary_key=True, index=True)
     classification = Column(String, index=True) # e.g., Fiscal, Apropriation
     analysis_type = Column(String, index=True) # e.g., Chromatography, BSW
     local = Column(String, default="Onshore") # Onshore or Offshore
+    status_variation = Column(String, default="Any") # Approved, Reproved, Any
     
     # Deadlines (days)
     interval_days = Column(Integer, nullable=True)
@@ -789,6 +800,9 @@ class SLARule(Base):
     report_days = Column(Integer, nullable=True)
     fc_days = Column(Integer, nullable=True)
     fc_is_business_days = Column(Integer, default=0) # 1 = business days
+    
+    # Reproval-specific: business days after report emission for emergency reschedule
+    reproval_reschedule_days = Column(Integer, nullable=True)
     
     # Validation Rules
     needs_validation = Column(Integer, default=1)

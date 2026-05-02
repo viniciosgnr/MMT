@@ -173,12 +173,14 @@ class SLARuleBase(BaseModel):
     classification: str
     analysis_type: str
     local: str = "Onshore"
+    status_variation: str = "Any"  # Approved, Reproved, Any
     interval_days: Optional[int] = None
     disembark_days: Optional[int] = None
     lab_days: Optional[int] = None
     report_days: Optional[int] = None
     fc_days: Optional[int] = None
     fc_is_business_days: bool = False
+    reproval_reschedule_days: Optional[int] = None
     needs_validation: bool = True
 
 class SLARuleCreate(SLARuleBase):

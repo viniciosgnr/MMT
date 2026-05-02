@@ -460,11 +460,19 @@ def update_sample_status(sample_id: int, update: schemas.SampleStatusUpdate, db:
     sla_config = get_sla_config(db, meter_class, sample.type, sample.local)
     
     def schedule_emergency_re_sampling(s: models.Sample, db: Session, cfg: Optional[dict]):
-        # Schedule emergency sample 3 business days after emission
+        # Try to get the Reproved-specific SLA rule for accurate reschedule days
+        reproved_cfg = get_sla_config(db, meter_class, s.type, s.local, status_variation="Reproved")
+        reschedule_days = 3  # default
+        if reproved_cfg and reproved_cfg.get("reproval_reschedule_days"):
+            reschedule_days = reproved_cfg["reproval_reschedule_days"]
+        elif cfg and cfg.get("reproval_reschedule_days"):
+            reschedule_days = cfg["reproval_reschedule_days"]
+        
+        # Schedule emergency sample N business days after emission/reproval
         base_date = s.report_issue_date or date.today()
         
-        # Calculate 3 business days
-        days_to_add = 3
+        # Calculate N business days
+        days_to_add = reschedule_days
         emergency_date = base_date
         while days_to_add > 0:
             emergency_date += timedelta(days=1)
@@ -502,30 +510,35 @@ def update_sample_status(sample_id: int, update: schemas.SampleStatusUpdate, db:
         db.add(new_sample)
         return new_sample
 
+    # ---------------------------------------------------------------
+    # AUTO-SCHEDULE: Trigger when sample LEAVES status "Sample" (step 2)
+    # This fires for both Onshore (→ Disembark prep) and Offshore (→ Report issue)
+    # ---------------------------------------------------------------
+    if sample.status == models.SampleStatus.SAMPLE.value and update.status != models.SampleStatus.SAMPLE:
+        sampling_dt = update.event_date or date.today()
+        sample.sampling_date = sampling_dt
+
+        # Guard: only schedule if no periodic child already exists for this sample
+        existing_periodic = db.query(models.Sample).filter(
+            models.Sample.sample_id.like(f"%-PER-{sample.id}-%")
+        ).first()
+        if not existing_periodic and sla_config and sla_config.get("interval_days"):
+            schedule_next_periodic_sample(sample, sla_config)
+
+        # Set expected dates from SLA config
+        if sla_config:
+            if sla_config.get("disembark_days"):
+                sample.disembark_expected_date = sampling_dt + timedelta(days=sla_config["disembark_days"])
+            if sla_config.get("lab_days"):
+                sample.lab_expected_date = sampling_dt + timedelta(days=sla_config["lab_days"])
+            if sla_config.get("report_days"):
+                sample.report_expected_date = sampling_dt + timedelta(days=sla_config["report_days"])
+
     # Auto-update dates based on status
     if update.status == models.SampleStatus.DISEMBARK_PREP:
         if update.local:
             sample.local = update.local
             sla_config = get_sla_config(db, meter_class, sample.type, sample.local)
-        
-        sampling_dt = update.event_date or date.today()
-        sample.sampling_date = sampling_dt
-        
-        # Schedule the next periodic sample when collection is performed
-        # Guard: only schedule if no periodic child already exists for this sample
-        existing_periodic = db.query(models.Sample).filter(
-            models.Sample.sample_id.like(f"%-PER-{sample.id}-%")
-        ).first()
-        if not existing_periodic and sla_config:
-            schedule_next_periodic_sample(sample, sla_config)
-        
-        if sla_config:
-            if sla_config["disembark_days"]:
-                sample.disembark_expected_date = sampling_dt + timedelta(days=sla_config["disembark_days"])
-            if sla_config["lab_days"]:
-                sample.lab_expected_date = sampling_dt + timedelta(days=sla_config["lab_days"])
-            if sla_config["report_days"]:
-                sample.report_expected_date = sampling_dt + timedelta(days=sla_config["report_days"])
                 
     elif update.status == models.SampleStatus.DISEMBARK_LOGISTICS:
         sample.disembark_date = update.event_date or date.today()

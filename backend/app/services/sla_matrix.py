@@ -168,12 +168,19 @@ SLA_MATRIX: Dict[Tuple[str, str, str], dict] = {
 from sqlalchemy.orm import Session
 from app import models
 
-def get_sla_config(db: Session, classification: str, analysis_type: str, local: str) -> Optional[dict]:
-    """Returns the SLA configuration from DB (SLARule) or fallback matrix if not found."""
+def get_sla_config(db: Session, classification: str, analysis_type: str, local: str, status_variation: str = "Any") -> Optional[dict]:
+    """Returns the SLA configuration from DB (SLARule) or fallback matrix if not found.
+    
+    Lookup order:
+      1. Exact match: (classification, type, local, status_variation) in DB
+      2. Generic match: (classification, type, local, 'Any') in DB
+      3. Legacy fallback: hardcoded SLA_MATRIX dict
+    """
     # Standardize inputs
     c = classification.strip().title() if classification else "Fiscal"
     t = analysis_type.strip().title() if analysis_type else "Chromatography"
     l = local.strip().title() if local else "Onshore"
+    sv = status_variation.strip().title() if status_variation else "Any"
     
     # Aliases
     if t == "Cro":
@@ -181,14 +188,7 @@ def get_sla_config(db: Session, classification: str, analysis_type: str, local: 
     elif t == "Pvt":
         t = "PVT"
 
-    # 1. Check Database
-    rule = db.query(models.SLARule).filter(
-        models.SLARule.classification == c,
-        models.SLARule.analysis_type == t,
-        models.SLARule.local == l
-    ).first()
-
-    if rule:
+    def _rule_to_dict(rule):
         return {
             "interval_days": rule.interval_days,
             "disembark_days": rule.disembark_days,
@@ -196,13 +196,40 @@ def get_sla_config(db: Session, classification: str, analysis_type: str, local: 
             "report_days": rule.report_days,
             "fc_days": rule.fc_days,
             "fc_is_business_days": bool(rule.fc_is_business_days),
-            "needs_validation": bool(rule.needs_validation)
+            "reproval_reschedule_days": rule.reproval_reschedule_days,
+            "needs_validation": bool(rule.needs_validation),
+            "status_variation": rule.status_variation or "Any",
         }
 
-    # 2. Fallback to Hardcoded Matrix
+    # 1. Exact match in Database (with status_variation)
+    rule = db.query(models.SLARule).filter(
+        models.SLARule.classification == c,
+        models.SLARule.analysis_type == t,
+        models.SLARule.local == l,
+        models.SLARule.status_variation == sv
+    ).first()
+    if rule:
+        return _rule_to_dict(rule)
+
+    # 2. Generic fallback: status_variation == 'Any'
+    if sv != "Any":
+        rule = db.query(models.SLARule).filter(
+            models.SLARule.classification == c,
+            models.SLARule.analysis_type == t,
+            models.SLARule.local == l,
+            models.SLARule.status_variation == "Any"
+        ).first()
+        if rule:
+            return _rule_to_dict(rule)
+
+    # 3. Fallback to Hardcoded Matrix
     key = (c, t, l)
     if key in SLA_MATRIX:
-        return SLA_MATRIX[key]
+        cfg = dict(SLA_MATRIX[key])
+        cfg.setdefault("reproval_reschedule_days", None)
+        cfg.setdefault("status_variation", "Any")
+        return cfg
         
-    # Provide None for unknown combinations, as expected by system safety tests
+    # Provide None for unknown combinations
     return None
+
