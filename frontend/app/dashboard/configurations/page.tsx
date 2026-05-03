@@ -93,7 +93,6 @@ function ConfigurationsContent() {
           <TabsTrigger value="frequencies">Frequencies</TabsTrigger>
           <TabsTrigger value="validation-limits">Validation Limits</TabsTrigger>
           <TabsTrigger value="sla-matrix">SLA Matrix</TabsTrigger>
-          <TabsTrigger value="general">System Identity</TabsTrigger>
         </TabsList>
 
         {/* Hierarchy Management */}
@@ -199,33 +198,7 @@ function ConfigurationsContent() {
           <SlaMatrix />
         </TabsContent>
 
-        {/* General Parameters */}
-        <TabsContent value="general" className="mt-4 space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>System Identity</CardTitle>
-              <CardDescription>Basic system information and global parameters.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Metering System Name</Label>
-                  <Input
-                    defaultValue={getParamValue("system_name", "FPSO SEPETIBA Metering")}
-                    onBlur={(e) => handleSaveParam("system_name", e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Operator Name</Label>
-                  <Input
-                    defaultValue={getParamValue("operator_name", "SBM Offshore")}
-                    onBlur={(e) => handleSaveParam("operator_name", e.target.value)}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+
       </Tabs>
     </div>
   )

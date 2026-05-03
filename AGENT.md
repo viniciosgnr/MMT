@@ -71,3 +71,76 @@ Este projeto adota OBRIGATORIAMENTE a arquitetura de **Harness Engineering** com
 - **Memória & Bootstrap:**
   - Disciplina inalienável no Github Versioning (Git Discipline) controlada via regras de Commit convencionais.
   - Orquestração técnica ágil mapeada através da automatização contínua com `docker-compose` e `.agent/workflows/`.
+
+---
+
+## 5. Motor de Análise Química — Regras de Negócio (M3)
+
+Esta seção documenta as **4 regras de negócio inegociáveis** do motor de análise química. Todo agente ou desenvolvedor que tocar no módulo M3 ou M11 DEVE estar alinhado a elas.
+
+### Regra 1 — A Matriz de SLA (M11) é a única fonte da verdade de prazos
+
+Nenhum prazo de análise química é hardcoded. Todos são lidos dinamicamente da tabela `sla_rules` no banco de dados, gerenciável pelo administrador via Módulo 11 sem deploy.
+
+- **Chave de lookup:** `(classification, analysis_type, local, status_variation)` — ex: `(Fiscal, Chromatography, Onshore, Approved)`
+- **22 combinações cadastradas** cobrindo: Fiscal/Apropriação/Operacional × Cromatografia/PVT/Enxofre/Viscosidade × Onshore/Offshore × Approved/Reproved/Any
+- **Campos-chave:** `interval_days`, `disembark_days`, `lab_days`, `report_days`, `fc_days`, `fc_is_business_days`, `reproval_reschedule_days`, `needs_validation`
+- **Cascading Lookup:** Busca exata (com `status_variation`) → fallback para `Any` → fallback hardcoded
+- **Approved vs Reproved:** Regras `Approved` incluem FC Update (`fc_days`). Regras `Reproved` omitem FC Update e incluem `reproval_reschedule_days`.
+- **Offshore vs Onshore:** Fluxos offshore **não possuem** etapas de desembarque (`disembark_days = null`, `lab_days = null`) pois a análise é realizada a bordo do FPSO.
+
+### Regra 2 — Gatilho de agendamento: saída do status "Sample" (etapa 2)
+
+O sistema agenda a próxima coleta **automaticamente** sempre que um sample sai do status `Sample` (etapa 2) — independentemente para qual status ele vai em seguida.
+
+- **Fluxo Onshore:** `Sample → Disembark preparation` → gatilha agendamento
+- **Fluxo Offshore:** `Sample → Report issue` (pula desembarque) → gatilha agendamento da mesma forma
+- **Data da próxima coleta:** `sampling_date (event_date) + interval_days` da regra SLA correspondente
+- **Guard anti-duplicação:** A query verifica `sample_id LIKE '%-PER-{id}-%'` antes de criar. Transições subsequentes (ex: `Disembark logistics → Warehouse`) não criam novas amostras.
+- **Implementação:** `backend/app/routers/chemical.py` — bloco `AUTO-SCHEDULE` antes dos `if/elif` de status
+
+```python
+# Trigger pattern — qualquer saída do status Sample
+if sample.status == SampleStatus.SAMPLE.value and update.status != SampleStatus.SAMPLE:
+    schedule_next_periodic_sample(sample, sla_config)
+```
+
+### Regra 3 — Reprovação: nova coleta no menor prazo entre 3 dias úteis e o próximo agendado
+
+Quando um relatório é reprovado (`validation_status = "Reprovado"`), o sistema cria imediatamente uma amostra de emergência (prefixo `EMG`) com a data calculada como:
+
+```
+data_emergencia = report_issue_date + reproval_reschedule_days (dias úteis)
+data_proxima_periodica = sampling_date + interval_days
+data_final = min(data_emergencia, data_proxima_periodica)
+```
+
+- **`reproval_reschedule_days`** é configurável por regra SLA no M11 (padrão: 3 dias úteis)
+- **Triggers:** `Report approve/reprove` com `validation_status = Reprovado` e `Flow computer update` com `validation_status = Reprovado`
+- **O prazo periódico serve de teto:** Se o próximo agendado já estiver mais próximo que os 3 dias úteis, usa-se a data do periódico
+
+### Regra 4 — Samples auto-agendados iniciam na etapa "Sample" (etapa 2)
+
+Todo sample criado automaticamente pelo sistema (PER ou EMG) **começa no status `Sample`**, nunca em `Plan`. O sistema registra no histórico que a etapa `Plan` foi concluída automaticamente.
+
+- **Motivo:** O agendamento automático **é** a conclusão do planejamento (Plan). O operador não precisa completar manualmente o Plan — ele já entra direto na fase de coleta.
+- **Histórico gerado automaticamente:**
+  ```
+  Plan  → "Auto-scheduled periodic analysis — Plan completed by scheduler."
+  Sample → "Awaiting next sample collection."
+  ```
+- **Aplica-se a:** PER (criado por `create_sample`), PER (criado por `update-status`), EMG (criado por reproval)
+- **Invariante testada:** Nenhum sample com prefixo `PER-` ou `EMG-` deve estar no status `Plan` após a criação
+
+### Arquivos-chave do Motor M3
+
+| Arquivo | Responsabilidade |
+|---|---|
+| `backend/app/routers/chemical.py` | Endpoints: `create_sample`, `update_sample_status`, `schedule_next_periodic_sample`, `schedule_emergency_re_sampling` |
+| `backend/app/services/sla_matrix.py` | `get_sla_config(db, classification, type, local, status_variation)` — lookup com cascading fallback |
+| `backend/app/routers/configuration.py` | CRUD de `SLARule` via M11: `GET/POST/PUT/DELETE /config/sla-rules` |
+| `backend/app/models.py` | Modelo `SLARule` com `status_variation`, `reproval_reschedule_days` |
+| `backend/seed_slas.py` | Script de seed das 22 combinações oficiais |
+| `backend/tests/test_m11_sla_matrix.py` | Suite TDD com 20 testes cobrindo as 4 regras de negócio |
+| `backend/tests/test_m3_validate_report_pipeline.py` | Pipeline end-to-end: upload PDF → validação → agendamento |
+| `frontend/.../sla-matrix.tsx` | Interface M11: tabela editável das 22 combinações com modal PUT/DELETE |

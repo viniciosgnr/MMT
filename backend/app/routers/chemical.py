@@ -213,6 +213,7 @@ def create_sample(sample: schemas.SampleCreate, db: Session = Depends(database.g
     db.commit()
     
     # --- Auto-schedule next periodic sample based on DB SLA configuration ---
+    # The system handles Plan (step 1) automatically — the new sample starts at Sample (step 2).
     meter = db.query(models.InstrumentTag).filter(models.InstrumentTag.id == db_sample.meter_id).first() if db_sample.meter_id else None
     meter_class = meter.classification if meter else "Fiscal"
     sla_config = get_sla_config(db, meter_class, db_sample.type, db_sample.local)
@@ -227,11 +228,12 @@ def create_sample(sample: schemas.SampleCreate, db: Session = Depends(database.g
         prefix = db_sample.sample_id.split('-')[0] if '-' in db_sample.sample_id else 'CDI'
         new_id = f"{prefix}-{p_date.strftime('%Y%m')}-PER-{db_sample.id}-{int(datetime.utcnow().timestamp())}"
         
+        # Start at SAMPLE (step 2): Plan was completed automatically by the scheduler
         new_sample = models.Sample(
             sample_id=new_id,
             type=db_sample.type,
             category=db_sample.category,
-            status=models.SampleStatus.PLAN.value,
+            status=models.SampleStatus.SAMPLE.value,
             responsible=db_sample.responsible,
             sample_point_id=db_sample.sample_point_id,
             meter_id=db_sample.meter_id,
@@ -245,12 +247,17 @@ def create_sample(sample: schemas.SampleCreate, db: Session = Depends(database.g
         )
         db.add(new_sample)
         db.flush()
-        plan_h = models.SampleStatusHistory(
+        # History: Plan completed automatically, now at Sample
+        db.add(models.SampleStatusHistory(
             sample_id=new_sample.id,
             status=models.SampleStatus.PLAN.value,
-            comments="Auto-scheduled periodic analysis."
-        )
-        db.add(plan_h)
+            comments="Auto-scheduled periodic analysis — Plan completed by scheduler."
+        ))
+        db.add(models.SampleStatusHistory(
+            sample_id=new_sample.id,
+            status=models.SampleStatus.SAMPLE.value,
+            comments="Awaiting next sample collection."
+        ))
         db.commit()
 
     return db_sample
@@ -491,6 +498,7 @@ def update_sample_status(sample_id: int, update: schemas.SampleStatusUpdate, db:
 
         prefix = s.sample_id.split('-')[0] if '-' in s.sample_id else 'CDI'
         new_id = f"{prefix}-{datetime.now().strftime('%Y%m')}-EMG-{s.id}-{int(datetime.utcnow().timestamp())}"
+        # Start at SAMPLE (step 2): Plan was completed automatically by the scheduler
         new_sample = models.Sample(
             sample_id=new_id,
             type=s.type,
@@ -508,6 +516,18 @@ def update_sample_status(sample_id: int, update: schemas.SampleStatusUpdate, db:
             created_at=datetime.utcnow()
         )
         db.add(new_sample)
+        db.flush()
+        # History: Plan completed automatically, now at Sample
+        db.add(models.SampleStatusHistory(
+            sample_id=new_sample.id,
+            status=models.SampleStatus.PLAN.value,
+            comments="Emergency re-sampling scheduled after report reproval — Plan completed by scheduler."
+        ))
+        db.add(models.SampleStatusHistory(
+            sample_id=new_sample.id,
+            status=models.SampleStatus.SAMPLE.value,
+            comments=f"Awaiting emergency collection — scheduled {reschedule_days} business days after report emission."
+        ))
         return new_sample
 
     # ---------------------------------------------------------------
