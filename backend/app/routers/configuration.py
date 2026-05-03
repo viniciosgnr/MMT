@@ -371,11 +371,12 @@ def create_sla_rule(
     db: Session = Depends(database.get_db),
     current_user=Depends(get_current_user),
 ):
-    # Overwrite if exists for same combination
+    # Overwrite if exists for same combination (including status_variation)
     db_rule = db.query(models.SLARule).filter(
         models.SLARule.classification == rule.classification,
         models.SLARule.analysis_type == rule.analysis_type,
-        models.SLARule.local == rule.local
+        models.SLARule.local == rule.local,
+        models.SLARule.status_variation == rule.status_variation
     ).first()
 
     if db_rule:
@@ -389,3 +390,35 @@ def create_sla_rule(
     db.commit()
     db.refresh(db_rule)
     return db_rule
+
+
+@router.put("/sla-rules/{rule_id}", response_model=schemas.SLARule)
+def update_sla_rule(
+    rule_id: int,
+    rule: schemas.SLARuleCreate,
+    db: Session = Depends(database.get_db),
+    current_user=Depends(get_current_user),
+):
+    db_rule = db.query(models.SLARule).filter(models.SLARule.id == rule_id).first()
+    if not db_rule:
+        raise HTTPException(status_code=404, detail="SLA Rule not found")
+    update_data = rule.model_dump(exclude_unset=True)
+    for k, v in update_data.items():
+        setattr(db_rule, k, v)
+    db.commit()
+    db.refresh(db_rule)
+    return db_rule
+
+
+@router.delete("/sla-rules/{rule_id}")
+def delete_sla_rule(
+    rule_id: int,
+    db: Session = Depends(database.get_db),
+    current_user=Depends(get_current_user),
+):
+    db_rule = db.query(models.SLARule).filter(models.SLARule.id == rule_id).first()
+    if not db_rule:
+        raise HTTPException(status_code=404, detail="SLA Rule not found")
+    db.delete(db_rule)
+    db.commit()
+    return {"status": "deleted", "id": rule_id}
