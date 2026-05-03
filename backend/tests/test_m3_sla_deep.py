@@ -19,11 +19,16 @@ from app.services.sla_matrix import get_sla_config, SLA_MATRIX
 
 # ─── Pillar 5a: Unit tests — get_sla_config() for all 18 matrix rows ─────────
 
+class _MockDb:
+    def query(self, *a): return self
+    def filter(self, *a): return self
+    def first(self): return None
+
 class TestSLAMatrix:
     """Testa que get_sla_config() retorna os valores corretos para cada combinação."""
 
     def _assert_config(self, classification, analysis_type, local, expected):
-        cfg = get_sla_config(classification, analysis_type, local)
+        cfg = get_sla_config(_MockDb(), classification, analysis_type, local)
         assert cfg is not None, f"Expected config for ({classification}, {analysis_type}, {local}) but got None"
         for field, value in expected.items():
             assert cfg[field] == value, (
@@ -166,25 +171,25 @@ class TestSLAMatrix:
 
     # Alias: CRO → Chromatography
     def test_alias_cro_resolves_to_chromatography(self):
-        cfg = get_sla_config("Fiscal", "CRO", "Onshore")
+        cfg = get_sla_config(_MockDb(), "Fiscal", "CRO", "Onshore")
         assert cfg is not None, "Alias 'CRO' should resolve to 'Chromatography'"
         assert cfg["interval_days"] == 30
 
     # Alias: PVT stays PVT
     def test_alias_pvt_resolves_correctly(self):
-        cfg = get_sla_config("Apropriation", "PVT", "Onshore")
+        cfg = get_sla_config(_MockDb(), "Apropriation", "PVT", "Onshore")
         assert cfg is not None
         assert cfg["interval_days"] == 90
 
     # Unknown combination returns None — no crash
     def test_unknown_classification_returns_none(self):
-        cfg = get_sla_config("GasLift", "SomeAnalysis", "Onshore")
+        cfg = get_sla_config(_MockDb(), "GasLift", "SomeAnalysis", "Onshore")
         assert cfg is None
 
     # Case insensitivity / title-case normalization
     def test_case_normalization(self):
-        cfg_upper = get_sla_config("FISCAL", "CHROMATOGRAPHY", "ONSHORE")
-        cfg_normal = get_sla_config("Fiscal", "Chromatography", "Onshore")
+        cfg_upper = get_sla_config(_MockDb(), "FISCAL", "CHROMATOGRAPHY", "ONSHORE")
+        cfg_normal = get_sla_config(_MockDb(), "Fiscal", "Chromatography", "Onshore")
         assert cfg_upper == cfg_normal
 
     # Verify that all 22 semantic combinations map back to valid config states
