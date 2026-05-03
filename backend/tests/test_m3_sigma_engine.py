@@ -14,11 +14,18 @@ from app.services.pdf_parser import PVTResult, CROResult
 from app.services import validation_engine as ve
 
 
-# ─── Unit-level 2-sigma logic ────────────────────────────────────────────────
+class _MockDb:
+    """Minimal DB stub — returns None so _get_config_limit uses defaults."""
+    def query(self, *a): return self
+    def filter(self, *a): return self
+    def first(self): return None
+
+_DB = _MockDb()
+
 
 def test_first_sample_always_passes_bootstrap():
     """Com histórico vazio, o valor atual vira baseline → deve passar."""
-    check = ve._check_2sigma("density", 850.0, "kg/m3", history=[])
+    check = ve._check_2sigma(_DB, "density", 850.0, "kg/m3", history=[])
     assert check.status == "pass"
     assert "bootstrapped" in check.detail
 
@@ -26,7 +33,7 @@ def test_first_sample_always_passes_bootstrap():
 def test_second_sample_with_same_value_passes():
     """Com um único histórico igual ao novo valor, std=0 → passa."""
     history = [{"value": 850.0, "date": "2024-01-01", "sample_id": "S1"}]
-    check = ve._check_2sigma("density", 850.0, "kg/m3", history)
+    check = ve._check_2sigma(_DB, "density", 850.0, "kg/m3", history)
     assert check.status == "pass"
 
 
@@ -34,7 +41,7 @@ def test_clear_outlier_fails_with_sufficient_history():
     """Com 10 históricos tightly clustered, um outlier extremo deve falhar."""
     # Cluster around 850.0 with tiny variance
     history = [{"value": 850.0 + i * 0.01, "date": "2024-01-01", "sample_id": f"S{i}"} for i in range(10)]
-    check = ve._check_2sigma("density", 950.0, "kg/m3", history)  # ~100 units away
+    check = ve._check_2sigma(_DB, "density", 950.0, "kg/m3", history)  # ~100 units away
     assert check.status == "fail"
     assert check.lower_bound is not None
     assert check.upper_bound is not None
@@ -45,7 +52,7 @@ def test_value_exactly_at_boundary_passes():
     # Cluster with known std ≈ 1.0
     history = [{"value": float(v), "date": "2024-01-01", "sample_id": f"S{i}"}
                for i, v in enumerate([10, 10, 10, 10, 10, 10, 10, 10, 10, 10])]
-    check = ve._check_2sigma("density", 10.0, "kg/m3", history)
+    check = ve._check_2sigma(_DB, "density", 10.0, "kg/m3", history)
     assert check.status == "pass"
 
 
@@ -53,7 +60,7 @@ def test_check_result_contains_history_stats():
     """O CheckResult deve conter mean, std, lower_bound e upper_bound."""
     history = [{"value": float(v), "date": "2024-01-01", "sample_id": f"S{i}"}
                for i, v in enumerate([100, 102, 98, 101, 99, 100, 102, 98, 101, 99])]
-    check = ve._check_2sigma("density", 100.0, "kg/m3", history)
+    check = ve._check_2sigma(_DB, "density", 100.0, "kg/m3", history)
     assert check.history_mean is not None
     assert check.history_std is not None
     assert check.lower_bound is not None
@@ -63,7 +70,7 @@ def test_check_result_contains_history_stats():
 def test_bootstrapped_flag_in_detail_with_partial_history():
     """Com histórico parcial (< 10 amostras), detalhe deve mencionar 'bootstrapped'."""
     history = [{"value": 850.0, "date": "2024-01-01", "sample_id": "S1"}]
-    check = ve._check_2sigma("density", 851.0, "kg/m3", history)
+    check = ve._check_2sigma(_DB, "density", 851.0, "kg/m3", history)
     assert "bootstrapped" in check.detail
 
 

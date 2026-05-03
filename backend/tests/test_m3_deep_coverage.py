@@ -25,7 +25,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from app.services.validation_engine import (
     _check_2sigma, _check_o2_limit,
     CheckResult, ValidationResult,
-    DEFAULT_O2_LIMIT, HISTORY_SIZE, SIGMA_MULTIPLIER
+    DEFAULT_O2_LIMIT,
 )
 from app.services.pdf_parser import (
     PVTResult, CROResult,
@@ -33,6 +33,39 @@ from app.services.pdf_parser import (
     _extract_tag_point, _extract_boletim, _extract_sampling_date,
     extract_pvt, extract_cro
 )
+from unittest.mock import MagicMock
+
+
+class _MockConfigParam:
+    """Minimal DB stub that returns config defaults for unit tests."""
+    def __init__(self, value):
+        self.value = str(value)
+
+
+class _MockDb:
+    """Fakes db.query().filter().first() for ConfigParameter lookups."""
+    def __init__(self, sigma=2.0, history_size=10, o2=0.5, h2s=10.0, bsw=1.0):
+        self._params = {
+            "SIGMA_MULTIPLIER": str(sigma),
+            "HISTORY_SIZE": str(history_size),
+            "VALIDATION_LIMIT_O2": str(o2),
+            "VALIDATION_LIMIT_H2S": str(h2s),
+            "VALIDATION_LIMIT_BSW": str(bsw),
+        }
+
+    def query(self, model):
+        return self
+
+    def filter(self, *args):
+        return self
+
+    def first(self):
+        # Determine which key was queried by checking the last filter arg
+        # Since we can't easily inspect SQLAlchemy expressions, return None to use defaults
+        return None
+
+
+_DB = _MockDb()
 class TestCheckResultDataclass:
     """Testa o dataclass CheckResult."""
 
@@ -75,36 +108,35 @@ class TestCheck2SigmaEdgeCases:
 
     def test_empty_history_bootstraps(self):
         """Sem histórico, valor é replicado → σ=0 → sempre PASS."""
-        result = _check_2sigma("density", 875.0, "kg/m³", [])
+        result = _check_2sigma(_DB, "density", 875.0, "kg/m³", [])
         assert result.status == "pass"
 
     def test_single_history_point(self):
         """1 ponto = replicação → baixo σ → provavelmente pass."""
         history = [{"value": 875.0, "date": "2026-01-01", "sample_id": "S1"}]
-        result = _check_2sigma("density", 875.0, "kg/m³", history)
+        result = _check_2sigma(_DB, "density", 875.0, "kg/m³", history)
         assert result.status == "pass"
 
     def test_identical_history_zero_std(self):
         """Todos valores iguais → σ=0 → o mesmo valor passa, qualquer outro falha."""
         history = [{"value": 875.0, "date": f"2026-01-{i+1:02d}", "sample_id": f"S{i}"} for i in range(10)]
         # O mesmo valor passa
-        result = _check_2sigma("density", 875.0, "kg/m³", history)
+        result = _check_2sigma(_DB, "density", 875.0, "kg/m³", history)
         assert result.status == "pass"
         # Um valor diferente falha (σ = 0, range = [875, 875])
-        result2 = _check_2sigma("density", 876.0, "kg/m³", history)
+        result2 = _check_2sigma(_DB, "density", 876.0, "kg/m³", history)
         assert result2.status == "fail"
 
     def test_exact_boundary_2sigma(self):
         """Valor exatamente no boundary (mean ± 2σ) deve PASS."""
-        # Valores: [100, 110, 100, 110, 100, 110, 100, 110, 100, 110]
         history = [
             {"value": 100 + (i % 2) * 10, "date": f"2026-01-{i+1:02d}", "sample_id": f"S{i}"}
             for i in range(10)
         ]
         # Mean = 105, σ = 5, range = [95, 115]
-        result_lower = _check_2sigma("test", 95.0, "unit", history)
+        result_lower = _check_2sigma(_DB, "test", 95.0, "unit", history)
         assert result_lower.status == "pass", "Valor exatamente no lower bound deve PASS"
-        result_upper = _check_2sigma("test", 115.0, "unit", history)
+        result_upper = _check_2sigma(_DB, "test", 115.0, "unit", history)
         assert result_upper.status == "pass", "Valor exatamente no upper bound deve PASS"
 
     def test_just_outside_boundary_fails(self):
@@ -113,7 +145,7 @@ class TestCheck2SigmaEdgeCases:
             {"value": 100 + (i % 2) * 10, "date": f"2026-01-{i+1:02d}", "sample_id": f"S{i}"}
             for i in range(10)
         ]
-        result = _check_2sigma("test", 116.0, "unit", history)
+        result = _check_2sigma(_DB, "test", 116.0, "unit", history)
         assert result.status == "fail"
 
     def test_volatile_history(self):
@@ -123,7 +155,7 @@ class TestCheck2SigmaEdgeCases:
             for i, v in enumerate([800, 900, 810, 890, 820, 880, 830, 870, 840, 860])
         ]
         # Mean ≈ 850, σ ≈ 33 → range ≈ [784, 916]
-        result = _check_2sigma("test", 850.0, "unit", history)
+        result = _check_2sigma(_DB, "test", 850.0, "unit", history)
         assert result.status == "pass"
 
     def test_history_fills_output(self):
@@ -132,7 +164,7 @@ class TestCheck2SigmaEdgeCases:
             {"value": 100 + i, "date": f"2026-01-{i+1:02d}", "sample_id": f"S{i}"}
             for i in range(5)
         ]
-        result = _check_2sigma("density", 102.0, "kg/m³", history)
+        result = _check_2sigma(_DB, "density", 102.0, "kg/m³", history)
         assert result.history_mean is not None
         assert result.history_std is not None
         assert result.lower_bound is not None
