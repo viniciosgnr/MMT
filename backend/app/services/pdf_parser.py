@@ -85,7 +85,9 @@ def _parse_br_float(value_str: str) -> Optional[float]:
     if not value_str:
         return None
     try:
-        return float(value_str.replace(",", "."))
+        # Handling thousands separator (dot) and decimal separator (comma)
+        clean_str = value_str.replace(".", "").replace(",", ".")
+        return float(clean_str)
     except ValueError:
         return None
 

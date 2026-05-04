@@ -204,6 +204,7 @@ def client():
 @pytest.fixture(scope="module")
 def db_session() -> Session:
     """Direct DB session for tests that need manual data injection."""
+    Base.metadata.create_all(bind=engine)
     db = TestingSessionLocal()
     yield db
     db.close()
