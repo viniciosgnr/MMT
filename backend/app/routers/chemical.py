@@ -212,60 +212,13 @@ def create_sample(sample: schemas.SampleCreate, db: Session = Depends(database.g
     db.add(sample_history)
     db.commit()
     
-    # --- Auto-schedule next periodic sample based on DB SLA configuration ---
-    # The system handles Plan (step 1) automatically — the new sample starts at Sample (step 2).
-    meter = db.query(models.InstrumentTag).filter(models.InstrumentTag.id == db_sample.meter_id).first() if db_sample.meter_id else None
-    meter_class = meter.classification if meter else "Fiscal"
-    sla_config = get_sla_config(db, meter_class, db_sample.type, db_sample.local)
-    
-    if sla_config and sla_config.get("interval_days"):
-        base_date = db_sample.planned_date or date.today()
-        # Ensure base_date is a date object
-        if hasattr(base_date, 'date'):
-            base_date = base_date.date()
-            
-        p_date = base_date + timedelta(days=sla_config["interval_days"])
-        prefix = db_sample.sample_id.split('-')[0] if '-' in db_sample.sample_id else 'CDI'
-        new_id = f"{prefix}-{p_date.strftime('%Y%m')}-PER-{db_sample.id}-{int(datetime.utcnow().timestamp())}"
-        
-        # Start at SAMPLE (step 2): Plan was completed automatically by the scheduler
-        new_sample = models.Sample(
-            sample_id=new_id,
-            type=db_sample.type,
-            category=db_sample.category,
-            status=models.SampleStatus.SAMPLE.value,
-            responsible=db_sample.responsible,
-            sample_point_id=db_sample.sample_point_id,
-            meter_id=db_sample.meter_id,
-            well_id=db_sample.well_id,
-            validation_party=db_sample.validation_party,
-            is_active=1,
-            local=db_sample.local,
-            planned_date=p_date,
-            due_date=p_date,
-            created_at=datetime.utcnow()
-        )
-        db.add(new_sample)
-        db.flush()
-        # History: Plan completed automatically, now at Sample
-        db.add(models.SampleStatusHistory(
-            sample_id=new_sample.id,
-            status=models.SampleStatus.PLAN.value,
-            comments="Auto-scheduled periodic analysis — Plan completed by scheduler."
-        ))
-        db.add(models.SampleStatusHistory(
-            sample_id=new_sample.id,
-            status=models.SampleStatus.SAMPLE.value,
-            comments="Awaiting next sample collection."
-        ))
-        db.commit()
-
     return db_sample
 
 @router.get("/samples", response_model=List[schemas.Sample])
 def list_samples(
     fpso_name: Optional[str] = None,
     status: Optional[str] = None,
+    sample_type: Optional[str] = None,
     equipment_id: Optional[int] = None,
     db: Session = Depends(database.get_db)
 ):
@@ -279,6 +232,8 @@ def list_samples(
         query = query.filter(models.SamplePoint.fpso_name == fpso_name)
     if status:
         query = query.filter(models.Sample.status == status)
+    if sample_type:
+        query = query.filter(models.Sample.type == sample_type)
         
     if equipment_id:
         # --- Skill (backend-dev-guidelines): Unified Historical Traceability ---
@@ -463,6 +418,10 @@ def update_sample_status(sample_id: int, update: schemas.SampleStatusUpdate, db:
         db.add(plan_h)
         db.add(sample_h)
 
+    # Apply local override EARLY if provided
+    if update.local:
+        sample.local = update.local
+
     meter_class = sample.meter.classification if sample.meter else "Fiscal"
     sla_config = get_sla_config(db, meter_class, sample.type, sample.local)
     
@@ -545,20 +504,23 @@ def update_sample_status(sample_id: int, update: schemas.SampleStatusUpdate, db:
         if not existing_periodic and sla_config and sla_config.get("interval_days"):
             schedule_next_periodic_sample(sample, sla_config)
 
-        # Set expected dates from SLA config
+        # Set/Clear expected dates based on SLA config
         if sla_config:
-            if sla_config.get("disembark_days"):
-                sample.disembark_expected_date = sampling_dt + timedelta(days=sla_config["disembark_days"])
-            if sla_config.get("lab_days"):
-                sample.lab_expected_date = sampling_dt + timedelta(days=sla_config["lab_days"])
-            if sla_config.get("report_days"):
-                sample.report_expected_date = sampling_dt + timedelta(days=sla_config["report_days"])
+            # We use "is not None" because 0 days is a valid delay, but None means "no step"
+            sample.disembark_expected_date = (sampling_dt + timedelta(days=sla_config["disembark_days"])) if sla_config.get("disembark_days") is not None else None
+            sample.lab_expected_date = (sampling_dt + timedelta(days=sla_config["lab_days"])) if sla_config.get("lab_days") is not None else None
+            sample.report_expected_date = (sampling_dt + timedelta(days=sla_config["report_days"])) if sla_config.get("report_days") is not None else None
 
     # Auto-update dates based on status
     if update.status == models.SampleStatus.DISEMBARK_PREP:
         if update.local:
+            # If location changes during disembark prep, we MUST re-evaluate SLA and dates
             sample.local = update.local
             sla_config = get_sla_config(db, meter_class, sample.type, sample.local)
+            if sla_config and sample.sampling_date:
+                sample.disembark_expected_date = (sample.sampling_date + timedelta(days=sla_config["disembark_days"])) if sla_config.get("disembark_days") is not None else None
+                sample.lab_expected_date = (sample.sampling_date + timedelta(days=sla_config["lab_days"])) if sla_config.get("lab_days") is not None else None
+                sample.report_expected_date = (sample.sampling_date + timedelta(days=sla_config["report_days"])) if sla_config.get("report_days") is not None else None
                 
     elif update.status == models.SampleStatus.DISEMBARK_LOGISTICS:
         sample.disembark_date = update.event_date or date.today()

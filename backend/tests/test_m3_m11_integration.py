@@ -299,8 +299,14 @@ class TestINT5_IntervalDaysFromSLAMatrix:
         planned = "2026-09-01"
         sample = _make_sample(iclient, sp["id"], planned_date=planned)
 
+        # Trigger transition out of SAMPLE
+        iclient.post(f"/api/chemical/samples/{sample['id']}/update-status", json={
+            "status": "Disembark prep",
+            "event_date": planned
+        })
+
         periodic = _periodic_children(iclient, sp["id"], sample["id"])
-        assert len(periodic) >= 1, "No PER auto-created from create_sample"
+        assert len(periodic) >= 1, "No PER auto-created after status transition"
 
         # planned_date 2026-09-01 + 30 = 2026-10-01
         dates = [p["planned_date"] for p in periodic]
@@ -325,7 +331,14 @@ class TestINT5_IntervalDaysFromSLAMatrix:
         })
 
         sp = _make_sp(iclient)
-        sample = _make_sample(iclient, sp["id"], planned_date="2026-08-01")
+        planned = "2026-08-01"
+        sample = _make_sample(iclient, sp["id"], planned_date=planned)
+
+        # Trigger transition out of SAMPLE
+        iclient.post(f"/api/chemical/samples/{sample['id']}/update-status", json={
+            "status": "Disembark prep",
+            "event_date": planned
+        })
 
         periodic = _periodic_children(iclient, sp["id"], sample["id"])
         assert len(periodic) >= 1

@@ -11,6 +11,13 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 from app.services.sla_matrix import get_sla_config
 
+class _MockDb:
+    def query(self, *args, **kwargs):
+        class _MockQuery:
+            def filter(self, *args, **kwargs): return self
+            def first(self): return None
+        return _MockQuery()
+
 
 class TestSlaMatrixFullSweep:
     """Testa TODAS as 20 combinações da planilha Excel (Classification × Type × Local)."""
@@ -20,7 +27,7 @@ class TestSlaMatrixFullSweep:
     # ──────────────────────────────────────────────────────────────
 
     def test_fiscal_chromatography_onshore(self):
-        c = get_sla_config("Fiscal", "Chromatography", "Onshore")
+        c = get_sla_config(_MockDb(), "Fiscal", "Chromatography", "Onshore")
         assert c["interval_days"] == 30
         assert c["disembark_days"] == 10
         assert c["lab_days"] == 20
@@ -29,7 +36,7 @@ class TestSlaMatrixFullSweep:
         assert c["fc_is_business_days"] is True
 
     def test_fiscal_chromatography_offshore(self):
-        c = get_sla_config("Fiscal", "Chromatography", "Offshore")
+        c = get_sla_config(_MockDb(), "Fiscal", "Chromatography", "Offshore")
         assert c["interval_days"] == 30
         assert c["disembark_days"] is None, "Offshore: Disembark deve ser NA"
         assert c["lab_days"] is None, "Offshore: Lab deve ser NA"
@@ -38,7 +45,7 @@ class TestSlaMatrixFullSweep:
         assert c["fc_is_business_days"] is True
 
     def test_apropriation_chromatography_onshore(self):
-        c = get_sla_config("Apropriation", "Chromatography", "Onshore")
+        c = get_sla_config(_MockDb(), "Apropriation", "Chromatography", "Onshore")
         assert c["interval_days"] == 90
         assert c["disembark_days"] == 10
         assert c["lab_days"] == 20
@@ -47,7 +54,7 @@ class TestSlaMatrixFullSweep:
         assert c["fc_is_business_days"] is True
 
     def test_apropriation_chromatography_offshore(self):
-        c = get_sla_config("Apropriation", "Chromatography", "Offshore")
+        c = get_sla_config(_MockDb(), "Apropriation", "Chromatography", "Offshore")
         assert c["interval_days"] == 90
         assert c["disembark_days"] is None
         assert c["lab_days"] is None
@@ -55,7 +62,7 @@ class TestSlaMatrixFullSweep:
         assert c["fc_days"] == 3
 
     def test_operational_chromatography_onshore(self):
-        c = get_sla_config("Operational", "Chromatography", "Onshore")
+        c = get_sla_config(_MockDb(), "Operational", "Chromatography", "Onshore")
         assert c["interval_days"] == 180
         assert c["disembark_days"] == 10
         assert c["lab_days"] == 20
@@ -64,7 +71,7 @@ class TestSlaMatrixFullSweep:
         assert c["fc_is_business_days"] is True
 
     def test_operational_chromatography_offshore(self):
-        c = get_sla_config("Operational", "Chromatography", "Offshore")
+        c = get_sla_config(_MockDb(), "Operational", "Chromatography", "Offshore")
         assert c["interval_days"] == 180
         assert c["disembark_days"] is None
         assert c["lab_days"] is None
@@ -76,7 +83,7 @@ class TestSlaMatrixFullSweep:
     # ──────────────────────────────────────────────────────────────
 
     def test_apropriation_pvt_onshore(self):
-        c = get_sla_config("Apropriation", "PVT", "Onshore")
+        c = get_sla_config(_MockDb(), "Apropriation", "PVT", "Onshore")
         assert c["interval_days"] == 90
         assert c["disembark_days"] == 10
         assert c["lab_days"] == 20
@@ -84,7 +91,7 @@ class TestSlaMatrixFullSweep:
         assert c["fc_days"] is None, "PVT nunca exige FC Update"
 
     def test_apropriation_pvt_offshore(self):
-        c = get_sla_config("Apropriation", "PVT", "Offshore")
+        c = get_sla_config(_MockDb(), "Apropriation", "PVT", "Offshore")
         assert c["interval_days"] == 90
         assert c["disembark_days"] is None
         assert c["lab_days"] is None
@@ -96,7 +103,7 @@ class TestSlaMatrixFullSweep:
     # ──────────────────────────────────────────────────────────────
 
     def test_fiscal_enxofre_onshore(self):
-        c = get_sla_config("Fiscal", "Enxofre", "Onshore")
+        c = get_sla_config(_MockDb(), "Fiscal", "Enxofre", "Onshore")
         assert c["interval_days"] == 365
         assert c["disembark_days"] == 10
         assert c["lab_days"] == 20
@@ -104,7 +111,7 @@ class TestSlaMatrixFullSweep:
         assert c["fc_days"] is None, "Enxofre não gera FC"
 
     def test_fiscal_enxofre_offshore(self):
-        c = get_sla_config("Fiscal", "Enxofre", "Offshore")
+        c = get_sla_config(_MockDb(), "Fiscal", "Enxofre", "Offshore")
         assert c["interval_days"] == 365
         assert c["disembark_days"] is None
         assert c["lab_days"] is None
@@ -116,7 +123,7 @@ class TestSlaMatrixFullSweep:
     # ──────────────────────────────────────────────────────────────
 
     def test_fiscal_viscosity_onshore(self):
-        c = get_sla_config("Fiscal", "Viscosity", "Onshore")
+        c = get_sla_config(_MockDb(), "Fiscal", "Viscosity", "Onshore")
         assert c["interval_days"] == 365
         assert c["disembark_days"] == 10
         assert c["lab_days"] == 20
@@ -124,7 +131,7 @@ class TestSlaMatrixFullSweep:
         assert c["fc_days"] is None
 
     def test_fiscal_viscosity_offshore(self):
-        c = get_sla_config("Fiscal", "Viscosity", "Offshore")
+        c = get_sla_config(_MockDb(), "Fiscal", "Viscosity", "Offshore")
         assert c["interval_days"] == 365
         assert c["disembark_days"] is None
         assert c["lab_days"] is None
@@ -132,7 +139,7 @@ class TestSlaMatrixFullSweep:
         assert c["fc_days"] is None
 
     def test_custody_transfer_viscosity_onshore(self):
-        c = get_sla_config("Custody Transfer", "Viscosity", "Onshore")
+        c = get_sla_config(_MockDb(), "Custody Transfer", "Viscosity", "Onshore")
         assert c["interval_days"] == 365
         assert c["disembark_days"] == 10
         assert c["lab_days"] == 20
@@ -140,7 +147,7 @@ class TestSlaMatrixFullSweep:
         assert c["fc_days"] is None
 
     def test_custody_transfer_viscosity_offshore(self):
-        c = get_sla_config("Custody Transfer", "Viscosity", "Offshore")
+        c = get_sla_config(_MockDb(), "Custody Transfer", "Viscosity", "Offshore")
         assert c["interval_days"] == 365
         assert c["disembark_days"] is None
         assert c["lab_days"] is None
@@ -153,12 +160,12 @@ class TestSlaMatrixFullSweep:
 
     def test_invalid_combination_returns_none(self):
         """Combinação inexistente na matriz não pode crashar o backend."""
-        result = get_sla_config("Inventado", "Inexistente", "Marte")
+        result = get_sla_config(_MockDb(), "Inventado", "Inexistente", "Marte")
         assert result is None, "get_sla_config DEVE retornar None para combinações inexistentes"
 
     def test_case_sensitivity_guard(self):
         """Verifica se a lookup é case-sensitive (deve ser, conforme implementação)."""
-        result = get_sla_config("fiscal", "chromatography", "onshore")
+        result = get_sla_config(_MockDb(), "fiscal", "chromatography", "onshore")
         # Se a implementação for case-insensitive, isso passará; se for case-sensitive, retornará None
         # Este test documenta o comportamento atual para evitar regressões silenciosas
         assert result is None or result["interval_days"] == 30

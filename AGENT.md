@@ -91,19 +91,13 @@ Nenhum prazo de análise química é hardcoded. Todos são lidos dinamicamente d
 
 ### Regra 2 — Gatilho de agendamento: saída do status "Sample" (etapa 2)
 
-O sistema agenda a próxima coleta **automaticamente** sempre que um sample sai do status `Sample` (etapa 2) — independentemente para qual status ele vai em seguida.
+O sistema agenda a próxima coleta **automaticamente** exclusivamente quando um sample sai do status `Sample` (etapa 2). O agendamento foi desacoplado da criação manual para evitar duplicidade.
 
 - **Fluxo Onshore:** `Sample → Disembark preparation` → gatilha agendamento
-- **Fluxo Offshore:** `Sample → Report issue` (pula desembarque) → gatilha agendamento da mesma forma
+- **Fluxo Offshore:** `Sample → Report issue` (pula desembarque) → gatilha agendamento
 - **Data da próxima coleta:** `sampling_date (event_date) + interval_days` da regra SLA correspondente
-- **Guard anti-duplicação:** A query verifica `sample_id LIKE '%-PER-{id}-%'` antes de criar. Transições subsequentes (ex: `Disembark logistics → Warehouse`) não criam novas amostras.
-- **Implementação:** `backend/app/routers/chemical.py` — bloco `AUTO-SCHEDULE` antes dos `if/elif` de status
-
-```python
-# Trigger pattern — qualquer saída do status Sample
-if sample.status == SampleStatus.SAMPLE.value and update.status != SampleStatus.SAMPLE:
-    schedule_next_periodic_sample(sample, sla_config)
-```
+- **Guard anti-duplicação:** O sistema garante que apenas um agendamento futuro exista para o mesmo ponto e tipo.
+- **Implementação:** `backend/app/routers/chemical.py` — bloco `AUTO-SCHEDULE` dentro de `update_sample_status`.
 
 ### Regra 3 — Reprovação: nova coleta no menor prazo entre 3 dias úteis e o próximo agendado
 
@@ -129,7 +123,7 @@ Todo sample criado automaticamente pelo sistema (PER ou EMG) **começa no status
   Plan  → "Auto-scheduled periodic analysis — Plan completed by scheduler."
   Sample → "Awaiting next sample collection."
   ```
-- **Aplica-se a:** PER (criado por `create_sample`), PER (criado por `update-status`), EMG (criado por reproval)
+- **Aplica-se a:** PER (criado por `update-status`), EMG (criado por reproval)
 - **Invariante testada:** Nenhum sample com prefixo `PER-` ou `EMG-` deve estar no status `Plan` após a criação
 
 ### Arquivos-chave do Motor M3
